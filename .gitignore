@@ -1,0 +1,15 @@
+*.tfstate
+*.tfstate.backup
+.terraform/
+*.tfvars
+*.pem
+*.key
+*.crt
+id_rsa*
+.env
+raw-secrets.yaml
+__pycache__/
+*.pyc
+.venv/
+.vscode/
+.idea/
