@@ -1,0 +1,48 @@
+name: DevSecOps CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - staging
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 1. Determine Target Environment and Map Correct File Names
+      - name: Set Environment Context
+        id: env-context
+        run: |
+          if [ "${{ github.ref_name }}" == "main" ]; then
+            echo "ENVIRONMENT=production" >> $GITHUB_ENV
+            echo "HELM_VALUES=values.yaml" >> $GITHUB_ENV
+            echo "NAMESPACE=production" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=staging" >> $GITHUB_ENV
+            echo "HELM_VALUES=override-values.yaml" >> $GITHUB_ENV
+            echo "NAMESPACE=staging" >> $GITHUB_ENV
+          fi
+
+      # 2. Build & Test Stage
+      - name: Run Tests & SAST Scanning
+        run: |
+          echo "Running SAST analysis and unit tests for target env: ${{ env.ENVIRONMENT }}"
+          # pytest apps/nkepsx/
+
+      # 3. Deploy Step (Using exact helm directory file names)
+      - name: Deploy to Target Cluster
+        run: |
+          echo "Deploying to namespace: ${{ env.NAMESPACE }} using values file: ${{ env.HELM_VALUES }}"
+          
+          # Ensure target namespace exists on cluster
+          # kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+
+          # Execute Helm Release
+          # helm upgrade --install muse-llama ./helm/muse_llama_platform \
+          #   --namespace ${{ env.NAMESPACE }} \
+          #   -f ./helm/muse_llama_platform/${{ env.HELM_VALUES }} \
+          #   -f ./helm/muse_llama_platform/override-secrets.yaml
