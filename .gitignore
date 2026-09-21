@@ -1,15 +1,34 @@
+# Archives
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+
+# Terraform
 *.tfstate
 *.tfstate.backup
 .terraform/
 *.tfvars
+
+# Keys and Certificates
 *.pem
 *.key
 *.crt
 id_rsa*
+
+# Environment & Secrets
 .env
 raw-secrets.yaml
+
+# Python
 __pycache__/
 *.pyc
 .venv/
+
+# IDEs
 .vscode/
 .idea/
+
+# uv package manager
+.uv/
+uv.lock
