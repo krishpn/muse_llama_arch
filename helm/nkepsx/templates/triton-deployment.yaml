@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nkepsx.fullname" . }}-triton
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: triton
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: triton
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: triton
+      {{- if and .Values.istio .Values.istio.enabled }}
+      annotations:
+        sidecar.istio.io/inject: "true"
+      {{- end }}
+    spec:
+      containers:
+        - name: triton-server
+          image: "{{ .Values.image.repository | default "nvcr.io/nvidia/tritonserver" }}:{{ .Values.image.tag | default "24.03-py3" }}"
+          imagePullPolicy: "{{ .Values.image.pullPolicy | default "IfNotPresent" }}"          command: ["tritonserver"]
+          args:
+            - "--model-repository={{ .Values.persistence.path }}"
+            - "--allow-grpc=true"
+            - "--allow-http=true"
+          ports:
+            - containerPort: {{ .Values.service.httpPort }}
+              name: http
+            - containerPort: {{ .Values.service.grpcPort }}
+              name: grpc
+            - containerPort: {{ .Values.service.metricsPort }}
+              name: metrics
+          volumeMounts:
+            - name: model-repository
+              mountPath: {{ .Values.persistence.path }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: model-repository
+          {{- if and .Values.persistence.enabled (eq .Values.persistence.type "hostPath") }}
+          hostPath:
+            path: "{{ .Values.persistence.path }}"
+            type: Directory
+          {{- else if and .Values.persistence.enabled (eq .Values.persistence.type "pvc") }}
+          persistentVolumeClaim:
+            claimName: {{ include "nkepsx.fullname" . }}-models-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "nkepsx.fullname" . }}-triton-svc
+  namespace: {{ .Release.Namespace }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app.kubernetes.io/name: triton
+  ports:
+    - port: {{ .Values.service.httpPort }}
+      targetPort: http
+      name: http
+      nodePort: {{ if eq .Values.service.type "NodePort" }}32382{{ else }}nil{{ end }}
+    - port: {{ .Values.service.grpcPort }}
+      targetPort: grpc
+      name: grpc
+      nodePort: {{ if eq .Values.service.type "NodePort" }}32020{{ else }}nil{{ end }}

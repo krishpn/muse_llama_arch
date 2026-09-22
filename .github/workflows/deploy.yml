@@ -42,7 +42,8 @@ jobs:
           # kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
 
           # Execute Helm Release
-          # helm upgrade --install muse-llama ./helm/muse_llama_platform \
-          #   --namespace ${{ env.NAMESPACE }} \
-          #   -f ./helm/muse_llama_platform/${{ env.HELM_VALUES }} \
-          #   -f ./helm/muse_llama_platform/override-secrets.yaml
+          helm upgrade --install nkepsx ./helm/nkepsx \
+            --namespace ${{ env.NAMESPACE }} \
+            --create-namespace \
+            -f ./helm/nkepsx/${{ env.HELM_VALUES }} \
+            -f ./helm/nkepsx/override-secrets.yaml
