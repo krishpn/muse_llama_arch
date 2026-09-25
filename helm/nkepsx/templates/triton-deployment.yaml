@@ -22,7 +22,7 @@ spec:
       containers:
         - name: triton-server
           image: "{{ .Values.image.repository | default "nvcr.io/nvidia/tritonserver" }}:{{ .Values.image.tag | default "24.03-py3" }}"
-          imagePullPolicy: "{{ .Values.image.pullPolicy | default "IfNotPresent" }}"          command: ["tritonserver"]
+          imagePullPolicy: "{{ .Values.image.pullPolicy | default "IfNotPresent" }}"
           command: ["tritonserver"]
           args:
             - "--model-repository={{ .Values.persistence.path }}"
