@@ -32,3 +32,4 @@ __pycache__/
 # uv package manager
 .uv/
 uv.lock
+model_repository
