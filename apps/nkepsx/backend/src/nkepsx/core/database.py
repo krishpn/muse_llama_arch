@@ -19,7 +19,9 @@ async def get_database() -> AsyncIOMotorClient:
 
 async def connect_to_mongo(retries: int = 5, delay: int = 2) -> None:
     """Connect to MongoDB with retry logic on startup."""
-    mongo_uri = getattr(settings, "mongodb_uri", "mongodb://localhost:27017")
+    #mongo_uri = getattr(settings, "mongodb_uri", "mongodb://localhost:27017")
+    #mongo_uri = getattr(settings, "database_url", None) or os.getenv("NKEPSX_DATABASE_URL", "mongodb://localhost:27017")
+    mongo_uri = settings.database_url
     db.client = AsyncIOMotorClient(mongo_uri)
     
     for attempt in range(1, retries + 1):

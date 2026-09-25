@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nkepsx.fullname" . }}-orchestrator
+  labels:
+    {{- include "nkepsx.labels" . | nindent 4 }}
+    app.kubernetes.io/component: orchestrator
+spec:
+  replicas: {{ .Values.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "nkepsx.labels" . | nindent 6 }}
+      app.kubernetes.io/component: orchestrator
+  template:
+    metadata:
+      labels:
+        {{- include "nkepsx.labels" . | nindent 8 }}
+        app.kubernetes.io/component: orchestrator
+    spec:
+      containers:
+        - name: orchestrator
+          image: "{{ .Values.backend.image.repository | default "nkepsx-backend" }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy | default "IfNotPresent" }}
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+          env:
+            - name: NKEPSX_ENVIRONMENT
+              value: "{{ .Values.config.environment | default "production" }}"
+            - name: NKEPSX_API_TITLE
+              value: "{{ .Values.config.apiTitle | default "nkepsx API" }}"
+            - name: NKEPSX_API_VERSION
+              value: "{{ .Values.config.apiVersion | default "0.1.0" }}"
+            - name: NKEPSX_TRITON_GRPC_URL
+              value: 'grpcs://{{ include "nkepsx.fullname" . }}-triton-svc:8001'
+            - name: NKEPSX_DATABASE_URL
+              value: 'mongodb://{{ include "nkepsx.fullname" . }}-mongodb-svc:27017/nkepsx'
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15

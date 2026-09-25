@@ -4,7 +4,10 @@
 # dependencies = [
 #     "fastapi",
 #     "uvicorn",
+#     "motor",
 #     "pydantic-settings",
+#     "tritonclient[grpc]",
+#     "numpy",
 # ]
 # ///
 
@@ -15,13 +18,14 @@ cross-origin resource sharing (CORS) middleware,
 and registers core system and routing endpoints.
 """
 
-
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
+
 from nkepsx.config import settings
 from nkepsx.core.database import connect_to_mongo, close_mongo_connection, get_database
+from nkepsx.routers.orchestrator import router as orchestrator_router
 
 
 @asynccontextmanager
@@ -32,12 +36,14 @@ async def lifespan(app: FastAPI):
     # Shutdown: Close connection
     await close_mongo_connection()
 
+
 # Initialize the core FastAPI application using metadata from centralized settings
 app = FastAPI(
     title=settings.api_title,
     version=settings.api_version,
     lifespan=lifespan
 )
+
 # Configure CORS middleware for local frontend integration and trusted domains
 app.add_middleware(
     CORSMiddleware,
@@ -47,26 +53,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Register Routers
+app.include_router(orchestrator_router)
+
+
 @app.get("/health")
 async def health_check() -> dict[str, str]:
     return {"status": "healthy", "version": settings.api_version}
+
 
 @app.get("/")
 def read_root():
     return {"status": "healthy", "service": "nkepsx-backend"}
 
+
 # Sample endpoint fetching data from your MongoDB instance
 @app.get("/api/datasets")
 async def get_datasets(client: AsyncIOMotorClient = Depends(get_database)):
-    # Connects to your 'nkepsx' database and lists collections or documents
-    db = client["nkepsx"]
+    db = client["Ins"]
     collections = await db.list_collection_names()
     
-    # Example: fetch documents from a collection if it exists, or return metadata
     return {
         "collections": collections,
         "status": "connected"
     }
+
 
 if __name__ == "__main__":
     import uvicorn

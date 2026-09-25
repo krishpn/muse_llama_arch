@@ -54,7 +54,8 @@ class Settings(BaseSettings):
     s3_use_kms_encryption: bool = True  # Forces SSE-KMS on artifact uploads
 
     # --- Relational Database (RDS / PostgreSQL - Encrypted at Rest) ---
-    database_url: str = "postgresql+asyncpg://user:pass@localhost:5432/nkepsx"
+    #database_url: str = "postgresql+asyncpg://user:pass@localhost:5432/nkepsx"
+    database_url: str = "mongodb://nkepsx-mongodb-svc:27017/nkepsx"
     database_ssl_mode: str = "verify-full"  # Forces SSL verification for DB connection
 
     # --- Vector Store (Qdrant / Milvus - Encrypted Storage) ---

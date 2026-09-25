@@ -34,10 +34,23 @@ secrets:
 
 resources:
   limits:
-    nvidia.com/gpu: "1"
+    # nvidia.com/gpu: "1"  <-- Removed to prevent Pending state if no GPU plugin is active
   requests:
     memory: "4Gi"
     cpu: "2"
+
+backend:
+  image:
+    repository: docker.io/library/nkepsx-backend
+    tag: v4
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
 
 mongodb:
   image:
@@ -88,8 +101,8 @@ config:
   s3UseKmsEncryption: true
 
   # Relational Database (PostgreSQL)
-  databaseUrl: "postgresql+asyncpg://user:pass@postgres-svc:5432/nkepsx"
-  databaseSslMode: "verify-full"
+  # databaseUrl: "postgresql+asyncpg://user:pass@postgres-svc:5432/nkepsx"
+  # databaseSslMode: "verify-full"
 
   # Vector Store (Qdrant / Milvus)
   vectorStoreProvider: "qdrant"

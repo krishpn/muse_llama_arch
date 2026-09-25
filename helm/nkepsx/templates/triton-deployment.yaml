@@ -66,8 +66,8 @@ spec:
     - port: {{ .Values.service.httpPort }}
       targetPort: http
       name: http
-      nodePort: {{ if eq .Values.service.type "NodePort" }}32382{{ else }}nil{{ end }}
+      nodePort: {{ if eq .Values.service.type "NodePort" }} NodePort: 32382{{ end }}
     - port: {{ .Values.service.grpcPort }}
       targetPort: grpc
       name: grpc
-      nodePort: {{ if eq .Values.service.type "NodePort" }}32020{{ else }}nil{{ end }}
+      nodePort: {{ if eq .Values.service.type "NodePort" }} NodePort: 32020{{ end }}
