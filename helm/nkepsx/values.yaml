@@ -37,4 +37,4 @@ resources:
     nvidia.com/gpu: "1"
   requests:
     memory: "4Gi"
-    cpu: "2"s
+    cpu: "2"
