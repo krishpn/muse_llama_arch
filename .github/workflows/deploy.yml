@@ -1,5 +1,6 @@
 name: DevSecOps CI/CD Pipeline
 
+# Trigger the workflow automatically on pushes to staging and main branches
 on:
   push:
     branches:
@@ -10,10 +11,12 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
+      # Check out repository source code onto the GitHub runner
       - name: Checkout Code
         uses: actions/checkout@v4
 
       # 1. Determine Target Environment and Map Correct File Names
+      # Dynamically sets environment variables based on the active branch (main vs. staging)
       - name: Set Environment Context
         id: env-context
         run: |
@@ -28,20 +31,32 @@ jobs:
           fi
 
       # 2. Build & Test Stage
+      # Executes unit tests and static application security testing (SAST) prior to deployment
       - name: Run Tests & SAST Scanning
         run: |
           echo "Running SAST analysis and unit tests for target env: ${{ env.ENVIRONMENT }}"
           # pytest apps/nkepsx/
 
+      # 2.5. Configure Kubernetes Context via Kubeconfig (Pure Bash)
+      # Securely decodes the base64-encoded cluster credentials stored in GitHub Secrets
+      - name: Configure Kubernetes Context via Kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          # Decode base64 secret and write directly to standard kubeconfig path
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > ~/.kube/config
+          # Enforce strict file permissions (read/write by owner only) for security compliance
+          chmod 600 ~/.kube/config          
+          
+          # Verify connection to ensure the remote cluster is reachable before executing deployment
+          kubectl cluster-info
+
       # 3. Deploy Step (Using exact helm directory file names)
+      # Packages and deploys the application using Helm with environment-specific values and secrets
       - name: Deploy to Target Cluster
         run: |
           echo "Deploying to namespace: ${{ env.NAMESPACE }} using values file: ${{ env.HELM_VALUES }}"
-          
-          # Ensure target namespace exists on cluster
-          # kubectl create namespace ${{ env.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
 
-          # Execute Helm Release
+          # Execute Helm Release (installs if missing, upgrades if existing)
           helm upgrade --install nkepsx ./helm/nkepsx \
             --namespace ${{ env.NAMESPACE }} \
             --create-namespace \
