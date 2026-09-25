@@ -1,0 +1,40 @@
+# Default values for nkepsx
+replicaCount: 1
+
+image:
+  repository: nvcr.io/nvidia/tritonserver
+  tag: "24.03-py3"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  httpPort: 8000
+  grpcPort: 8001
+  metricsPort: 8002
+
+persistence:
+  enabled: false
+  type: pvc
+  path: "/models"
+
+istio:
+  enabled: false
+  annotations:
+    sidecar.istio.io/inject: "true"
+
+aws:
+  irsa:
+    enabled: false
+    roleArn: ""
+
+secrets:
+  huggingfaceToken: ""
+  awsAccessKeyId: ""
+  awsSecretAccessKey: ""
+
+resources:
+  limits:
+    nvidia.com/gpu: "1"
+  requests:
+    memory: "4Gi"
+    cpu: "2"s
