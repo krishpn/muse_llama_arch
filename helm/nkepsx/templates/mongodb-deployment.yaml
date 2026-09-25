@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nkepsx.fullname" . }}-mongodb
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "nkepsx.fullname" . }}-mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "nkepsx.fullname" . }}-mongodb
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "nkepsx.fullname" . }}-mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: "{{ .Values.mongodb.image.repository | default "mongo" }}:{{ .Values.mongodb.image.tag | default "7.0" }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 27017
+              name: mongodb
+          volumeMounts:
+            - name: mongodb-data
+              mountPath: /data/db
+          resources:
+            {{- toYaml .Values.mongodb.resources | nindent 12 }}
+      volumes:
+        - name: mongodb-data
+          {{- if and .Values.mongodb.persistence.enabled (eq .Values.mongodb.persistence.type "hostPath") }}
+          hostPath:
+            path: "{{ .Values.mongodb.persistence.path | default "/var/lib/mongodb" }}"
+            type: DirectoryOrCreate
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "nkepsx.fullname" . }}-mongodb-svc
+  namespace: {{ .Release.Namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ include "nkepsx.fullname" . }}-mongodb
+  ports:
+    - port: 27017
+      targetPort: mongodb
+      name: mongodb

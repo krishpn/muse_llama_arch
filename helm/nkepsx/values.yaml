@@ -38,3 +38,75 @@ resources:
   requests:
     memory: "4Gi"
     cpu: "2"
+
+mongodb:
+  image:
+    repository: mongo
+    tag: "7.0"
+  persistence:
+    enabled: true
+    type: hostPath
+    path: "/var/lib/mongodb"
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 512Mi
+
+# --- Application Configuration (Maps to Pydantic BaseSettings with NKEPSX_ prefix) ---
+config:
+  # App Metadata & Environment
+  apiTitle: "nkepsx API"
+  environment: "development"
+  debug: false
+  logLevel: "INFO"
+
+  # AI Serving & Model Storage
+  # Note: When running in K3s, localhost points to the pod itself. Use service names for cluster communication.
+  
+  tritonGrpcUrl: 'grpcs://{{ include "nkepsx.fullname" . }}-triton-svc:8001'
+  vllmEndpoint: "https://localhost:8000"
+  modelRepositoryPath: "/models"
+  inferenceTimeoutSeconds: 60.0
+
+  # PKI, Certificates, & mTLS
+  verifySsl: true
+  caCertPath: ""
+  clientCertPath: ""
+  clientKeyPath: ""
+
+  # Encryption at Rest & Key Management (KMS)
+  kmsKeyArn: ""
+  encryptionAlgorithm: "AES-256-GCM"
+
+  # Object Storage (S3 / MinIO)
+  s3EndpointUrl: ""
+  s3BucketName: "nkepsx-artifacts"
+  awsRegion: "us-east-1"
+  s3UseKmsEncryption: true
+
+  # Relational Database (PostgreSQL)
+  databaseUrl: "postgresql+asyncpg://user:pass@postgres-svc:5432/nkepsx"
+  databaseSslMode: "verify-full"
+
+  # Vector Store (Qdrant / Milvus)
+  vectorStoreProvider: "qdrant"
+  vectorStoreUrl: "https://qdrant-svc:6333"
+  vectorStoreApiKey: ""
+
+  # Caching & Sessions (Redis)
+  redisUrl: "rediss://redis-svc:6379/0"
+
+  # Observability & Distributed Tracing
+  enableTelemetry: true
+  otelExporterOtlpEndpoint: "http://otel-collector.monitoring.svc.cluster.local:4317"
+
+  # Audit & Security Compliance
+  enableStructuredLogging: true
+  auditLogRetentionDays: 90
+
+  # Database (Using MongoDB)
+  databaseUrl: 'mongodb://{{ include "nkepsx.fullname" . }}-mongodb-svc:27017/nkepsx'
+  databaseSslMode: "verify-full"
