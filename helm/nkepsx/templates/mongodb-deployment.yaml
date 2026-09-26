@@ -43,10 +43,13 @@ metadata:
   name: {{ include "nkepsx.fullname" . }}-mongodb-svc
   namespace: {{ .Release.Namespace }}
 spec:
-  type: ClusterIP
+  type: {{ .Values.mongodb.serviceType | default "ClusterIP" }}
   selector:
     app.kubernetes.io/name: {{ include "nkepsx.fullname" . }}-mongodb
   ports:
     - port: 27017
       targetPort: mongodb
       name: mongodb
+      {{- if and (eq (.Values.mongodb.serviceType | default "ClusterIP") "NodePort") .Values.mongodb.nodePort }}
+      nodePort: {{ .Values.mongodb.nodePort }}
+      {{- end }}

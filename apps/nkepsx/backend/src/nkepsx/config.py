@@ -55,8 +55,10 @@ class Settings(BaseSettings):
 
     # --- Relational Database (RDS / PostgreSQL - Encrypted at Rest) ---
     #database_url: str = "postgresql+asyncpg://user:pass@localhost:5432/nkepsx"
-    database_url: str = "mongodb://nkepsx-mongodb-svc:27017/nkepsx"
-    database_ssl_mode: str = "verify-full"  # Forces SSL verification for DB connection
+    #database_ssl_mode: str = "verify-full"  # Forces SSL verification for DB connection
+    database_url: str = "mongodb://localhost:27017"
+    database_tls: bool = False
+
 
     # --- Vector Store (Qdrant / Milvus - Encrypted Storage) ---
     vector_store_provider: str = "qdrant"
@@ -89,6 +91,8 @@ class Settings(BaseSettings):
         except PackageNotFoundError:
             return "0.1.0"
 
+    class Config:
+        env_prefix = "NKEPSX_"
 
 # Instantiate global settings singleton
 settings = Settings()

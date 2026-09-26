@@ -70,10 +70,11 @@ def read_root():
 # Sample endpoint fetching data from your MongoDB instance
 @app.get("/api/datasets")
 async def get_datasets(client: AsyncIOMotorClient = Depends(get_database)):
-    db = client["Ins"]
+    db = client[settings.database_name]
     collections = await db.list_collection_names()
     
     return {
+        "database": settings.database_name,
         "collections": collections,
         "status": "connected"
     }

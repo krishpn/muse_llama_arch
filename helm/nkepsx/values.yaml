@@ -53,6 +53,8 @@ backend:
       memory: 256Mi
 
 mongodb:
+  serviceType: ClusterIP  # Change to "NodePort" when you want persistent local access via Compass
+  nodePort: 30017         # Static port mapped on the node for Compass (used if serviceType is NodePort)
   image:
     repository: mongo
     tag: "7.0"
@@ -121,5 +123,5 @@ config:
   auditLogRetentionDays: 90
 
   # Database (Using MongoDB)
-  databaseUrl: 'mongodb://{{ include "nkepsx.fullname" . }}-mongodb-svc:27017/nkepsx'
-  databaseSslMode: "verify-full"
+  databaseUrl: 'mongodb://{{ include "nkepsx.fullname" . }}-mongodb-svc:27017'
+  databaseTls: true  # True/False instead of PostgreSQL sslmode strings
