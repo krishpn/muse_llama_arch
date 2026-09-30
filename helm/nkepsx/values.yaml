@@ -1,0 +1,134 @@
+# Default values for nkepsx
+replicaCount: 1
+
+image:
+  repository: nvcr.io/nvidia/tritonserver
+  tag: "24.03-py3"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  httpPort: 8000
+  grpcPort: 8001
+  metricsPort: 8002
+
+persistence:
+  enabled: false
+  type: pvc
+  path: "/models"
+
+istio:
+  enabled: false
+  annotations:
+    sidecar.istio.io/inject: "true"
+
+aws:
+  irsa:
+    enabled: false
+    roleArn: ""
+
+secrets:
+  huggingfaceToken: ""
+  awsAccessKeyId: ""
+  awsSecretAccessKey: ""
+
+resources:
+  limits:
+    # nvidia.com/gpu: "1"  <-- Removed to prevent Pending state if no GPU plugin is active
+  requests:
+    memory: "4Gi"
+    cpu: "2"
+
+backend:
+  serviceType: NodePort  # Switch to "NodePort" for persistent local access
+  nodePort: 30080         # Static port mapped on the node for FastAPI / Swagger
+  image:
+    repository: docker.io/library/nkepsx-backend
+    tag: v4
+    pullPolicy: IfNotPresent
+  env:
+    - name: MONGO_URI
+      value: "mongodb://nkepsx-mongodb-svc:27017"
+    - name: NKEPSX_ENVIRONMENT
+      value: "development"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+mongodb:
+  serviceType: NodePort  # Change to "NodePort" when you want persistent local access via Compass
+  nodePort: 30017         # Static port mapped on the node for Compass (used if serviceType is NodePort)
+  image:
+    repository: mongo
+    tag: "7.0"
+  persistence:
+    enabled: true
+    type: hostPath
+    path: "/var/lib/mongodb"
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 512Mi
+
+# --- Application Configuration (Maps to Pydantic BaseSettings with NKEPSX_ prefix) ---
+config:
+  # App Metadata & Environment
+  apiTitle: "nkepsx API"
+  environment: "development"
+  debug: false
+  logLevel: "INFO"
+
+  # AI Serving & Model Storage
+  # Note: When running in K3s, localhost points to the pod itself. Use service names for cluster communication.
+  
+  tritonGrpcUrl: 'grpcs://{{ include "nkepsx.fullname" . }}-triton-svc:8001'
+  vllmEndpoint: "https://localhost:8000"
+  modelRepositoryPath: "/models"
+  inferenceTimeoutSeconds: 60.0
+
+  # PKI, Certificates, & mTLS
+  verifySsl: true
+  caCertPath: ""
+  clientCertPath: ""
+  clientKeyPath: ""
+
+  # Encryption at Rest & Key Management (KMS)
+  kmsKeyArn: ""
+  encryptionAlgorithm: "AES-256-GCM"
+
+  # Object Storage (S3 / MinIO)
+  s3EndpointUrl: ""
+  s3BucketName: "nkepsx-artifacts"
+  awsRegion: "us-east-1"
+  s3UseKmsEncryption: true
+
+  # Relational Database (PostgreSQL)
+  # databaseUrl: "postgresql+asyncpg://user:pass@postgres-svc:5432/nkepsx"
+  # databaseSslMode: "verify-full"
+
+  # Vector Store (Qdrant / Milvus)
+  vectorStoreProvider: "qdrant"
+  vectorStoreUrl: "https://qdrant-svc:6333"
+  vectorStoreApiKey: ""
+
+  # Caching & Sessions (Redis)
+  redisUrl: "rediss://redis-svc:6379/0"
+
+  # Observability & Distributed Tracing
+  enableTelemetry: true
+  otelExporterOtlpEndpoint: "http://otel-collector.monitoring.svc.cluster.local:4317"
+
+  # Audit & Security Compliance
+  enableStructuredLogging: true
+  auditLogRetentionDays: 90
+
+  # Database (Using MongoDB)
+  databaseUrl: 'mongodb://{{ include "nkepsx.fullname" . }}-mongodb-svc:27017'
+  databaseTls: true  # True/False instead of PostgreSQL sslmode strings

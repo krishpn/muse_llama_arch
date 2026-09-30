@@ -1,0 +1,13 @@
+{{- if and .Values.persistence.enabled (eq .Values.persistence.type "pvc") -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "nkepsx.fullname" . }}-models-pvc
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
+{{- end -}}
