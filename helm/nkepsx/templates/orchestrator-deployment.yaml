@@ -26,8 +26,10 @@ spec:
               name: http
               protocol: TCP
           env:
-            - name: NKEPSX_ENVIRONMENT
-              value: "{{ .Values.config.environment | default "production" }}"
+            {{- range .Values.backend.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
             - name: NKEPSX_API_TITLE
               value: "{{ .Values.config.apiTitle | default "nkepsx API" }}"
             - name: NKEPSX_API_VERSION

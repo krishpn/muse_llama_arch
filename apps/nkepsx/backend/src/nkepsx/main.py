@@ -25,6 +25,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from nkepsx.config import settings
 from nkepsx.core.database import connect_to_mongo, close_mongo_connection, get_database
+from nkepsx.routers import analytics
 from nkepsx.routers.orchestrator import router as orchestrator_router
 
 
@@ -47,7 +48,8 @@ app = FastAPI(
 # Configure CORS middleware for local frontend integration and trusted domains
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    #allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -55,6 +57,7 @@ app.add_middleware(
 
 # Register Routers
 app.include_router(orchestrator_router)
+app.include_router(analytics.router)
 
 
 @app.get("/health")

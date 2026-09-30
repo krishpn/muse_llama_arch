@@ -40,10 +40,17 @@ resources:
     cpu: "2"
 
 backend:
+  serviceType: NodePort  # Switch to "NodePort" for persistent local access
+  nodePort: 30080         # Static port mapped on the node for FastAPI / Swagger
   image:
     repository: docker.io/library/nkepsx-backend
     tag: v4
     pullPolicy: IfNotPresent
+  env:
+    - name: MONGO_URI
+      value: "mongodb://nkepsx-mongodb-svc:27017"
+    - name: NKEPSX_ENVIRONMENT
+      value: "development"
   resources:
     limits:
       cpu: 500m
@@ -53,7 +60,7 @@ backend:
       memory: 256Mi
 
 mongodb:
-  serviceType: ClusterIP  # Change to "NodePort" when you want persistent local access via Compass
+  serviceType: NodePort  # Change to "NodePort" when you want persistent local access via Compass
   nodePort: 30017         # Static port mapped on the node for Compass (used if serviceType is NodePort)
   image:
     repository: mongo

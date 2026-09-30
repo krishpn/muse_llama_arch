@@ -18,6 +18,7 @@ import logging
 import sys
 from importlib.metadata import PackageNotFoundError, version
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field
 
 
 class Settings(BaseSettings):
@@ -54,9 +55,12 @@ class Settings(BaseSettings):
     s3_use_kms_encryption: bool = True  # Forces SSE-KMS on artifact uploads
 
     # --- Relational Database (RDS / PostgreSQL - Encrypted at Rest) ---
-    #database_url: str = "postgresql+asyncpg://user:pass@localhost:5432/nkepsx"
-    #database_ssl_mode: str = "verify-full"  # Forces SSL verification for DB connection
-    database_url: str = "mongodb://localhost:27017"
+    # --- Database (MongoDB Encrypted at Rest) ---
+    database_url: str = Field(
+        default="mongodb://nkepsx-mongodb-svc:27017",
+        validation_alias="MONGO_URI"
+    )
+    database_name: str = "insTrader"
     database_tls: bool = False
 
 
@@ -91,8 +95,19 @@ class Settings(BaseSettings):
         except PackageNotFoundError:
             return "0.1.0"
 
-    class Config:
-        env_prefix = "NKEPSX_"
+
+    model_config = SettingsConfigDict(
+        env_prefix="NKEPSX_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+
+    
+
+    # class Config:
+    #     env_prefix = "NKEPSX_"
 
 # Instantiate global settings singleton
 settings = Settings()
