@@ -14,7 +14,7 @@
 """
 Main application entrypoint for the FastAPI orchestrator service.
 This module initializes the FastAPI application instance, configures 
-cross-origin resource sharing (CORS) middleware, 
+cross-origin resources sharing (CORS) middleware, 
 and registers core system and routing endpoints.
 """
 

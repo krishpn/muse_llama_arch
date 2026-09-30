@@ -5,7 +5,7 @@ cd apps/nkepsx/backend
 `uv sync`
 
 
-1. Backend & Container Build Cycle
+# 1. Backend & Container Build Cycle
 
 `docker images` 
 
@@ -28,7 +28,7 @@ Restart deployment to pick up the new image
 `kubectl rollout restart deployment/nkepsx-orchestrator`
 
 
-2. Kubernetes Cluster & Pod Diagnostics
+# 2. Kubernetes Cluster & Pod Diagnostics
 
 Check status of all pods
 
@@ -62,10 +62,11 @@ Test internal DNS resolution from inside the pod (e.g., reaching MongoDB service
 
 `kubectl exec -it deployment/nkepsx-orchestrator -- python -c "import socket; print(socket.gethostbyname('nkepsx-mongodb-svc'))"`
 
-# Verify environment variables set inside the pod container
-kubectl exec -it deployment/nkepsx-orchestrator -- env
+Verify environment variables set inside the pod container
 
-3. API & Endpoint Testing
+`kubectl exec -it deployment/nkepsx-orchestrator -- env`
+
+# 3. API & Endpoint Testing
 
 Test health check root
 
