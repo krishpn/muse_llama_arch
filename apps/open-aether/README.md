@@ -6,7 +6,8 @@
 
 ## Target Audience & Applied Venues
 
-* **Primary Target Audience:** Empirical causal inference researchers, applied econometricians, and domain scientists evaluating network spillovers in venues such as **AISTATS (Applied Track)**, **ICML (Applications)**, and applied economics journals.
+* **Primary Target Audience:** Empirical ca
+usal inference researchers, applied econometricians, and domain scientists evaluating network spillovers in venues such as **AISTATS (Applied Track)**, **ICML (Applications)**, and applied economics journals.
 
 * **Intended Impact:** Enabling practitioners to discover validated causal graphs from real-world networked data without making unrealistic unit-independence or no-interference (SUTVA) assumptions.
 

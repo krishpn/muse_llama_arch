@@ -1,9 +1,63 @@
-cd apps/nkepsx/backend
+# A project setup 
+
+**open-aether** is a Python benchmarking suite for applied causal inference, network interference, and spillover effect estimation under complex topological settings.
+
+
+**Repository Structure**
+
+**Create all directory paths in one command**
+
+mkdir -p open-aether/src/open_aether/{data,evaluation,models,utils} \
+         open-aether/experiments/configs \
+         open-aether/scripts \
+         open-aether/tests
+
+**Create all placeholder files**
+
+touch open-aether/src/open_aether/__init__.py \
+      open-aether/src/open_aether/data/__init__.py \
+      open-aether/src/open_aether/data/network_loader.py \
+      open-aether/src/open_aether/evaluation/__init__.py \
+      open-aether/src/open_aether/evaluation/metrics.py \
+      open-aether/src/open_aether/models/__init__.py \
+      open-aether/src/open_aether/utils/__init__.py \
+      open-aether/experiments/configs/baseline.yaml \
+      open-aether/scripts/01_run_applied_benchmark.py \
+      open-aether/tests/test_data_loader.py \
+      open-aether/pyproject.toml \
+      open-aether/README.md
+
+```text
+open-aether/
+├── src/
+│   └── open_aether/
+│       ├── __init__.py
+│       ├── data/
+│       │   ├── __init__.py
+│       │   └── network_loader.py
+│       ├── evaluation/
+│       │   ├── __init__.py
+│       │   └── metrics.py
+│       ├── models/
+│       │   └── __init__.py
+│       └── utils/
+│           └── __init__.py
+├── experiments/
+│   └── configs/
+│       └── baseline.yaml
+├── scripts/
+│   └── 01_run_applied_benchmark.py
+├── tests/
+│   └── test_data_loader.py
+├── pyproject.toml
+└── README.md
+```
+
+`cd apps/nkepsx/backend`
 
 `uv pip install -e .`
 `uv run pytest tests/ -v`
 `uv sync`
-
 
 # 1. Backend & Container Build Cycle
 
