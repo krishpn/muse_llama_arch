@@ -63,6 +63,9 @@ jobs:
             
             cd "$ROOT_DIR/$dir"
 
+            # Create venv for the subproject
+            uv venv
+
             # Sync project dependencies
             if [ -f "uv.lock" ]; then
               uv sync --extra dev
