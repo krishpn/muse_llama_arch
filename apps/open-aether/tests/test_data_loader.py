@@ -12,4 +12,7 @@ def test_data_module_import():
     """Verify that open_aether.data subpackage imports clean."""
     import open_aether.data
 
+
     assert open_aether.data is not None
+
+print("All tests passed successfully.")
