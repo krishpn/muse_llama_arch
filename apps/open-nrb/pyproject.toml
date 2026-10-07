@@ -1,7 +1,7 @@
 [project]
-name = "open-aether"
+name = "open-nrb"
 version = "0.1.0"
-description = "Applied Causal Inference and Network Interference Benchmarking"
+description = "Nepal Rastra Bank Financial Analytics and Network Econometrics"
 readme = "README.md"
 authors = [
     { name = "Krishna Neupane" }
@@ -13,6 +13,8 @@ dependencies = [
     "networkx>=3.0",
     "scipy>=1.10.0",
     "pyyaml>=6.0",
+    "requests>=2.28.0",
+    "beautifulsoup4>=4.12.0",
 ]
 
 [project.optional-dependencies]
@@ -21,8 +23,8 @@ dev = [
 ]
 
 [build-system]
-requires = ["uv_build>=0.12.10,<0.13.0"]
-build-backend = "uv_build"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.uv.build-backend]
-module-name = "open_aether"
+[tool.hatch.build.targets.wheel]
+packages = ["src/open_nrb"]

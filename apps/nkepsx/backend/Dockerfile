@@ -1,26 +1,27 @@
-# Use official Python 3.12 slim image
 FROM python:3.12-slim
 
-# Install uv for ultra-fast package management
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-WORKDIR /app
+WORKDIR /workspace
 
-# Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
 
-# Copy dependency files
-COPY pyproject.toml uv.lock /app/
+COPY apps/nkepsx/backend/pyproject.toml apps/nkepsx/backend/uv.lock /workspace/apps/nkepsx/backend/
+COPY apps/open-aether/pyproject.toml* /workspace/apps/open-aether/
+COPY apps/open-nrb/pyproject.toml* /workspace/apps/open-nrb/
 
-# Install dependencies using uv
+WORKDIR /workspace/apps/nkepsx/backend
+
 RUN uv sync --frozen --no-install-project --no-dev
 
-# Copy application source code
-COPY . /app
+COPY apps /workspace/apps
 
-# Tell Python where to find the source packages
-ENV PYTHONPATH=/app/src
+RUN uv pip install -e /workspace/apps/open-aether \
+                   -e /workspace/apps/open-nrb \
+                   -e /workspace/apps/nkepsx/backend
 
-# Run uvicorn directly from the pre-built virtual environment binary
+ENV PYTHONPATH="/workspace/apps/nkepsx/backend/src:/workspace/apps/open-aether/src:/workspace/apps/open-nrb/src"
+
 EXPOSE 8000
+
 CMD [".venv/bin/uvicorn", "nkepsx.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,0 +1,6 @@
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/node_modules
+**/.git
+apps/open-nrb/src/open_nrb/data/raw_pdfs
