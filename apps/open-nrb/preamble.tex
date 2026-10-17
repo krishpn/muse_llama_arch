@@ -1,0 +1,58 @@
+% --- Layout & Document Setup ---
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{tcolorbox}
+\usepackage{wrapfig}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{makecell}
+\usepackage{siunitx}
+\usepackage{tabularx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% --- Mathematical Enhancements ---
+\usepackage{amsmath, amssymb, amsfonts}
+\setlength{\abovedisplayskip}{6pt}
+\setlength{\belowdisplayskip}{6pt}
+
+% --- Reference & Tracking Systems ---
+\usepackage{hyperref}
+\usepackage[backend=biber]{biblatex}
+\usepackage{lineno}
+% \linenumbers % Uncomment to enable line numbering for faculty review [cite: 2026-02-08]
+
+% --- Consolidated Header/Footer Logic for H1 Collection ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{} 
+
+% Standard Page Configuration
+\fancyhead[L,R]{\small\color{red}PREPRINT/WORKING PAPER}
+\fancyhead[C]{\small\color{red}\url{https://krishpn.github.io}}
+\fancyfoot[L,R]{\small\color{red}PREPRINT/WORKING PAPER}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% First Page (Title Page) Style Override
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyhead[L,R]{\small\color{red}PREPRINT/WORKING PAPER}
+  \fancyhead[C]{%
+    \small\color{red}\url{https://krishpn.github.io}
+  }
+  \fancyfoot[L,R]{\small\color{red}PREPRINT/WORKING PAPER}
+  \fancyfoot[C]{\thepage}
+}
+
+
+% --- Custom Math Commands ---
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\quotes}[1]{``#1''}

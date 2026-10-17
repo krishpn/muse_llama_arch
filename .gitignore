@@ -37,3 +37,8 @@ model_repository
 # Data and Downloads
 raw_pdfs/
 **/raw_pdfs/
+processed/
+**/processed/
+.csv
+.json
+.pdf

@@ -128,6 +128,87 @@ $$\mathcal{L} = -\mathbb{E}_q[\log p(W_t^{\text{true}})]_{\text{synthetic only}}
   Explicit instruction from the design discussion: report honestly if the deep model doesn't beat
   the classical baseline — don't bury a negative result.
 
+
+## 11. Algorithms (pseudocode)
+
+Three algorithms, in dependency order: the capacitated Sinkhorn projection (the hard constraint layer, Eq. 8) is standalone and testable without the rest of the model; the generative forward pass (Eq. 1–5, 8) samples a synthetic $W_t$ for validation; training (Eq. 6–9) wraps the amortized encoder/decoder of §4 around the same projection layer. All three are written over *symbol-level* inputs ($N, K, d, \kappa$, etc.) — nothing below is a fixed dataset size or constant; see §12 for how these get threaded through as config, not literals.
+
+\begin{algorithm}
+\caption{\textsc{CapacitatedSinkhornProjection} (Eq. 8)}
+\begin{algorithmic}[1]
+\Require $\tilde{W} \in \mathbb{R}_{\ge 0}^{N \times N}$ (raw/sampled edge weights), $r, c \in \mathbb{R}_{\ge 0}^N$ (target marginals), $\text{cap} \in \mathbb{R}_{\ge 0}^N$ (per-row cap, $\text{cap}_i = \kappa \cdot K_{i,t}$), $\varepsilon > 0$ (entropic regularization), $n_{\text{iters}}, \text{tol}$ (stopping criteria)
+\Ensure $W \in \mathbb{R}_{\ge 0}^{N \times N}$ satisfying row/col marginals and $W_{ij} \le \text{cap}_i$ exactly
+\State $\text{Kern} \leftarrow \exp(\log(\tilde{W} + \delta) / \varepsilon)$ \Comment{$\delta$ tiny avoids $\log(0)$; config, not literal}
+\State $u \leftarrow \mathbf{1}_N$; $v \leftarrow \mathbf{1}_N$
+\For{$\text{iter} = 1 \dots n_{\text{iters}}$}
+    \State $u_{\text{new}} \leftarrow r / (\text{Kern} \cdot v)$
+    \State $u_{\text{new}} \leftarrow \min\left(u_{\text{new}}, \text{cap} / (\text{Kern} \cdot v)\right)$ \Comment{Enforce row-wise cap}
+    \State $v_{\text{new}} \leftarrow c / (\text{Kern}^T \cdot u_{\text{new}})$
+    \If{$\|u_{\text{new}} - u\| < \text{tol}$ \textbf{and} $\|v_{\text{new}} - v\| < \text{tol}$} \State \textbf{break}
+    \EndIf
+    \State $u, v \leftarrow u_{\text{new}}, v_{\text{new}}$
+\EndFor
+\State $W \leftarrow \text{diag}(u) \cdot \text{Kern} \cdot \text{diag}(v)$
+\State \textbf{return} $W$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{\textsc{SampleSyntheticNetwork} (Eq. 1–5, 8; ground truth for validation, §6)}
+\begin{algorithmic}[1]
+\Require $N, K, d$ (problem dimensions), $\pi \in \Delta^K, \Lambda \in \mathbb{R}_{\ge 0}^{K \times K}, w \in \mathbb{R}^d, \sigma^2$ (generative params), $X_{1:N} \in \mathbb{R}^{N \times d}$ (covariates), $\kappa, K_{\text{cap}} \in \mathbb{R}^N$ (regulatory cap inputs)
+\Ensure $W_{\text{true}} \in \mathbb{R}_{\ge 0}^{N \times N}, r, c \in \mathbb{R}^N$ (ground-truth network + marginals)
+\For{$i = 1 \dots N$} 
+    \State $z_i \sim \text{Categorical}(\pi)$ \Comment{Eq. 1}
+\EndFor
+\For{$i = 1 \dots N$} 
+    \State $\varphi_i \leftarrow \exp(w^T X_i)$ \Comment{Eq. 2}
+\EndFor
+\For{$i, j = 1 \dots N$ ($i \neq j$)}
+    \State $\lambda_{ij} \leftarrow \Lambda[z_i, z_j] \cdot \varphi_i \cdot \varphi_j$ \Comment{Eq. 3}
+    \State $e_{ij} \sim \text{Bernoulli}(\sigma(\eta_{ij}))$ \Comment{Eq. 4, zero-inflation param}
+    \State $\tilde{W}_{ij} \leftarrow e_{ij} \cdot \text{LogNormalSample}(\log \lambda_{ij}, \sigma^2)$
+\EndFor
+\State $r \leftarrow \text{row\_sums}(\tilde{W})$; $c \leftarrow \text{col\_sums}(\tilde{W})$
+\State $W_{\text{true}} \leftarrow \textsc{CapacitatedSinkhornProjection}(\tilde{W}, r, c, \kappa \cdot K_{\text{cap}})$ \Comment{Eq. 8}
+\State \textbf{return} $W_{\text{true}}, \text{row\_sums}(W_{\text{true}}), \text{col\_sums}(W_{\text{true}})$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{\textsc{TrainStep} (Eq. 6–9; amortized inference + one optimizer step)}
+\begin{algorithmic}[1]
+\Require Batch of periods $\{X_{1:N,t}, r_t, c_t, K_t\}_{t \in \text{batch}}$, optional $W_{\text{true},t}$, model params $\theta, \psi, \Lambda, w, \sigma^2$, hyperparams $\lambda_{\text{smooth}}, \lambda_{\text{reg}}, \kappa$
+\Statex \textbf{State:} $h_{i,t-1}$ carried across periods (GRU hidden state)
+\Ensure Loss value; updated $\theta, \psi, \Lambda, w$ after one gradient step
+\For{$t \in \text{batch}$ (temporal order)}
+    \For{$i = 1 \dots N$}
+        \State $h_{i,t} \leftarrow \text{GRU}_\theta(X_{i,t}, h_{i,t-1})$ \Comment{Eq. 6}
+        \State [Optional] $h_{i,t} \leftarrow \text{GNN\_refine}(h_{i,t}, A_{\text{obs},t})$ \Comment{§4, §8c}
+        \State $q_i \leftarrow \text{softmax}(\text{MLP}_\psi(h_{i,t}))$ \Comment{Eq. 7}
+        \State $z_i \sim \text{GumbelSoftmaxSample}(q_i)$ \Comment{Reparameterized}
+    \EndFor
+    \For{$i, j = 1 \dots N$ ($i \neq j$)}
+        \State $(\eta_{ij,t}, \lambda_{ij,t}) \leftarrow \text{Decoder}_\psi(h_{i,t}, h_{j,t}, z_i, z_j)$ \Comment{Eq. 3–4}
+        \State $e_{ij,t} \sim \text{GumbelSigmoidSample}(\eta_{ij,t})$ \Comment{Reparameterized gate}
+        \State $\tilde{W}_{ij,t} \leftarrow e_{ij,t} \cdot \text{LogNormalSample}(\log \lambda_{ij,t}, \sigma^2)$
+    \EndFor
+    \State $W_t \leftarrow \textsc{CapacitatedSinkhornProjection}(\tilde{W}_t, r_t, c_t, \kappa \cdot K_t)$ \Comment{Eq. 8, Alg. 1}
+    \If{$W_{\text{true},t}$ is given (synthetic branch)}
+        \State $L_{\text{recon},t} \leftarrow -\log p(W_{\text{true},t} \mid \lambda_t, \eta_t, \sigma^2)$ \Comment{Eq. 9, first term}
+    \Else
+        \State $L_{\text{recon},t} \leftarrow 0$ \Comment{Real data: no ground truth}
+    \EndIf
+    \State $L_{\text{KL},t} \leftarrow \text{KL}(q_\psi(z_t) \parallel p(z))$
+\EndFor
+\State $L_{\text{smooth}} \leftarrow \sum_t \|W_t - W_{t-1}\|_F^2$ \Comment{Over consecutive periods in batch}
+\State $L_{\text{reg}} \leftarrow \|\Lambda\|^2 + \|w\|^2$
+\State $L \leftarrow \sum_t (L_{\text{recon},t} + L_{\text{KL},t}) + \lambda_{\text{smooth}} \cdot L_{\text{smooth}} + \lambda_{\text{reg}} \cdot L_{\text{reg}}$
+\State Backpropagate $L$; update $\theta, \psi, \Lambda, w$ via optimizer step
+\State \textbf{return} $L$
+\end{algorithmic}
+\end{algorithm}
+
 ## 8. Variable inventory (what actually feeds the model)
 
 Net statement from the design discussion: **the reconstruction model needs ~5 covariates per
@@ -139,7 +220,7 @@ a Paper 2 outcome variable or not usable given current data coverage.**
 | NRB field | Statement / side | Symbol |
 |---|---|---|
 | `2.b Interbank Borrowing` | Balance Sheet, **Liabilities** | $c_{i,t}$ (column marginal) |
-| `3.a Interbank Lending` | Balance Sheet, **Assets** | $r_{i,t}$ (row marginal) |
+| `INTERBANK LENDING (Marginal r_i)` | Balance Sheet, **Assets** | $r_{i,t}$ (row marginal) |
 
 These are the actual payoff variables for the whole method — everything else exists to help infer
 the matrix whose row/column sums these fix.
@@ -148,11 +229,11 @@ the matrix whose row/column sums these fix.
 
 | # | Covariate | Built from | Role |
 |---|---|---|---|
-| 1 | Size | sum of top-level asset categories (**not** the `TOTAL ASSETS` label directly — see data caveat below) | SBM block/fitness prior, scale control |
+| 1 | Size | sum of the 11 `ASSET_TOP_LEVEL` columns: `1 LIQUID FUNDS`, `2 INVESTMENT IN SECURITIES`, `3 SHARE & OTHER INVESTMENT`, `4 LOANS & ADVANCES`, `5 BILL PURCHASED`, `6 LOANS AGAINST COLLECTED BILLS`, `7 FIXED ASSETS`, `8 OTHER ASSETS`, `9 EXPENSES NOT WRITTEN OFF`, `10 NON BANKING ASSETS`, `INTERBANK LENDING (Marginal r_i)` (**not** the `TOTAL ASSETS` label directly — see data caveat below) | SBM block/fitness prior, scale control |
 | 2 | Capital ratio | `1 CAPITAL FUND` (Liabilities) ÷ size | solvency/fitness term; also sets the obligor cap $K_{i,t}$ |
 | 3 | Liquidity ratio | `1 LIQUID FUNDS` (Assets) ÷ size | liquidity position |
 | 4 | Loan-to-deposit pressure | `4 LOANS & ADVANCES` (Assets) ÷ `3 DEPOSITS` (Liabilities) | funding-pressure signal |
-| 5 | NRB-dependence | `2.a NRB` (Liabilities, under BORROWINGS) ÷ `2 BORROWINGS` (Liabilities) | central-bank liquidity dependence — useful for the zero-inflation gate (a bank funded mainly by NRB is less likely to have interbank exposure) |
+| 5 | NRB-dependence | `2.a Borrowings - NRB` ÷ `2 BORROWINGS` (both Liabilities; if `2 BORROWINGS` is missing for a row — some early-era filings never print the top-level subtotal — the denominator is reconstructed as the sum of its sub-items: `2.a Borrowings - NRB`, `2.b Interbank Borrowing`, `2.c Foreign Banks and Financial Institutions`, `2.d Other Financial Institutions`, `2.e Bonds and Securities / NRB Bonds`, `2.f Borrowings - Govt Non-Financial Institutions`, `2.g Borrowings - Other Non-Financial Institutions`) | central-bank liquidity dependence — useful for the zero-inflation gate (a bank funded mainly by NRB is less likely to have interbank exposure) |
 
 Optional secondary signal, not in the core 5: ownership type (state/private/foreign), if available
 — would add homophily structure to the block prior.
@@ -181,14 +262,14 @@ the model, not read off the bulletin.
 
 | Symbol | Appears in | Raw NRB field | Statement / side | Transformation |
 |---|---|---|---|---|
-| $r_{i,t}$ | Eq. (5), (8) | `3.a Interbank Lending` | Balance Sheet, Assets | identity (reported value) |
+| $r_{i,t}$ | Eq. (5), (8) | `INTERBANK LENDING (Marginal r_i)` | Balance Sheet, Assets | identity (reported value) |
 | $c_{i,t}$ | Eq. (5), (8) | `2.b Interbank Borrowing` | Balance Sheet, Liabilities | identity (reported value) |
 | $K_{i,t}$ | Eq. (8), $\kappa K_{i,t}$ cap | `1 CAPITAL FUND` | Balance Sheet, Liabilities | identity (reported value) — note: raw value here, *not* the ratio used in $X^{(2)}_{i,t}$ below |
-| $X^{(1)}_{i,t}$ | Eq. (2), component of $X_{i,t}$ | sum of top-level asset categories | Balance Sheet, Assets | sum (not the `TOTAL ASSETS` label — see §9.1) |
+| $X^{(1)}_{i,t}$ | Eq. (2), component of $X_{i,t}$ | sum of the 11 `ASSET_TOP_LEVEL` columns (listed in §8b) | Balance Sheet, Assets | sum (not the `TOTAL ASSETS` label — see §9.1) |
 | $X^{(2)}_{i,t}$ | Eq. (2) | `1 CAPITAL FUND` | Balance Sheet, Liabilities | ÷ $X^{(1)}_{i,t}$ (capital ratio) |
 | $X^{(3)}_{i,t}$ | Eq. (2) | `1 LIQUID FUNDS` | Balance Sheet, Assets | ÷ $X^{(1)}_{i,t}$ (liquidity ratio) |
 | $X^{(4)}_{i,t}$ | Eq. (2) | `4 LOANS & ADVANCES` ÷ `3 DEPOSITS` | Balance Sheet, Assets ÷ Liabilities | ratio across statement sides |
-| $X^{(5)}_{i,t}$ | Eq. (2) | `2.a NRB` ÷ `2 BORROWINGS` | Balance Sheet, Liabilities (both) | ratio within Liabilities |
+| $X^{(5)}_{i,t}$ | Eq. (2) | `2.a Borrowings - NRB` ÷ `2 BORROWINGS` | Balance Sheet, Liabilities (both) | ratio within Liabilities; denominator falls back to the sum of `2.a`–`2.g` sub-items when `2 BORROWINGS` is unreported (§8b) |
 | $w$ | Eq. (2) | — | — | **learned** (fitness weight vector, $\dim = 5$, no raw field) |
 | $z_i$ | Eq. (1), (3), (7) | — | — | **latent** (inferred via $q_\psi$, Eq. 7); optionally informed by ownership type if used (§8b) |
 | $\Lambda$ | Eq. (3) | — | — | **learned** ($K\times K$ block-pair intensity matrix) |
@@ -232,6 +313,9 @@ component order used everywhere $X_{i,t}$ appears in Eq. (2) and (6).
   on how reconstruction uncertainty in $\hat W_t$ propagates into coverage guarantees for a
   downstream interference estimator (which would also strengthen the Paper 1 → Paper 2 link).
   **Not resolved** — needs a decision before drafting.
+
+
+
 
 ## 11. Paper structure (≤7 pages)
 
