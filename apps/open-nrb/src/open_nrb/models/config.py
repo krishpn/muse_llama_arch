@@ -88,3 +88,20 @@ class ReparamConfig:
     gumbel_sigmoid_tau: float = 0.5
     delta: float = 1e-20  # stabilizer inside the various log(...) terms
 
+
+
+@dataclass
+class TrainStepConfig:
+    """Hyperparameters for train_step (Eq. 6-9, Sec 11 Algorithm 3).
+
+    lambda_smooth and lambda_reg are deliberately NOT given defaults -- unlike the
+    numerical-stabilizer fields below, these are real modeling choices that vary
+    per experiment (Sec 7's baseline comparisons, Sec 10's open items), so the
+    caller must set them explicitly rather than silently inheriting an arbitrary
+    default.
+    """
+
+    lambda_smooth: float
+    lambda_reg: float
+    recon_zero_tol: float = 1e-6  # |W_true_ij| below this counts as a structural zero
+    delta: float = 1e-12          # log-stabilizer
