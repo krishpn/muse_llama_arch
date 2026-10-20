@@ -222,7 +222,7 @@
 
 \title{Bayesian Network Reconstruction of Interbank Exposures (Nepal)}
 \author{Krishna Neupane}
-\date{2026-10-17}
+\date{2026-10-18}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -250,8 +250,6 @@ design (it invented a generic ``Bayesian-net structural-constraint''
 layer built from accounting identities --- that was never part of the
 real design and is corrected below).
 
-/home/krishna/Documents/personal/neupane\_article/network\_papers/00\_llama\_arch/muse\_llama\_arch/apps/open-nrb
-
 \subsection{0. Problem framing and contribution to
 policy}\label{problem-framing-and-contribution-to-policy}
 
@@ -269,25 +267,39 @@ problem of statistical inference under partial observability, not
 analysis over a topology that is already known or self-reported.
 (Revisit/tighten this paragraph later --- current form is a first pass.)
 
-\textbf{Contribution to policy.} No central bank in a
-resource-constrained setting is going to mandate new bilateral exposure
-reporting purely for a research exercise --- that is a costly,
-politically slow regulatory change. The contribution here is that this
-doesn't require that change: a usable, continuously-updatable estimate
-of systemic interconnectedness is produced from data NRB (or any
-similarly-resourced central bank) already publishes every month, with
-zero new reporting burden. Put to a central banker directly: today there
-is no way to ask ``who is exposed to whom'' or ``which banks are
-structurally systemic'' --- not because the question doesn't matter, but
-because answering it was assumed to require data that isn't collected.
-This method shows it doesn't. It converts a previously unanswerable
-supervisory question into an answerable one, cheaply, and produces a
-reusable pipeline that other analyses (stress tests, contagion
-simulations, Paper 2's spillover estimation) can plug into. This also
-generalizes beyond Nepal: most emerging-market central banks publish the
-same kind of aggregate call-report data and face the identical
-constraint, so the method is a template for resource-constrained
-regulators broadly, not a Nepal-specific workaround.
+\textbf{Contribution to policy.}
+
+\begin{itemize}
+\item
+  Zero New Reporting Burden: No central bank in a resource-constrained
+  setting is going to mandate new bilateral exposure reporting purely
+  for a research exercise --- that is a costly, politically slow
+  regulatory change. The contribution here is that this doesn't require
+  that change: a usable, continuously-updatable estimate of systemic
+  interconnectedness is produced from data NRB (or any
+  similarly-resourced central bank) already publishes every month, with
+  zero new reporting burden. That is, by relying exclusively on
+  aggregate publicly available data, the model requires zero new
+  regulatory compliannce overhead.
+\item
+  Unlocking an answerable Supervisory Question: At present, there is no
+  way to ask \emph{who is exposed to whom} or \emph{which banks are
+  structurally systemic} --- not because the question doesn't matter,
+  but because answering it was assumed to require data that isn't
+  collected. \textbf{This method shows it doesn't.} It converts a
+  previously unanswerable supervisory question into an answerable one,
+  cheaply, and produces a reusable pipeline that other analyses can plug
+  into. In summary, the \emph{data barrier} can be bypassed
+  computationally. The method hence turns the blind spot in systemic
+  risk monitoring into generalized framework providing where the future
+  policy framework implemention can and should be aimed at.
+\item
+  Generalization: This also generalizes beyond Nepal: most
+  emerging-market central banks publish the same kind of aggregate
+  call-report data and face the identical constraint, so the method is a
+  template for resource-constrained regulators broadly, not a
+  Nepal-specific workaround.
+\end{itemize}
 
 \subsection{1. Why this is its own
 paper}\label{why-this-is-its-own-paper}
@@ -314,16 +326,18 @@ Meaning
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-\(i, j \in \{1,...,N\}\) & institutions (BFIs) \\
+\(i, j \in \{1,...,N\}\) & individual banking and financial
+institutions \\
 \(t \in \{1,...,T\}\) & periods (NRB bulletin months) \\
-\(X_{i,t} \in \mathbb{R}^d\) & node covariates for bank \(i\) at time
-\(t\) \\
+\(X_{i,t} \in \mathbb{R}^d\) & observed node covariates for bank \(i\)
+at time \(t\) \\
 \(r_{i,t}, c_{i,t} \ge 0\) & observed interbank lending / borrowing
 marginals \\
-\(K_{i,t}\) & core capital (used to set the regulatory single-obligor
-cap) \\
-\(W_t \in \mathbb{R}_{\ge 0}^{N \times N}\) & \textbf{latent} bilateral
-exposure matrix --- never observed, the reconstruction target \\
+\(K_{i,t}\) & core capitalof the bank, that defines the the regulatory
+single-obligor cap) \\
+\(W_t \in \mathbb{R}_{\ge 0}^{N \times N}\) & The true \textbf{latent}
+bilateral interbank exposure matrix --- never observed, the
+reconstruction target \\
 \(z_i \in \{1,...,K\}\) & latent block/tier membership (e.g.~core
 vs.~periphery) \\
 \end{longtable}
@@ -333,35 +347,54 @@ vs.~periphery) \\
 \begin{itemize}
 \tightlist
 \item
-  Block membership: \(z_i \sim \text{Categorical}(\pi)\) --- (Eq. 1)
+  Block membership: Banks are sorted into latent tiers (SBM priors) :
+  \(z_i \sim \text{Categorical}(\pi)\) --- (Eq. 1).
 \item
   Block-pair intensity: \(\Lambda \in \mathbb{R}_{\ge0}^{K\times K}\)
   --- the SBM core
 \item
-  Fitness/degree-correction from covariates:
-  \(\phi_{i,t} = \exp(w^\top X_{i,t})\) --- (Eq. 2)
+  Fitness/degree-correction from covariates: bank baseline activity
+  scales with covariates: \(\phi_{i,t} = \exp(w^\top X_{i,t})\) --- (Eq.
+  2)
 \item
-  Latent edge intensity:
+  Bilateral Latent edge intensity: the exposure magnigute is a fucntion
+  of tier interaction and invidivudal fitness.
   \[\lambda_{ij,t} = \Lambda_{z_i z_j} \cdot \phi_{i,t}\phi_{j,t} \cdot \exp(h_{i,t}^\top h_{j,t}) \qquad \text{(Eq. 3)}\]
 \item
-  Zero-inflated edge weight (most bank pairs have \emph{no} exposure):
+  Zero-inflated edge weight (most bank pairs have \emph{no} exposure).
+  The edges are modeled via hurle process - a Bernoulli gate determines
+  connection existence, followed by a LogNormal distribution for
+  positive exposure volumes:
   \[\Pr(\tilde W_{ij,t}=0) = \sigma(-\eta_{ij,t}), \qquad \tilde W_{ij,t} \mid \tilde W_{ij,t}>0 \sim \text{LogNormal}(\log\lambda_{ij,t}, \sigma^2) \qquad \text{(Eq. 4)}\]
 \item
   Marginals are a \textbf{deterministic function} of \(W_t\):
   \[r_{i,t} = \sum_j W_{ij,t}, \qquad c_{j,t} = \sum_i W_{ij,t} \qquad \text{(Eq. 5)}\]
   This means the marginal constraint belongs in the \emph{architecture}
-  (a hard projection), not the likelihood --- see §5.
+  (a hard projection), not the likelihood --- see §5. Rows and columns
+  sums mach observed micro-prudential totals (\(r_{i,t}, c_{i,t}\)),
+  enforced strictly via the Sinkhorn projection layer rather than soft
+  likelihood penalties.
 \end{itemize}
 
 \subsection{4. Inference network (amortized, PyG GNN +
 GRU)}\label{inference-network-amortized-pyg-gnn-gru}
 
-The encoder runs on covariates/history only --- it cannot message-pass
-over \(W_t\) itself, since that would be circular (the whole point is
-that \(W_t\) is unobserved).
-
 \begin{itemize}
-\tightlist
+\item
+  Design Principle: The encoder processes covariates/history only --- it
+  cannot message-pass over \(W_t\) itself, since that would be circular
+  (the whole point is that \(W_t\) is unobserved). This design principle
+  is implemented because in the standard graph autoencodersv(GAEs), the
+  adjacency matrix defined by bilateral or multilateral relationshhips
+  is an input to encoder which in turn uses message-passing across
+  \emph{known connections} to learn the node embeddings. In the current
+  context, the true interbank (\(W_t\)) network is not known publicly -
+  that is why the paper aims to \emph{reconstruct} interbank network
+  from publicly available data. Because the encoder has an input
+  \(W_t\), but the goal is to figure out the what \(W_t\) is, then
+  modeling is trapped into logical circularity which is why this
+  principle is adopted in order answer before it becomes burden in
+  downstream task.
 \item
   Temporal encoder:
   \(h_{i,t} = \text{GRU}_\theta(X_{i,t}, h_{i,t-1}) \qquad \text{(Eq. 6)}\),
@@ -375,20 +408,38 @@ that \(W_t\) is unobserved).
   \((h_{i,t}, h_{j,t}, z_i, z_j)\) --- full amortized variational
   posterior \(q_\psi(W_t \mid X_{1:t}, r_t, c_t)\)
 \item
-  Reparameterized sampling: log-normal reparam trick for the continuous
-  weight, Gumbel-softmax for the discrete existence gate.
+  Reparameterized sampling: Generates log-normal reparam trick for the
+  continuous weight, and Gumbel-softmax for the discrete existence gate.
 \end{itemize}
 
-\subsection{5. Constraint-satisfaction layer (the technical core of the
-paper)}\label{constraint-satisfaction-layer-the-technical-core-of-the-paper}
+\subsection{5. Constraint-satisfaction layer (the technical
+core)}\label{constraint-satisfaction-layer-the-technical-core}
 
-Differentiable \textbf{capacitated Sinkhorn / entropic-OT projection}:
+Differentiable \textbf{capacitated Sinkhorn / entropic-optimal transport
+projection}:
 
 \[W_t = \text{Sinkhorn}_{\text{cap}}(\tilde W_t;\; r_t, c_t, \kappa K_t) \qquad \text{(Eq. 8)}\]
 
-Enforces, exactly and differentiably: 1. row/column marginals match the
-observed \(r_{i,t}, c_{i,t}\) 2. the regulatory single-obligor cap
-\(W_{ij,t} \le \kappa K_{i,t}\)
+Enforces, exactly and differentiably:
+
+\begin{itemize}
+\tightlist
+\item
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi}.}
+  \tightlist
+  \item
+    row/column marginals match the observed \(r_{i,t}, c_{i,t}\)
+  \end{enumerate}
+\item
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi}.}
+  \setcounter{enumi}{1}
+  \tightlist
+  \item
+    the regulatory single-obligor cap \(W_{ij,t} \le \kappa K_{i,t}\)
+  \end{enumerate}
+\end{itemize}
 
 References: Cuturi (2013) entropic OT; Mena et al.~(2018)
 Gumbel-Sinkhorn. Flagged explicitly as ``the one genuinely nontrivial
@@ -409,17 +460,34 @@ component of the generative model or the constraint layer.
 \[\mathcal{L} = -\mathbb{E}_q[\log p(W_t^{\text{true}})]_{\text{synthetic only}} + \text{KL}(q_\psi(z)\,\|\,p(z)) + \lambda_{\text{smooth}}\sum_t \|W_t - W_{t-1}\|_F^2 + \lambda_{\text{reg}}\|\Lambda, w\|^2\]
 
 \begin{itemize}
-\tightlist
 \item
-  \textbf{Synthetic data} (known ground-truth \(W_t\) from an SBM
-  generator): the first term is a real supervised reconstruction loss
-  --- this is the main validation evidence.
+  \textbf{Synthetic Validation data} (known ground-truth \(W_t\) from an
+  SBM generator): the first term is a real supervised reconstruction
+  loss --- this is the main validation evidence. That, when training on
+  synthetic data generated via the SBM (where the true networks
+  \(W_t^{true}\) are known), the first term acts as a suprvised
+  reconstruction loss, which in turn serves as the primary validation of
+  the model's accuracy.
 \item
-  \textbf{Real data} (no \(W_t\) is ever observed): the first term drops
-  out entirely. What's left is a regularized/MAP-style constrained fit,
-  \emph{not} likelihood-based estimation. Evaluation on real data has to
-  rely on indirect evidence: temporal stability of the recovered \(W_t\)
-  sequence, and comparison against a classical baseline (§8).
+  \textbf{Real data} (no \(W_t\) is ever observed): When applied to a
+  real world central bank data where \(W_t\) is unobserved, the
+  supervised reconstruction term drops out entirely, the first term
+  drops out entirely. What's left is a regularized/MAP-style constrained
+  fit, \emph{not} likelihood-based estimation. That is, in a standard
+  statiscal or ML models, the model looks into observed ground trught
+  answers (eg \(W_t^{true}\)). The model is trained by calculating the
+  likelihood of model's guesses against the actual answers followed by
+  parameter optimization to maximize the likelhood. However in this
+  case, the true \(W_t^{true}\) does not exist in publicly available
+  data, therefore a Maximum Likelhood calculation falls apart.
+  Therefore, by implementing MAP instead of model fitting into known
+  potentially right answers, the model aims to learn the most possible
+  configuration of the network given the structural priors (eg latent
+  tiers \(z_i\)) and regulatory rules.
+\item
+  Real World Evaluation: Evaluation on real data has to rely on indirect
+  evidence: temporal stability of the recovered \(W_t\) sequence, and
+  comparison against a classical baseline (§8).
 \end{itemize}
 
 \subsection{7. Design rationale}\label{design-rationale}
@@ -478,7 +546,6 @@ literals.
 \State \textbf{return} $W$
 \end{algorithmic}
 \end{algorithm}
-
 \begin{algorithm}
 \caption{\textsc{SampleSyntheticNetwork} (Eq. 1–5, 8; ground truth for validation, §6)}
 \begin{algorithmic}[1]
@@ -500,7 +567,6 @@ literals.
 \State \textbf{return} $W_{\text{true}}, \text{row\_sums}(W_{\text{true}}), \text{col\_sums}(W_{\text{true}})$
 \end{algorithmic}
 \end{algorithm}
-
 \begin{algorithm}
 \caption{\textsc{TrainStep} (Eq. 6–9; amortized inference + one optimizer step)}
 \begin{algorithmic}[1]
@@ -534,6 +600,115 @@ literals.
 \State \textbf{return} $L$
 \end{algorithmic}
 \end{algorithm}
+
+Sinkhorn (operating on a non-negative matrix, enforcing row/col
+marginals ≥ 0 via the kernel) is only the last step. The full pipeline
+per Algorithm 3 (§11) and Eq. 1-8:
+
+\begin{itemize}
+\tightlist
+\item
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi}.}
+  \tightlist
+  \item
+    SBM block assignment + covariate fitness → gives each bank pair a
+    prior edge intensity \(\lambda_{ij,t}\) (Eq. 1-3), informed by
+    \(z_i\) and the 5 covariates.
+  \end{enumerate}
+\item
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi}.}
+  \setcounter{enumi}{1}
+  \tightlist
+  \item
+    GNN/GRU encoder + pairwise decoder → turns that into
+    \((\eta_{ij,t}, \lambda_{ij,t})\) per pair, learned from data (Eq.
+    6-7, §4).
+  \end{enumerate}
+\item
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi}.}
+  \setcounter{enumi}{2}
+  \tightlist
+  \item
+    Zero-inflated log-normal sampling → produces the raw guess
+    \(\tilde W_t\) (Eq.~4) --- this is where the actual ``who's
+    connected to whom, roughly how much'' signal comes from.
+  \end{enumerate}
+\item
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi}.}
+  \setcounter{enumi}{3}
+  \tightlist
+  \item
+    Only then does Sinkhorn project \(\tilde W_t\) onto the feasible set
+    that exactly matches the observed marginals \(r_t,c_t\) and the
+    regulatory cap (Eq.~8) --- a correction/projection step, not a
+    generative one.
+  \end{enumerate}
+\end{itemize}
+
+In summary, plain Sinkhorn/IPF applied to a uniform prior (no
+covariates, no learned structure) is exactly the classical
+Gandy-Veraart/RAS maximum-entropy reconstruction --- that's the baseline
+this paper compares against (§7, §12 baseline requirement). The
+contribution is that Sinkhorn here operates on a covariate- and
+block-structure-informed \(\tilde W_t\), not blind uniform mass --- so
+you justify why Sinkhorn
+
+(it's the natural, differentiable way to enforce known hard constraints
+exactly, à la Cuturi 2013) separately from why not Sinkhorn alone
+(because unlike RAS/Gandy-Veraart, the prior it's projecting isn't
+uninformed).
+
+\section*{Methodological Literature Synthesis}
+
+The model bridges three major streams of literature: classical financial
+network reconstruction, entropic optimal transport, and amortized deep
+latent variable modeling.
+
+\subsection*{Classical Interbank Matrix Reconstruction}
+
+Early efforts to estimate missing bilateral exposures (\(W_t\)) from
+aggregated call reports relied primarily on Maximum Entropy (ME)
+principles \cite{upper2011simulation}. While ME models successfully
+match row and column balance sheet totals (\(r_t, c_t\)), they typically
+yield fully connected, overly dense matrices that understate systemic
+fragility. Modern maximum-entropy and fitness framework extensions
+attempt to introduce sparsity \cite{squartini2018reconstruction}, yet
+these classical models rely on rigid functional forms and cannot easily
+learn complex temporal dynamics or non-linear node covariate signals
+(\(X_{i,t}\)).
+
+\subsection*{Entropic Optimal Transport \& Differentiable Constraints}
+
+To enforce macro-prudential constraints differentiably, the model builds
+on entropic optimal transport (EOT) frameworks.
+\cite{cuturi2013sinkhorn} demonstrated that adding an entropic
+regularizer to optimal transport transforms non-differentiable linear
+programs into computationally efficient, GPU-parallelizable scaling
+operations via the Sinkhorn-Knopp algorithm. Further extensions by
+\cite{mena2018learning} showed that applying the Sinkhorn operator
+directly to neural network outputs enables gradient backpropagation
+through continuous matrix transformations and discrete topology
+decisions. In our pipeline, this capacitated Sinkhorn projection
+enforces row/column totals (\(r_t, c_t\)) and regulatory single-obligor
+exposure limits (\(W_{ij,t} \le \kappa K_{i,t}\)) directly inside the
+forward pass.
+
+\subsection*{Amortized Variational Inference for Graphs}
+
+Standard Graph Autoencoders require observing the graph adjacency matrix
+to compute node representations. To bypass this circularity on
+unobserved networks, our inference architecture draws inspiration from
+Neural Relational Inference (NRI) \cite{kipf2018neural}. NRI established
+that latent relational structures can be inferred purely from dynamic
+node trajectories (\(X_{1:T}\)) using a graph variational autoencoder.
+By conditioning the GNN/GRU temporal encoder strictly on independent
+node covariates and history rather than unobserved edges, our pipeline
+avoids circular identification logic while predicting continuous weight
+distributions and discrete connection gates.
 
 \subsection{8. Variable inventory (what actually feeds the
 model)}\label{variable-inventory-what-actually-feeds-the-model}
@@ -803,12 +978,12 @@ decided)}\label{open-items-not-yet-decided}
 \begin{itemize}
 \tightlist
 \item
-  \textbf{\(K\) (number of SBM blocks)}: start with \(K=2\)
-  (core/periphery), treat larger \(K\) as a robustness check, not the
-  headline specification.
+  \(K\) (number of SBM blocks): start with \(K=2\) (core/periphery),
+  treat larger \(K\) as a robustness check, not the headline
+  specification.
 \item
-  \textbf{\(\sigma^2\) (log-normal dispersion)}: learned, either
-  globally or per-block --- not yet decided which.
+  \(\sigma^2\) (log-normal dispersion): learned, either globally or
+  per-block --- not yet decided which.
 \item
   \textbf{Venue/scope hook}: ICAIF fit is comfortable at the current
   scope (methods + real-data case study). ICLR/NeurIPS main track would

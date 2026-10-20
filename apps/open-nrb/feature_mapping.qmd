@@ -1,0 +1,95 @@
+---
+title: "Feature Mapping"
+author:
+  - name: Krishna Neupane
+    orcid: 0000-0003-1689-0557
+    url: https://krishpn.github.io/
+abstract: text text 
+
+
+keywords:
+  - networks 
+ 
+
+date: last-modified
+bibliography: book.bib
+linestretch: "1.5"
+toc: false
+
+format:
+  pdf:
+    pdf-engine: xelatex
+    number-sections: true
+    colorlinks: true
+    documentclass: article
+    # --- BIBLATEX CONFIGURATION (ONLY THESE) ---
+    citation-package: biblatex
+    biblatexoptions:
+      - backend=biber
+      - style=numeric # This now defines the style for ALL citations
+    # --- END BIBLATEX CONFIGURATION ---
+
+    papersize: a4
+    keep-tex: true
+    # 'formatting: preprint' can stay if it's not causing issues, but it was repeated before.
+    formatting: preprint
+    callout-appearance: simple
+
+    include-in-header:
+      - file: preamble.tex
+---
+
+
+# Feature Inventory → Research Model Mapping
+
+> Reconstructed from the architecture we settled on (SBM + GNN + RNN + Bayesian network
+> for Paper 1; NRB-shock econometric causal design for Paper 2), not quoted verbatim from
+> the earlier model spec — check against what we specifically fixed earlier if anything
+> looks off.
+
+## Feature inventory (what the parser extracts, per BFI per month)
+
+**Balance sheet** — stock variables: `CAPITAL FUND` (+ paid-up capital, reserves, retained
+earnings), `BORROWINGS` split by counterparty (**NRB**, **interbank borrowing**, foreign
+banks, other financial ins., bonds), `DEPOSITS` (current/savings/fixed/call × domestic/
+foreign), `LOANS & ADVANCES`, `LIQUID FUNDS`, `INVESTMENT IN SECURITIES`,
+`SHARE & OTHER INVESTMENT` (incl. **interbank lending**), `FIXED/OTHER ASSETS`,
+`TOTAL ASSETS` / `TOTAL Liabilities`.
+
+**P&L** — flow variables: `Interest Expense` / `Interest Income` (each broken out by
+deposit type / investment type), `Commission`, `Staff Expense`, `Provision for Risk`
+(loan-loss provisioning, general/specific/watch-list), `Loan Written Off`, `Net Profit`,
+`Total Expenses`.
+
+**Statement of credit** — composition variables: sector-wise loan shares (12 sectors incl.
+agriculture, construction, real estate, tourism...), product-wise shares (term loan,
+overdraft, real estate loan, consumption loan...), collateral-wise shares (guarantee type,
+property, securities).
+
+## Mapping to Paper 1 (network reconstruction: SBM / GNN / RNN / Bayesian net)
+
+| Model slot | NRB field(s) | Role |
+|---|---|---|
+| **Node features x_i,t** (GNN input) | `TOTAL ASSETS` (size), `CAPITAL FUND` (capital), `DEPOSITS`+`BORROWINGS` (funding mix), `LOANS & ADVANCES`+`INVESTMENT IN SECURITIES` (asset mix) | Per-bank attribute vector at each GNN layer / RNN timestep |
+| **Temporal panel** (RNN input) | Same node features indexed by `year_bs`/`month_bs` | This dataset *is* the monthly panel — no extra work needed once the archive is batch-extracted |
+| **Edge-reconstruction margins (SBM / entropy method)** | **`b. Interbank Borrowing`** (liability-side row sum) + **`a. Interbank Lending`** (asset-side column sum) | This is the actual payoff: NRB never publishes the bilateral interbank matrix, only these two marginal totals per bank. That's exactly the input the classic network-reconstruction literature (maximum-entropy / SBM-regularized) needs to infer the latent bilateral exposure matrix — this dataset is a direct fit for Paper 1's stated method, not just a proxy. |
+| **Block/community prior (SBM)** | BFI class (A/B/C, from the aggregate summary pages) + size | Stochastic block prior over bank "types" before refining with GNN embeddings |
+| **Bayesian-net structural constraints** | `TOTAL ASSETS = TOTAL Liabilities`; `Total Expenses + Net Profit = Total Income`; `CAPITAL FUND = Σ(sub-items a–g)` | Known accounting identities — fix these as deterministic edges in the DAG rather than letting the model "discover" them, which regularizes the learned structure and gives a built-in correctness check |
+| **Common-exposure / contagion channel** | Sector-wise and product-wise credit shares | Two banks both concentrated in, say, real estate are correlated through a shared shock even with zero direct interbank linkage — a second edge-formation signal independent of the interbank margins above |
+
+## Mapping to Paper 2 (NRB regulatory-shock causal design)
+
+| Model slot | NRB field(s) | Role |
+|---|---|---|
+| **Treatment** | *Not in this dataset* — needs a separate NRB circular/directive date series (CRR change, provisioning rule, rate corridor) | External to the parser; still needs sourcing |
+| **Outcome Y** | `Net Profit`, `Provision for Risk`, `LOANS & ADVANCES` growth, sector credit growth, interest margin (`Interest Income` − `Interest Expense`) | Candidate dependent variables |
+| **Controls** | `CAPITAL FUND / TOTAL ASSETS` (capital adequacy proxy), `LIQUID FUNDS / DEPOSITS` (liquidity ratio), log `TOTAL ASSETS` (size), BFI class dummy | Standard bank-level covariates |
+| **Spillover regressor — the link back to Paper 1** | Σⱼ (reconstructed interbank weight wᵢⱼ from Paper 1) × (1 if bank *j* directly shocked) | This is the actual bridge between the two papers: Paper 1's reconstructed network isn't just a standalone contribution, it's the mechanism that lets Paper 2 identify *indirect* (network-propagated) treatment effects on banks not directly targeted by the regulation — otherwise Paper 2 is just a standard panel diff-in-diff with no network story. |
+
+## Known gap
+
+`item_code` (the "4", "a.", "1.1.2.1" hierarchy) only exists on balance sheet/P&L. If any
+model component wants a consistent parent-child line-item taxonomy across all three
+statements (e.g., for automated feature aggregation across years where wording drifts),
+the credit statement will need category labels matched by string, not code, since it has
+no numbering in the source document.
