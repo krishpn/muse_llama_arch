@@ -41,3 +41,50 @@ class CapacityProjectionConfig:
 
     n_iters: int = 100  # full row->col->box passes, not single-set applications
     tol: float = 1e-6
+
+
+
+
+@dataclass
+class SyntheticConfig:
+    """Hyperparameters for sample_synthetic_network (Eq. 1-5, 8, Sec 11 Algorithm 2).
+
+    Only holds the one numerical-stabilizer constant this algorithm needs; everything
+    else (pi, Lambda, w, sigma2, eta, cap) is a generative parameter supplied by the
+    caller per synthetic scenario, not a fixed hyperparameter of the algorithm itself.
+    """
+
+    delta: float = 1e-12  # log-stabilizer, avoids log(0) when a block intensity is 0
+
+
+
+@dataclass
+class EncoderDecoderConfig:
+    """Layer sizes for the amortized inference network (Sec 4, Eq. 6-7, Algorithm 3).
+
+    Unlike SinkhornConfig/CapacityProjectionConfig/SyntheticConfig, these aren't
+    numerical tolerances -- they're nn.Module weight-matrix shapes, which have to be
+    fixed at construction time (can't be inferred from a runtime tensor shape the way
+    N is elsewhere in this package). input_dim/num_blocks should match the X and pi
+    shapes used elsewhere in the same experiment.
+    """
+
+    input_dim: int           # d, covariate dimension (GRU input size)
+    hidden_dim: int          # GRU hidden size, h_{i,t}'s dimension; also the block-
+                              # posterior MLP's hidden-layer width
+    num_blocks: int          # K, number of SBM blocks
+    decoder_hidden_dim: int  # pairwise decoder MLP's hidden-layer width
+
+@dataclass
+class ReparamConfig:
+    """Temperatures for the reparameterized/relaxed samplers used in Algorithm 3
+    (Sec 4, Eq. 3-4, 7, steps 5/8/9) -- Gumbel-softmax for z (Jang et al., 2017;
+    Maddison et al., 2017), Gumbel-sigmoid (binary concrete) for the existence gate
+    e_ij. Lower tau = closer to the true discrete distribution but higher-variance
+    gradients; higher tau = smoother gradients but a more biased relaxation.
+    """
+
+    gumbel_softmax_tau: float = 0.5
+    gumbel_sigmoid_tau: float = 0.5
+    delta: float = 1e-20  # stabilizer inside the various log(...) terms
+
