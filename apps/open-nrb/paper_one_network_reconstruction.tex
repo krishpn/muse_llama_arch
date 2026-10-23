@@ -462,12 +462,24 @@ component of the generative model or the constraint layer.
   always eventually out-competes whatever reconstruction-gradient signal
   keeps \(q_\psi(z)\) informative. Current value:
   \(\beta_{\max} = 0.15\) (\texttt{KL\_BETA\_MAX} in the synthetic
-  experiment script) --- \textbf{validated}: a full 3000-epoch re-run
-  with this cap held block-recovery accuracy at 0.7578--0.7682
-  throughout (vs.~that run's trivial baseline of 0.7344) rather than
-  decaying back down, with \(\text{KL}\) stabilizing around 266 instead
-  of collapsing to \textasciitilde0; see §10 for the caveat on how large
-  a margin this actually is.
+  experiment script) --- \textbf{partially validated, seed-dependent}: a
+  single 3000-epoch run (seed 0) held block-recovery accuracy at
+  0.7578--0.7682 throughout (vs.~that run's trivial baseline of 0.7344)
+  rather than decaying back down, with \(\text{KL}\) stabilizing around
+  266 instead of collapsing to \textasciitilde0. A 5-seed replication of
+  that same run (seeds 0--4) showed this does \textbf{not} hold up as a
+  general fix: block-recovery margin over the trivial baseline was
+  \(+0.0234, -0.1380, +0.1380,
+  -0.1797, -0.0026\) (mean \(-0.0318\), std \(0.1148\) --- std nearly 4×
+  the mean), with only 2/5 seeds beating the trivial baseline at all.
+  Two distinct failure modes recur across seeds: full collapse to the
+  uniform prior (\(\text{KL} \approx 0\) throughout, e.g.~seed 4), and
+  confident but \emph{wrong} block assignment (\(\text{KL}\) climbs
+  normally but accuracy sits below the trivial baseline, e.g.~seed 1).
+  Reconstruction accuracy, by contrast, \textbf{is} robust across the
+  same 5 seeds: model mean relative error beat the classical
+  Sinkhorn/RAS baseline in 5/5 seeds (mean 0.4154 vs.~0.5657). See §10
+  for what this means for the paper's claims.
 \item
   \textbf{Synthetic data} (known ground-truth \(W_t\) from an SBM
   generator): the first term is a real supervised reconstruction loss
@@ -891,8 +903,8 @@ decided)}\label{open-items-not-yet-decided}
   needs a decision before drafting.
 \item
   \textbf{Posterior collapse on the block-assignment KL term --- root
-  cause identified, architecture fix plus capped KL ceiling validated to
-  sustain block recovery, margin-above-baseline still modest}: Eq. 9's
+  cause identified, architecture fix plus capped KL ceiling fixes
+  reconstruction but NOT block recovery reliably across seeds}: Eq. 9's
   \(\text{KL}(q_\psi(z)\|p(z))\) under the original unweighted
   (\(\beta_t = 1\) always) term collapsed to \textasciitilde0 almost
   immediately in the first synthetic validation run. A direct check
@@ -927,22 +939,46 @@ decided)}\label{open-items-not-yet-decided}
   collapse on a delay, this time by out-competing a signal that
   \emph{does} exist rather than one that never did. Mitigation: cap
   \(\beta_t\)'s asymptote at \(\beta_{\max} = 0.15 < 1\) instead of
-  annealing to \(1\) (§6). \textbf{Validated}: a full 3000-epoch re-run
-  with this cap held block-recovery accuracy at 0.7578--0.7682 for the
-  entire run (epoch 200 through 2999), against that run's trivial
-  baseline of 0.7344 --- \(\text{KL}\) stabilized around 266 rather than
-  collapsing, and \(\hat W_t\)'s relative Frobenius error kept improving
-  in parallel (to 0.4297, vs.~baseline 0.5965), so both channels are
-  healthy simultaneously now. \textbf{New open item --- margin size}:
-  the sustained gap above baseline is real but modest (roughly 3 points,
-  \textasciitilde0.76 vs.~\textasciitilde0.73) and plateaus rather than
-  keeps climbing --- a stable equilibrium, not a trajectory still
-  improving. Whether this margin is strong enough to support the paper's
-  claim that ``the model identifies which banks are core'' (vs.~only
-  ``recovers block structure better than chance'') is \textbf{not
-  resolved} --- candidates to widen the margin if needed: longer
-  training, more capacity in \texttt{BlockPosteriorMLP}, or retuning
-  \(\beta_{\max}\) lower still.
+  annealing to \(1\) (§6). A single 3000-epoch re-run with this cap
+  (seed 0) held block-recovery accuracy at 0.7578--0.7682 for the entire
+  run (epoch 200 through 2999), against that run's trivial baseline of
+  0.7344 --- \(\text{KL}\) stabilized around 266 rather than collapsing,
+  and \(\hat W_t\)'s relative Frobenius error kept improving in parallel
+  (to 0.4297, vs.~baseline 0.5965). \textbf{A 5-seed replication (seeds
+  0--4) showed this does NOT generalize}: block-recovery margin over the
+  trivial baseline was \(+0.0234, -0.1380,
+  +0.1380, -0.1797, -0.0026\) across seeds 0--4 --- mean \(-0.0318\),
+  std \(0.1148\) (std nearly 4× the mean) --- with only 2/5 seeds
+  beating the trivial baseline at all. Seed 0's healthy-looking run was
+  not representative; on average across seeds, block recovery is
+  statistically indistinguishable from (if anything slightly worse than)
+  the trivial majority-guess baseline. Two distinct failure modes recur:
+  full collapse to the uniform prior (\(\text{KL} \approx 0\) throughout
+  --- seed 4), and confident-but-wrong block assignment (\(\text{KL}\)
+  climbs to a healthy magnitude but accuracy sits \emph{below} the
+  trivial baseline anyway --- seed 1). Reconstruction accuracy, in
+  contrast, \textbf{is} robust across the same 5 seeds: model mean
+  relative Frobenius error beat the classical Sinkhorn/RAS baseline in
+  5/5 seeds (mean 0.4154 vs.~0.5657, std 0.0416 vs.~0.0257).
+  \textbf{Resolved conclusion for now}: the paper's claim that ``the
+  model identifies which banks are core'' is \textbf{not currently
+  supported} by this architecture + hyperparameter combination --- it
+  should either
+
+  \begin{enumerate}
+  \def\labelenumi{(\alph{enumi})}
+  \tightlist
+  \item
+    be dropped in favor of the already-robust claim (``the model
+    recovers \(W_t\) more accurately than the classical baseline,'' no
+    block-identity claim), or (b) remain an explicit goal pending
+    further work: longer training, more \texttt{BlockPosteriorMLP}
+    capacity, a lower \(\beta_{\max}\), or a per-seed diagnosis of why
+    seeds 1/4 fail differently from seeds 0/2. Not yet decided which
+    path; revisit once real-data validation (§9/§12) is underway, since
+    that may be a better use of time than chasing a synthetic-only
+    metric further.
+  \end{enumerate}
 \end{itemize}
 
 \subsection{11. Algorithms (pseudocode)}\label{algorithms-pseudocode}

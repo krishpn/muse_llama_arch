@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-import csv, re
+import csv, re, json
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
@@ -61,10 +61,13 @@ N, K, D = 24, 2, 5  # banks, SBM blocks, covariate dim (matches COVARIATE_ORDER,
 HIDDEN, DECODER_HIDDEN = 16, 16
 N_PERIODS = 16
 EPOCHS = 3000
-EVAL_EVERY = 200  # epochs between relative-error checkpoints, not just loss
+EVAL_EVERY = 100  # epochs between relative-error checkpoints, not just loss
 KL_WARMUP_EPOCHS = 300  # Sec 10: epochs over which Eq. 9's beta_t ramps 0 -> KL_BETA_MAX
 KL_BETA_MAX = 0.15  # Sec 10: beta_t's ceiling, NOT 1.0 -- see _kl_beta_schedule docstring
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+RESULTS_DIR = Path(__file__).resolve().parent / "results"  # saved per-seed artifacts for later
+                                                            # plotting, so a figure never requires
+                                                            # re-running GPU training
 
 
 def _kl_beta_schedule(epoch: int, warmup_epochs: int, beta_max: float) -> float:
@@ -257,10 +260,24 @@ def _baseline_errors(periods: list[Period]) -> list[float]:
     return errors
 
 
-def main() -> None:
-    torch.manual_seed(0)  # governs nn.Module weight init (CPU global RNG, before .to(DEVICE))
+SEEDS = [0, 1, 2, 3, 4]  # Sec 10 open item: is the block_acc margin over the trivial
+                         # baseline a real, repeatable effect or single-seed noise?
+
+
+def _mean_std(xs: list[float]) -> tuple[float, float]:
+    """Population mean/std (ddof=0) -- fine for eyeballing a handful of seeds,
+    not a formal CI.
+    """
+    m = sum(xs) / len(xs)
+    var = sum((x - m) ** 2 for x in xs) / len(xs)
+    return m, var**0.5
+
+
+def _run_once(seed: int) -> dict:
+    torch.manual_seed(seed)  # governs nn.Module weight init (CPU global RNG, before .to(DEVICE))
+    print(f"\n--- seed {seed} ---")
     print(f"device: {DEVICE}")
-    generator = torch.Generator(device=DEVICE).manual_seed(0)
+    generator = torch.Generator(device=DEVICE).manual_seed(seed)
 
     periods, zs = _build_panel(generator, DEVICE)
 
@@ -280,6 +297,7 @@ def main() -> None:
 
     losses = []
     error_trend = []  # (epoch, model_mean_rel_error) -- is the gap to baseline closing, not just loss?
+    block_acc_trend = []  # (epoch, block_acc) -- same cadence as error_trend, for later plotting
     for epoch in range(EPOCHS):
         train_config.kl_beta = _kl_beta_schedule(epoch, KL_WARMUP_EPOCHS, KL_BETA_MAX)
         loss = train_step(
@@ -301,6 +319,7 @@ def main() -> None:
             model_mean = sum(model_errors) / len(model_errors)
             block_acc = _block_recovery_accuracy(qs, zs, K)
             error_trend.append((epoch, model_mean))
+            block_acc_trend.append((epoch, block_acc))
             print(
                 f"epoch {epoch:5d}  loss={loss.item():10.3f}  "
                 f"model_rel_error={model_mean:.4f}  (baseline={baseline_mean:.4f})  "
@@ -317,7 +336,7 @@ def main() -> None:
     block_acc = _block_recovery_accuracy(qs, zs, K)
     trivial_baseline = _trivial_majority_baseline(zs, K)
 
-    print("\n=== SYNTHETIC VALIDATION (Sec 6/12) ===")
+    print(f"\n=== SYNTHETIC VALIDATION (Sec 6/12) -- seed {seed} ===")
     print(f"loss: first={losses[0]:.3f} last={losses[-1]:.3f}")
     print("error trend (epoch, model_rel_error): " + ", ".join(f"({e}, {v:.4f})" for e, v in error_trend))
     print(f"model mean relative Frobenius error:   {model_mean:.4f}")
@@ -331,6 +350,110 @@ def main() -> None:
         if model_mean < baseline_mean
         else "model does NOT beat classical baseline -- report honestly (Sec 7)"
     )
+
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    artifact_path = RESULTS_DIR / f"seed_{seed}.pt"
+    torch.save(
+        {
+            "seed": seed,
+            "zs": torch.stack(zs).cpu(),  # (N_PERIODS, N) -- ground truth, needed for any
+                                          # later block-recovery plot/confusion matrix
+            "W_true": torch.stack([p.W_true for p in periods]).cpu(),  # (N_PERIODS, N, N)
+            "W_hat_final": torch.stack(W_hats).cpu(),  # (N_PERIODS, N, N), post-training
+            "q_final": torch.stack(qs).cpu(),  # (N_PERIODS, N, K), post-training posterior
+            "losses": losses,
+            "error_trend": error_trend,
+            "block_acc_trend": block_acc_trend,
+            "baseline_mean": baseline_mean,
+            "model_mean": model_mean,
+            "block_acc": block_acc,
+            "trivial_baseline": trivial_baseline,
+        },
+        artifact_path,
+    )
+    print(f"saved: {artifact_path}")
+
+    return {
+        "seed": seed,
+        "baseline_mean": baseline_mean,
+        "model_mean": model_mean,
+        "block_acc": block_acc,
+        "trivial_baseline": trivial_baseline,
+    }
+
+
+def main() -> None:
+    """Loops _run_once over SEEDS (Sec 10 open item): a single seed's block_acc
+    margin over the trivial baseline could be a real, repeatable effect of the
+    r_t/c_t encoder fix, or just that one seed's draw of z/X/noise landing
+    favorably. Report mean +/- std of the margin across seeds so that question
+    has an actual answer before investing in more model capacity or a lower
+    beta_max to try to widen it further.
+    """
+    results = [_run_once(seed) for seed in SEEDS]
+
+    print("\n=== MULTI-SEED SUMMARY (Sec 10: is the block_acc margin real or single-seed noise?) ===")
+    for r in results:
+        gap = r["block_acc"] - r["trivial_baseline"]
+        print(
+            f"seed {r['seed']}: model_rel_error={r['model_mean']:.4f}  "
+            f"block_acc={r['block_acc']:.4f}  trivial_baseline={r['trivial_baseline']:.4f}  gap={gap:+.4f}"
+        )
+
+    model_means = [r["model_mean"] for r in results]
+    baseline_means = [r["baseline_mean"] for r in results]
+    block_accs = [r["block_acc"] for r in results]
+    trivial_baselines = [r["trivial_baseline"] for r in results]
+    gaps = [r["block_acc"] - r["trivial_baseline"] for r in results]
+
+    print()
+    for name, xs in [
+        ("model_rel_error", model_means),
+        ("RAS/Sinkhorn baseline_rel_error", baseline_means),
+        ("block_acc", block_accs),
+        ("trivial_baseline", trivial_baselines),
+        ("gap (block_acc - trivial_baseline)", gaps),
+    ]:
+        m, s = _mean_std(xs)
+        print(f"{name}: mean={m:.4f}  std={s:.4f}")
+
+    n_beats_baseline = sum(1 for r in results if r["model_mean"] < r["baseline_mean"])
+    n_beats_trivial = sum(1 for g in gaps if g > 0)
+    print(f"\nseeds where model beats classical baseline: {n_beats_baseline}/{len(results)}")
+    print(f"seeds where block_acc beats trivial majority-guess: {n_beats_trivial}/{len(results)}")
+
+    model_mean_agg, model_std_agg = _mean_std(model_means)
+    baseline_mean_agg, baseline_std_agg = _mean_std(baseline_means)
+    block_acc_mean_agg, block_acc_std_agg = _mean_std(block_accs)
+    trivial_mean_agg, trivial_std_agg = _mean_std(trivial_baselines)
+    gap_mean_agg, gap_std_agg = _mean_std(gaps)
+
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    summary_path = RESULTS_DIR / "multiseed_summary.json"
+    with open(summary_path, "w") as f:
+        json.dump(
+            {
+                "seeds": SEEDS,
+                "epochs": EPOCHS,
+                "kl_beta_max": KL_BETA_MAX,
+                "kl_warmup_epochs": KL_WARMUP_EPOCHS,
+                "per_seed": results,
+                "aggregates": {
+                    "model_rel_error": {"mean": model_mean_agg, "std": model_std_agg},
+                    "baseline_rel_error": {"mean": baseline_mean_agg, "std": baseline_std_agg},
+                    "block_acc": {"mean": block_acc_mean_agg, "std": block_acc_std_agg},
+                    "trivial_baseline": {"mean": trivial_mean_agg, "std": trivial_std_agg},
+                    "gap": {"mean": gap_mean_agg, "std": gap_std_agg},
+                    "n_beats_baseline": n_beats_baseline,
+                    "n_beats_trivial": n_beats_trivial,
+                    "n_seeds": len(results),
+                },
+            },
+            f,
+            indent=2,
+        )
+    print(f"\nsaved: {summary_path}")
+    print(f"saved per-seed artifacts (zs, W_true, W_hat, q, trajectories) under: {RESULTS_DIR}")
 
 
 if __name__ == "__main__":

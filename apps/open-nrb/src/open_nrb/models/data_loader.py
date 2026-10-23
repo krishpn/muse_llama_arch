@@ -22,6 +22,7 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
+import warnings
 
 import torch
 
@@ -30,6 +31,23 @@ BS_MONTHS = [
     "Kartik", "Mangsir", "Poush", "Magh", "Falgun", "Chaitra",
 ]
 _MONTH_INDEX = {name: i for i, name in enumerate(BS_MONTHS)}
+
+# Alternate English transliterations of month_bs actually confirmed present in the real CSV
+# (counted via its month_bs column, 2026-10-23) -- different bulletin extractions spell the
+# same month differently. "Mangshir" is the ONLY spelling seen in real data for that month;
+# BS_MONTHS' own "Mangsir" never appears raw. Mapped to the canonical BS_MONTHS entry rather
+# than adding more canonical spellings, so every month_bs consumer still sees one name/month.
+_MONTH_ALIASES: dict[str, str] = {
+    "Ashar": "Asar",
+    "Baishakh": "Baisakh",
+    "Mangshir": "Mangsir",
+    "Asoj": "Ashwin",
+    "Aswin": "Ashwin",
+}
+
+
+def _normalize_month(month_bs: str) -> str:
+    return _MONTH_ALIASES.get(month_bs, month_bs)
 
 _TOTAL_LIABILITIES_RE = re.compile(r"total\s+liabilit", re.IGNORECASE)
 _TOTAL_ASSETS_RE = re.compile(r"total\s+assets?", re.IGNORECASE)
@@ -113,6 +131,8 @@ class _Row:
 
 def read_rows(csv_path: Path) -> list[_Row]:
     rows: list[_Row] = []
+    blank_month_count = 0
+    total_count = 0
     with open(csv_path, newline="") as f:
         for i, rec in enumerate(csv.DictReader(f)):
             raw_value = rec["value_mn_npr"].strip()
@@ -122,11 +142,23 @@ def read_rows(csv_path: Path) -> list[_Row]:
                 # absent row, not a parse error. `i` is kept as the enumerate index over
                 # the unfiltered reader so extraction order (used by infer_sides) is intact.
                 continue
+            total_count += 1
+            month_bs = _normalize_month(rec["month_bs"].strip())
+            if month_bs == "":
+                # Confirmed at large volume in real data (2026-10-23 column count: 477221
+                # blank-month_bs rows vs. 387721 across all 16 named-month spellings combined
+                # -- i.e. MORE rows than every real month put together). Too large to be a
+                # rare extraction glitch; flagged and skipped rather than silently absorbed
+                # like the blank-value skip above, since it likely means something is wrong
+                # upstream for a large share of rows, not that these rows are legitimately
+                # monthless. Open item -- not yet investigated what these rows actually are.
+                blank_month_count += 1
+                continue
             rows.append(
                 _Row(
                     source_file=rec["source_file"],
                     year_bs=int(rec["year_bs"]),
-                    month_bs=rec["month_bs"],
+                    month_bs=month_bs,
                     bfi_name=rec["bfi_name"],
                     item_code=rec["item_code"],
                     line_item=rec["line_item"],
@@ -134,6 +166,13 @@ def read_rows(csv_path: Path) -> list[_Row]:
                     order=i,
                 )
             )
+    if blank_month_count:
+        warnings.warn(
+            f"{blank_month_count}/{total_count} rows with a non-blank value have blank "
+            "month_bs (after alias normalization) and were skipped -- investigate before "
+            "trusting panel coverage",
+            stacklevel=2,
+        )
     return rows
 
 
@@ -246,6 +285,7 @@ def load_panel(csv_path: Path) -> Panel:
     K_t = torch.full((N, T), float("nan"))
 
     missing: list[str] = []
+    zero_denominator_count = 0
     for i, name in enumerate(names_sorted):
         for t, pk in enumerate(periods_seen):
             rec = values.get((name, pk))
@@ -256,10 +296,25 @@ def load_panel(csv_path: Path) -> Panel:
             except KeyError as exc:
                 missing.append(f"{name} @ {period_labels[t]}: missing {exc}")
                 continue
+            except ZeroDivisionError:
+                # size==0/deposits==0 is a legitimate real-data case (e.g. a non-deposit-taking
+                # BFI), not an extraction defect like a genuinely missing field -- treated the
+                # same as a bank with zero rows that period (left NaN, not a hard failure), but
+                # counted/warned since it's silent otherwise and affects downstream complete-case
+                # filtering (run_real_experiment.py).
+                zero_denominator_count += 1
+                continue
             X[i, t] = x
             r_t[i, t] = r_val
             c_t[i, t] = c_val
             K_t[i, t] = k_val
+
+    if zero_denominator_count:
+        warnings.warn(
+            f"{zero_denominator_count} (bfi, period) cells have a zero size/deposits "
+            "denominator and were left as NaN",
+            stacklevel=2,
+        )
 
     if missing:
         raise ValueError(
@@ -303,9 +358,16 @@ def _compute_fields(rec: dict[str, float]) -> tuple[torch.Tensor, float, float, 
     liquid_funds = _lookup_field(rec, FIELD_LABELS["liquid_funds"][1])
     loans_advances = _lookup_field(rec, FIELD_LABELS["loans_advances"][1])
     deposits = _lookup_field(rec, FIELD_LABELS["deposits"][1])
-    borrowings_nrb = _lookup_field(rec, FIELD_LABELS["borrowings_nrb"][1])
-    interbank_r = _lookup_field(rec, FIELD_LABELS["interbank_lending_r"][1])
-    interbank_c = _lookup_field(rec, FIELD_LABELS["borrowings_interbank"][1])
+    # borrowings_nrb/interbank_r/interbank_c are lettered sub-items, same category as the
+    # BORROWING_SUBITEMS fallback below -- confirmed live in real data (1546 cells, e.g. ADBNL
+    # across many periods) that "a. NRB" is omitted entirely rather than printed as 0 for a
+    # bank/period with no NRB borrowing at all, same leaf-omission convention as the
+    # ASSET_TOP_LEVEL_LABELS categories above. interbank_r/interbank_c feed the r/c marginals
+    # directly (not just a covariate ratio), but a bank legitimately doing zero interbank
+    # lending/borrowing that period is exactly the same "optional zero, not missing data" case.
+    borrowings_nrb = _lookup_field_or_zero(rec, FIELD_LABELS["borrowings_nrb"][1])
+    interbank_r = _lookup_field_or_zero(rec, FIELD_LABELS["interbank_lending_r"][1])
+    interbank_c = _lookup_field_or_zero(rec, FIELD_LABELS["borrowings_interbank"][1])
 
     try:
         borrowings_total = _lookup_field(rec, FIELD_LABELS["borrowings_total"][1])
@@ -314,11 +376,27 @@ def _compute_fields(rec: dict[str, float]) -> tuple[torch.Tensor, float, float, 
         # note), not that the whole cell is missing data -- reconstruct from sub-items.
         borrowings_total = sum(_lookup_field_or_zero(rec, lbl) for lbl in BORROWING_SUBITEMS)
 
+    # size==0 / deposits==0 (confirmed present in real data, 2026-10-23) mean this bank/period
+    # cell can't produce a finite ratio at all (no asset rows reported, or a BFI category that
+    # takes no deposits) -- there's no principled single value to substitute, so this is treated
+    # the same as a missing required field (raised, collected by load_panel's `missing` list)
+    # rather than guessed.
+    if size == 0:
+        raise ZeroDivisionError("size is zero (no asset rows reported)")
+    if deposits == 0:
+        raise ZeroDivisionError("deposits is zero (non-deposit-taking BFI/period)")
+
+    # Unlike size/deposits above, borrowings_total==0 IS well-defined: borrowings_nrb is a
+    # strict subset of borrowings_total (Sec 8b), so borrowings_total==0 implies
+    # borrowings_nrb==0 too -- "no borrowing of any kind" is legitimately zero NRB dependence,
+    # not missing data.
+    nrb_dependence = borrowings_nrb / borrowings_total if borrowings_total > 0 else 0.0
+
     x = torch.tensor([
         size,
         capital_fund / size,
         liquid_funds / size,
         loans_advances / deposits,
-        borrowings_nrb / borrowings_total,
+        nrb_dependence,
     ])
     return x, interbank_r, interbank_c, capital_fund
