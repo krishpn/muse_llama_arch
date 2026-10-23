@@ -128,11 +128,144 @@ $$\mathcal{L} = -\mathbb{E}_q[\log p(W_t^{\text{true}})]_{\text{synthetic only}}
 
 -   Real World Evaluation: Evaluation on real data has to rely on indirect evidence: temporal stability of the recovered $W_t$ sequence, and comparison against a classical baseline (§8).
 
+
+
+
 ## 7. Design rationale
 
 -   **SBM over preferential-attachment/fitness models** as the sole structural backbone: core- periphery tiering in interbank markets is literally a latent-block story, so SBM is the natural fit. PA/fitness models (Caldarelli et al.) are cited in related work for contrast but not built.
 -   **GRU, not a temporal-GNN** (EvolveGCN, TGN, etc.) for the temporal mechanism: deliberately the simpler choice, given the "big model, small data" risk — roughly 50–80 institutions, at most \~170 periods. A fancier temporal-GNN would be over-parameterized for this panel size.
 -   **Mandatory baseline**: head-to-head comparison against Gandy–Veraart / RAS maximum-entropy network reconstruction, on both the synthetic SBM data (known ground truth) and the real panel. Explicit instruction from the design discussion: report honestly if the deep model doesn't beat the classical baseline — don't bury a negative result.
+
+## 8. Variable inventory (what actually feeds the model)
+
+Net statement from the design discussion: **the reconstruction model needs ~5 covariates per
+node per period, plus the two interbank marginals. Everything else in the NRB bulletins is either
+a Paper 2 outcome variable or not usable given current data coverage.**
+
+### 8a. The two marginals (non-negotiable — the reconstruction target)
+
+The names below (`2.b Interbank Borrowing`, `INTERBANK LENDING (Marginal r_i)`) were this doc's
+own shorthand, not literal bulletin text, and the row-marginal name additionally implied a
+standalone top-level item that doesn't exist. Confirmed against the real extracted CSV
+(`nrb_balance_sheet.csv`) on 2026-10-22 — see §9.4:
+
+| Symbol | Real bulletin text | Parent section | Statement / side |
+|---|---|---|---|
+| $c_{i,t}$ (column marginal) | `b. Interbank Borrowing` | `2 BORROWINGS` | Balance Sheet, **Liabilities** |
+| $r_{i,t}$ (row marginal) | `a. Interbank Lending` | `3 SHARE & OTHER INVESTMENT` | Balance Sheet, **Assets** |
+
+Both are lettered sub-items, not top-level rows — `r_{i,t}$` in particular is a breakdown
+component of `3 SHARE & OTHER INVESTMENT`'s own reported total, which matters for the size
+formula below (§9.4). These are the actual payoff variables for the whole method — everything else
+exists to help infer the matrix whose row/column sums these fix.
+
+### 8b. Node covariates $X_{i,t}$ (block-membership / fitness prior)
+
+| # | Covariate | Built from | Role |
+|---|---|---|---|
+| 1 | Size | sum of the **10** real top-level asset rows: `1 LIQUID FUNDS`, `2 INVESTMENT IN SECURITIES`, `3 SHARE & OTHER INVESTMENT`, `4 LOANS & ADVANCES`, `5 BILL PURCHASED`, `6 LOANS AGAINST COLLECTED BILLS`, `7 FIXED ASSETS`, `8 OTHER ASSETS`, `9 EXPENSES NOT WRITTEN OFF`, `10 NON BANKING ASSETS` (**not** the `TOTAL ASSETS` label directly — see §9.1). $r_{i,t}$ is **not** added as an 11th term — per §8a/§9.4 it's a sub-item already folded into `3 SHARE & OTHER INVESTMENT`'s reported total, so adding it separately would double-count it | SBM block/fitness prior, scale control |
+| 2 | Capital ratio | `1 CAPITAL FUND` (Liabilities) ÷ size | solvency/fitness term; also sets the obligor cap $K_{i,t}$ |
+| 3 | Liquidity ratio | `1 LIQUID FUNDS` (Assets) ÷ size | liquidity position |
+| 4 | Loan-to-deposit pressure | `4 LOANS & ADVANCES` (Assets) ÷ `3 DEPOSITS` (Liabilities) | funding-pressure signal |
+| 5 | NRB-dependence | `a. NRB` ÷ `2 BORROWINGS` (both under Liabilities, `a. NRB` nested under `2 BORROWINGS`; if `2 BORROWINGS` is missing for a row — some early-era filings never print the top-level subtotal — the denominator is reconstructed as the sum of its sub-items: `a. NRB`, `b. Interbank Borrowing`, `c. Foreign Banks and Fin. Ins.`, `d. Other Financial Ins.`, `e. Bonds and Securities` — confirmed real text per §9.4; the `f.`/`g.` sub-items this doc previously assumed existed under `2 BORROWINGS` have **not** been confirmed in the real data yet) | central-bank liquidity dependence — useful for the zero-inflation gate (a bank funded mainly by NRB is less likely to have interbank exposure) |
+
+Optional secondary signal, not in the core 5: ownership type (state/private/foreign), if available
+— would add homophily structure to the block prior.
+
+### 8c. Auxiliary observed-graph candidate (optional GNN refinement input, §4)
+
+| Source | Role |
+|---|---|
+| Statement of Credit, sector-wise breakdown (12 sectors + Others) | shared sector-concentration = a correlated-shock signal independent of the interbank marginals. Candidate as the auxiliary *observed* graph the GNN layer can refine over, since it doesn't require $W_t$ itself. |
+
+### 8d. Explicitly excluded from Paper 1
+
+- `6 Bills Payable`, `5 Other Liabilities` (Liabilities, minor residuals) — not used
+- `6/10 Reconciliation A/c` (both sides) — accounting plug, not economically meaningful
+- `8 Expenses not Written off`, `9 Non Banking Assets` (Assets) — legacy/minor, not used
+- Everything in Profit & Loss — these are Paper 2 outcome variables, not reconstruction inputs
+  (see `paper2_causal_spillover.md`)
+- `nrb_statement_of_credit.csv` as a panel source — only 2 years of coverage in current data,
+  can't support a 14-year panel; not worth cleaning further unless more years turn up uncollected
+
+### 8e. One-to-one equation-symbol ↔ raw-variable map
+
+Every symbol that appears in Eq. (1)–(8) is listed below with exactly what real NRB field (if
+any) it is computed from. Symbols with no raw field are latent or learned — they're estimated by
+the model, not read off the bulletin.
+
+| Symbol | Appears in | Raw NRB field | Statement / side | Transformation |
+|---|---|---|---|---|
+| $r_{i,t}$ | Eq. (5), (8) | `a. Interbank Lending` (sub-item of `3 SHARE & OTHER INVESTMENT`) | Balance Sheet, Assets | identity (reported value) |
+| $c_{i,t}$ | Eq. (5), (8) | `b. Interbank Borrowing` (sub-item of `2 BORROWINGS`) | Balance Sheet, Liabilities | identity (reported value) |
+| $K_{i,t}$ | Eq. (8), $\kappa K_{i,t}$ cap | `1 CAPITAL FUND` | Balance Sheet, Liabilities | identity (reported value) — note: raw value here, *not* the ratio used in $X^{(2)}_{i,t}$ below |
+| $X^{(1)}_{i,t}$ | Eq. (2), component of $X_{i,t}$ | sum of the 10 real top-level asset rows (listed in §8b) | Balance Sheet, Assets | sum (not the `TOTAL ASSETS` label — see §9.1; $r_{i,t}$ excluded, see §8b/§9.3) |
+| $X^{(2)}_{i,t}$ | Eq. (2) | `1 CAPITAL FUND` | Balance Sheet, Liabilities | ÷ $X^{(1)}_{i,t}$ (capital ratio) |
+| $X^{(3)}_{i,t}$ | Eq. (2) | `1 LIQUID FUNDS` | Balance Sheet, Assets | ÷ $X^{(1)}_{i,t}$ (liquidity ratio) |
+| $X^{(4)}_{i,t}$ | Eq. (2) | `4 LOANS & ADVANCES` ÷ `3 DEPOSITS` | Balance Sheet, Assets ÷ Liabilities | ratio across statement sides |
+| $X^{(5)}_{i,t}$ | Eq. (2) | `a. NRB` ÷ `2 BORROWINGS` | Balance Sheet, Liabilities (both) | ratio within Liabilities; denominator falls back to the sum of `a.`–`e.` sub-items (§8b) when `2 BORROWINGS` is unreported |
+| $w$ | Eq. (2) | — | — | **learned** (fitness weight vector, $\dim = 5$, no raw field) |
+| $z_i$ | Eq. (1), (3), (7) | — | — | **latent** (inferred via $q_\psi$, Eq. 7); optionally informed by ownership type if used (§8b) |
+| $\Lambda$ | Eq. (3) | — | — | **learned** ($K\times K$ block-pair intensity matrix) |
+| $h_{i,t}$ | Eq. (3), (6), (7) | $X^{(1\text{-}5)}_{i,t}$ (all 5 covariates, fed in as the GRU input vector) | — | **learned embedding**, GRU output — not read directly off any single field |
+| $\theta$ (GRU weights) | Eq. (6) | — | — | **learned** |
+| $\psi$ (posterior-net weights) | Eq. (7) | — | — | **learned** |
+| $\eta_{ij,t}$ | Eq. (4) | — | — | **learned** (zero-inflation logit, decoder output) |
+| $\sigma^2$ | Eq. (4) | — | — | **learned** (log-normal dispersion — global or per-block, §10) |
+| $\kappa$ | Eq. (8) | — | — | **exogenous regulatory constant** (single-obligor exposure limit; not reported in the bulletin itself — a known regulatory parameter) |
+| $A^{\text{obs}}$ (auxiliary GNN graph, §4) | Eq. (6) refinement, optional | sector-wise credit, 12 sectors | Statement of Credit | co-exposure adjacency built from shared-sector lending shares |
+
+**Reading guide**: $X_{i,t} = \big(X^{(1)}_{i,t}, ..., X^{(5)}_{i,t}\big) \in \mathbb{R}^5$ is the
+concrete instantiation of the generic $X_{i,t}\in\mathbb{R}^d$ in §2 — i.e. $d=5$ for this model,
+and the ordering above (size, capital ratio, liquidity ratio, LDR, NRB-dependence) is the fixed
+component order used everywhere $X_{i,t}$ appears in Eq. (2) and (6).
+
+## 9. Known data-pipeline caveats (apply before this goes into the model)
+
+1. **`item_code` collision**: confirmed by re-running `nrb_extractor.py` against a real bulletin —
+   `item_code` is not unique across the Balance Sheet's Liabilities and Assets sides. Both sides
+   independently restart numbering at 1 (e.g. `1 CAPITAL FUND` on Liabilities vs. `1 LIQUID FUNDS`
+   on Assets; same collision pattern for `2`, `3`, and lettered sub-items `a.`–`g.`). The extractor
+   (`nrb_extractor.py:197-269`, `_extract_rows`) currently has no column marking which side a row
+   is on — that currently has to be inferred externally from which `TOTAL` block (`TOTAL
+   Liabilities` vs. `TOTAL ASSETS`) a row falls between on the page. **Fix needed**: add a `side`
+   column to the extractor output before any join on `item_code` alone, or it will silently
+   collide liabilities and assets rows that share a code (e.g. covariates 2 and 3 above, which
+   both use an `item_code == 1` row from different sides).
+2. Rotated bank-name header recovery (`recover_bank_names`, `nrb_extractor.py:130-171`) and the
+   layout-mode row extraction are both working as validated against the real sample PDF — no open
+   bug there as of this pass.
+3. **`item_code` drift across eras**: the top-level code attached to a given labeled row is not
+   stable over the panel's history — e.g. `LOANS & ADVANCES` is coded `4` in some eras and `4.1`
+   in others (with `BILL PURCHASED` shifting from `5` to `4.2` correspondingly). Matching must key
+   off the normalized label text (and, for lettered sub-items, parent section), never off
+   `item_code` alone.
+4. **Lettered sub-items (`a.`–`g.`) are reused across unrelated parent sections** (e.g. `a.` means
+   `Paid-up Capital` under `1 CAPITAL FUND`, `Cash Balance` under `1 LIQUID FUNDS`, `NRB` under
+   `2 BORROWINGS`, and `Interbank Lending` under `3 SHARE & OTHER INVESTMENT` — all in the same
+   bulletin). The letter alone is not a key; a row's identity is (normalized label text, nearest
+   preceding top-level/bare-number row in extraction order). The extractor should carry this parent
+   link explicitly (a `parent_item` or `section` column) rather than requiring every consumer to
+   replay the state machine itself.
+5. **Truncated-text duplicate rows**: some extractions clip a label mid-word (e.g. `4 LOANS &`
+   alongside the correct `4 LOANS & ADVANCES`, or `1 CAPITAL` alongside `1 CAPITAL FUND`) for the
+   same `item_code`/concept. Confirmed via `cut -d, -f7,8 ... | sort -u` on the real CSV
+   (2026-10-22). Treat these as the same field (prefix match or longest-label-wins), not as
+   missing data for the truncated variant.
+
+## 10. Open items (not yet decided)
+
+- **$K$ (number of SBM blocks)**: start with $K=2$ (core/periphery), treat larger $K$ as a
+  robustness check, not the headline specification.
+- **$\sigma^2$ (log-normal dispersion)**: learned, either globally or per-block — not yet decided
+  which.
+- **Venue/scope hook**: ICAIF fit is comfortable at the current scope (methods + real-data case
+  study). ICLR/NeurIPS main track would need an added theoretical hook — e.g. a provable statement
+  on how reconstruction uncertainty in $\hat W_t$ propagates into coverage guarantees for a
+  downstream interference estimator (which would also strengthen the Paper 1 → Paper 2 link).
+  **Not resolved** — needs a decision before drafting.
+
 
 ## 11. Algorithms (pseudocode)
 

@@ -222,7 +222,7 @@
 
 \title{Bayesian Network Reconstruction of Interbank Exposures (Nepal)}
 \author{Krishna Neupane}
-\date{2026-10-18}
+\date{2026-10-22}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -515,6 +515,334 @@ component of the generative model or the constraint layer.
   negative result.
 \end{itemize}
 
+\subsection{8. Variable inventory (what actually feeds the
+model)}\label{variable-inventory-what-actually-feeds-the-model}
+
+Net statement from the design discussion: \textbf{the reconstruction
+model needs \textasciitilde5 covariates per node per period, plus the
+two interbank marginals. Everything else in the NRB bulletins is either
+a Paper 2 outcome variable or not usable given current data coverage.}
+
+\subsubsection{8a. The two marginals (non-negotiable --- the
+reconstruction
+target)}\label{a.-the-two-marginals-non-negotiable-the-reconstruction-target}
+
+The names below (\texttt{2.b\ Interbank\ Borrowing},
+\texttt{INTERBANK\ LENDING\ (Marginal\ r\_i)}) were this doc's own
+shorthand, not literal bulletin text, and the row-marginal name
+additionally implied a standalone top-level item that doesn't exist.
+Confirmed against the real extracted CSV
+(\texttt{nrb\_balance\_sheet.csv}) on 2026-10-22 --- see §9.4:
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Symbol
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Real bulletin text
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Parent section
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Statement / side
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\(c_{i,t}\) (column marginal) & \texttt{b.\ Interbank\ Borrowing} &
+\texttt{2\ BORROWINGS} & Balance Sheet, \textbf{Liabilities} \\
+\(r_{i,t}\) (row marginal) & \texttt{a.\ Interbank\ Lending} &
+\texttt{3\ SHARE\ \&\ OTHER\ INVESTMENT} & Balance Sheet,
+\textbf{Assets} \\
+\end{longtable}
+
+Both are lettered sub-items, not top-level rows ---
+\texttt{r\_\{i,t\}\$} in particular is a breakdown component of
+\texttt{3\ SHARE\ \&\ OTHER\ INVESTMENT}'s own reported total, which
+matters for the size formula below (§9.4). These are the actual payoff
+variables for the whole method --- everything else exists to help infer
+the matrix whose row/column sums these fix.
+
+\subsubsection{\texorpdfstring{8b. Node covariates \(X_{i,t}\)
+(block-membership / fitness
+prior)}{8b. Node covariates X\_\{i,t\} (block-membership / fitness prior)}}\label{b.-node-covariates-x_it-block-membership-fitness-prior}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+\#
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Covariate
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Built from
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Role
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1 & Size & sum of the \textbf{10} real top-level asset rows:
+\texttt{1\ LIQUID\ FUNDS}, \texttt{2\ INVESTMENT\ IN\ SECURITIES},
+\texttt{3\ SHARE\ \&\ OTHER\ INVESTMENT},
+\texttt{4\ LOANS\ \&\ ADVANCES}, \texttt{5\ BILL\ PURCHASED},
+\texttt{6\ LOANS\ AGAINST\ COLLECTED\ BILLS}, \texttt{7\ FIXED\ ASSETS},
+\texttt{8\ OTHER\ ASSETS}, \texttt{9\ EXPENSES\ NOT\ WRITTEN\ OFF},
+\texttt{10\ NON\ BANKING\ ASSETS} (\textbf{not} the
+\texttt{TOTAL\ ASSETS} label directly --- see §9.1). \(r_{i,t}\) is
+\textbf{not} added as an 11th term --- per §8a/§9.4 it's a sub-item
+already folded into \texttt{3\ SHARE\ \&\ OTHER\ INVESTMENT}'s reported
+total, so adding it separately would double-count it & SBM block/fitness
+prior, scale control \\
+2 & Capital ratio & \texttt{1\ CAPITAL\ FUND} (Liabilities) ÷ size &
+solvency/fitness term; also sets the obligor cap \(K_{i,t}\) \\
+3 & Liquidity ratio & \texttt{1\ LIQUID\ FUNDS} (Assets) ÷ size &
+liquidity position \\
+4 & Loan-to-deposit pressure & \texttt{4\ LOANS\ \&\ ADVANCES} (Assets)
+÷ \texttt{3\ DEPOSITS} (Liabilities) & funding-pressure signal \\
+5 & NRB-dependence & \texttt{a.\ NRB} ÷ \texttt{2\ BORROWINGS} (both
+under Liabilities, \texttt{a.\ NRB} nested under \texttt{2\ BORROWINGS};
+if \texttt{2\ BORROWINGS} is missing for a row --- some early-era
+filings never print the top-level subtotal --- the denominator is
+reconstructed as the sum of its sub-items: \texttt{a.\ NRB},
+\texttt{b.\ Interbank\ Borrowing},
+\texttt{c.\ Foreign\ Banks\ and\ Fin.\ Ins.},
+\texttt{d.\ Other\ Financial\ Ins.}, \texttt{e.\ Bonds\ and\ Securities}
+--- confirmed real text per §9.4; the \texttt{f.}/\texttt{g.} sub-items
+this doc previously assumed existed under \texttt{2\ BORROWINGS} have
+\textbf{not} been confirmed in the real data yet) & central-bank
+liquidity dependence --- useful for the zero-inflation gate (a bank
+funded mainly by NRB is less likely to have interbank exposure) \\
+\end{longtable}
+
+Optional secondary signal, not in the core 5: ownership type
+(state/private/foreign), if available --- would add homophily structure
+to the block prior.
+
+\subsubsection{8c. Auxiliary observed-graph candidate (optional GNN
+refinement input,
+§4)}\label{c.-auxiliary-observed-graph-candidate-optional-gnn-refinement-input-4}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Source
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Role
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Statement of Credit, sector-wise breakdown (12 sectors + Others) &
+shared sector-concentration = a correlated-shock signal independent of
+the interbank marginals. Candidate as the auxiliary \emph{observed}
+graph the GNN layer can refine over, since it doesn't require \(W_t\)
+itself. \\
+\end{longtable}
+
+\subsubsection{8d. Explicitly excluded from Paper
+1}\label{d.-explicitly-excluded-from-paper-1}
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{6\ Bills\ Payable}, \texttt{5\ Other\ Liabilities}
+  (Liabilities, minor residuals) --- not used
+\item
+  \texttt{6/10\ Reconciliation\ A/c} (both sides) --- accounting plug,
+  not economically meaningful
+\item
+  \texttt{8\ Expenses\ not\ Written\ off},
+  \texttt{9\ Non\ Banking\ Assets} (Assets) --- legacy/minor, not used
+\item
+  Everything in Profit \& Loss --- these are Paper 2 outcome variables,
+  not reconstruction inputs (see \texttt{paper2\_causal\_spillover.md})
+\item
+  \texttt{nrb\_statement\_of\_credit.csv} as a panel source --- only 2
+  years of coverage in current data, can't support a 14-year panel; not
+  worth cleaning further unless more years turn up uncollected
+\end{itemize}
+
+\subsubsection{8e. One-to-one equation-symbol ↔ raw-variable
+map}\label{e.-one-to-one-equation-symbol-raw-variable-map}
+
+Every symbol that appears in Eq. (1)--(8) is listed below with exactly
+what real NRB field (if any) it is computed from. Symbols with no raw
+field are latent or learned --- they're estimated by the model, not read
+off the bulletin.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Symbol
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Appears in
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Raw NRB field
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Statement / side
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Transformation
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\(r_{i,t}\) & Eq. (5), (8) & \texttt{a.\ Interbank\ Lending} (sub-item
+of \texttt{3\ SHARE\ \&\ OTHER\ INVESTMENT}) & Balance Sheet, Assets &
+identity (reported value) \\
+\(c_{i,t}\) & Eq. (5), (8) & \texttt{b.\ Interbank\ Borrowing} (sub-item
+of \texttt{2\ BORROWINGS}) & Balance Sheet, Liabilities & identity
+(reported value) \\
+\(K_{i,t}\) & Eq. (8), \(\kappa K_{i,t}\) cap &
+\texttt{1\ CAPITAL\ FUND} & Balance Sheet, Liabilities & identity
+(reported value) --- note: raw value here, \emph{not} the ratio used in
+\(X^{(2)}_{i,t}\) below \\
+\(X^{(1)}_{i,t}\) & Eq. (2), component of \(X_{i,t}\) & sum of the 10
+real top-level asset rows (listed in §8b) & Balance Sheet, Assets & sum
+(not the \texttt{TOTAL\ ASSETS} label --- see §9.1; \(r_{i,t}\)
+excluded, see §8b/§9.3) \\
+\(X^{(2)}_{i,t}\) & Eq. (2) & \texttt{1\ CAPITAL\ FUND} & Balance Sheet,
+Liabilities & ÷ \(X^{(1)}_{i,t}\) (capital ratio) \\
+\(X^{(3)}_{i,t}\) & Eq. (2) & \texttt{1\ LIQUID\ FUNDS} & Balance Sheet,
+Assets & ÷ \(X^{(1)}_{i,t}\) (liquidity ratio) \\
+\(X^{(4)}_{i,t}\) & Eq. (2) & \texttt{4\ LOANS\ \&\ ADVANCES} ÷
+\texttt{3\ DEPOSITS} & Balance Sheet, Assets ÷ Liabilities & ratio
+across statement sides \\
+\(X^{(5)}_{i,t}\) & Eq. (2) & \texttt{a.\ NRB} ÷ \texttt{2\ BORROWINGS}
+& Balance Sheet, Liabilities (both) & ratio within Liabilities;
+denominator falls back to the sum of \texttt{a.}--\texttt{e.} sub-items
+(§8b) when \texttt{2\ BORROWINGS} is unreported \\
+\(w\) & Eq. (2) & --- & --- & \textbf{learned} (fitness weight vector,
+\(\dim = 5\), no raw field) \\
+\(z_i\) & Eq. (1), (3), (7) & --- & --- & \textbf{latent} (inferred via
+\(q_\psi\), Eq. 7); optionally informed by ownership type if used
+(§8b) \\
+\(\Lambda\) & Eq. (3) & --- & --- & \textbf{learned} (\(K\times K\)
+block-pair intensity matrix) \\
+\(h_{i,t}\) & Eq. (3), (6), (7) & \(X^{(1\text{-}5)}_{i,t}\) (all 5
+covariates, fed in as the GRU input vector) & --- & \textbf{learned
+embedding}, GRU output --- not read directly off any single field \\
+\(\theta\) (GRU weights) & Eq. (6) & --- & --- & \textbf{learned} \\
+\(\psi\) (posterior-net weights) & Eq. (7) & --- & --- &
+\textbf{learned} \\
+\(\eta_{ij,t}\) & Eq. (4) & --- & --- & \textbf{learned} (zero-inflation
+logit, decoder output) \\
+\(\sigma^2\) & Eq. (4) & --- & --- & \textbf{learned} (log-normal
+dispersion --- global or per-block, §10) \\
+\(\kappa\) & Eq. (8) & --- & --- & \textbf{exogenous regulatory
+constant} (single-obligor exposure limit; not reported in the bulletin
+itself --- a known regulatory parameter) \\
+\(A^{\text{obs}}\) (auxiliary GNN graph, §4) & Eq. (6) refinement,
+optional & sector-wise credit, 12 sectors & Statement of Credit &
+co-exposure adjacency built from shared-sector lending shares \\
+\end{longtable}
+
+\textbf{Reading guide}:
+\(X_{i,t} = \big(X^{(1)}_{i,t}, ..., X^{(5)}_{i,t}\big) \in \mathbb{R}^5\)
+is the concrete instantiation of the generic \(X_{i,t}\in\mathbb{R}^d\)
+in §2 --- i.e.~\(d=5\) for this model, and the ordering above (size,
+capital ratio, liquidity ratio, LDR, NRB-dependence) is the fixed
+component order used everywhere \(X_{i,t}\) appears in Eq. (2) and (6).
+
+\subsection{9. Known data-pipeline caveats (apply before this goes into
+the
+model)}\label{known-data-pipeline-caveats-apply-before-this-goes-into-the-model}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{\texttt{item\_code} collision}: confirmed by re-running
+  \texttt{nrb\_extractor.py} against a real bulletin ---
+  \texttt{item\_code} is not unique across the Balance Sheet's
+  Liabilities and Assets sides. Both sides independently restart
+  numbering at 1 (e.g.~\texttt{1\ CAPITAL\ FUND} on Liabilities
+  vs.~\texttt{1\ LIQUID\ FUNDS} on Assets; same collision pattern for
+  \texttt{2}, \texttt{3}, and lettered sub-items
+  \texttt{a.}--\texttt{g.}). The extractor
+  (\texttt{nrb\_extractor.py:197-269}, \texttt{\_extract\_rows})
+  currently has no column marking which side a row is on --- that
+  currently has to be inferred externally from which \texttt{TOTAL}
+  block (\texttt{TOTAL\ \ \ \ Liabilities} vs.~\texttt{TOTAL\ ASSETS}) a
+  row falls between on the page. \textbf{Fix needed}: add a
+  \texttt{side} column to the extractor output before any join on
+  \texttt{item\_code} alone, or it will silently collide liabilities and
+  assets rows that share a code (e.g.~covariates 2 and 3 above, which
+  both use an \texttt{item\_code\ ==\ 1} row from different sides).
+\item
+  Rotated bank-name header recovery (\texttt{recover\_bank\_names},
+  \texttt{nrb\_extractor.py:130-171}) and the layout-mode row extraction
+  are both working as validated against the real sample PDF --- no open
+  bug there as of this pass.
+\item
+  \textbf{\texttt{item\_code} drift across eras}: the top-level code
+  attached to a given labeled row is not stable over the panel's history
+  --- e.g.~\texttt{LOANS\ \&\ ADVANCES} is coded \texttt{4} in some eras
+  and \texttt{4.1} in others (with \texttt{BILL\ PURCHASED} shifting
+  from \texttt{5} to \texttt{4.2} correspondingly). Matching must key
+  off the normalized label text (and, for lettered sub-items, parent
+  section), never off \texttt{item\_code} alone.
+\item
+  \textbf{Lettered sub-items (\texttt{a.}--\texttt{g.}) are reused
+  across unrelated parent sections} (e.g.~\texttt{a.} means
+  \texttt{Paid-up\ Capital} under \texttt{1\ CAPITAL\ FUND},
+  \texttt{Cash\ Balance} under \texttt{1\ LIQUID\ FUNDS}, \texttt{NRB}
+  under \texttt{2\ BORROWINGS}, and \texttt{Interbank\ Lending} under
+  \texttt{3\ SHARE\ \&\ OTHER\ INVESTMENT} --- all in the same
+  bulletin). The letter alone is not a key; a row's identity is
+  (normalized label text, nearest preceding top-level/bare-number row in
+  extraction order). The extractor should carry this parent link
+  explicitly (a \texttt{parent\_item} or \texttt{section} column) rather
+  than requiring every consumer to replay the state machine itself.
+\item
+  \textbf{Truncated-text duplicate rows}: some extractions clip a label
+  mid-word (e.g.~\texttt{4\ LOANS\ \&} alongside the correct
+  \texttt{4\ LOANS\ \&\ ADVANCES}, or \texttt{1\ CAPITAL} alongside
+  \texttt{1\ CAPITAL\ FUND}) for the same \texttt{item\_code}/concept.
+  Confirmed via \texttt{cut\ -d,\ -f7,8\ ...\ \textbar{}\ sort\ -u} on
+  the real CSV (2026-10-22). Treat these as the same field (prefix match
+  or longest-label-wins), not as missing data for the truncated variant.
+\end{enumerate}
+
+\subsection{10. Open items (not yet
+decided)}\label{open-items-not-yet-decided}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{\(K\) (number of SBM blocks)}: start with \(K=2\)
+  (core/periphery), treat larger \(K\) as a robustness check, not the
+  headline specification.
+\item
+  \textbf{\(\sigma^2\) (log-normal dispersion)}: learned, either
+  globally or per-block --- not yet decided which.
+\item
+  \textbf{Venue/scope hook}: ICAIF fit is comfortable at the current
+  scope (methods + real-data case study). ICLR/NeurIPS main track would
+  need an added theoretical hook --- e.g.~a provable statement on how
+  reconstruction uncertainty in \(\hat W_t\) propagates into coverage
+  guarantees for a downstream interference estimator (which would also
+  strengthen the Paper 1 → Paper 2 link). \textbf{Not resolved} ---
+  needs a decision before drafting.
+\end{itemize}
+
 \subsection{11. Algorithms (pseudocode)}\label{algorithms-pseudocode}
 
 Three algorithms, in dependency order: the capacitated Sinkhorn
@@ -711,7 +1039,7 @@ avoids circular identification logic while predicting continuous weight
 distributions and discrete connection gates.
 
 \subsection{8. Variable inventory (what actually feeds the
-model)}\label{variable-inventory-what-actually-feeds-the-model}
+model)}\label{variable-inventory-what-actually-feeds-the-model-1}
 
 Net statement from the design discussion: \textbf{the reconstruction
 model needs \textasciitilde5 covariates per node per period, plus the
@@ -720,7 +1048,7 @@ a Paper 2 outcome variable or not usable given current data coverage.}
 
 \subsubsection{8a. The two marginals (non-negotiable --- the
 reconstruction
-target)}\label{a.-the-two-marginals-non-negotiable-the-reconstruction-target}
+target)}\label{a.-the-two-marginals-non-negotiable-the-reconstruction-target-1}
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
@@ -750,7 +1078,7 @@ these fix.
 
 \subsubsection{\texorpdfstring{8b. Node covariates \(X_{i,t}\)
 (block-membership / fitness
-prior)}{8b. Node covariates X\_\{i,t\} (block-membership / fitness prior)}}\label{b.-node-covariates-x_it-block-membership-fitness-prior}
+prior)}{8b. Node covariates X\_\{i,t\} (block-membership / fitness prior)}}\label{b.-node-covariates-x_it-block-membership-fitness-prior-1}
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
@@ -809,7 +1137,7 @@ to the block prior.
 
 \subsubsection{8c. Auxiliary observed-graph candidate (optional GNN
 refinement input,
-§4)}\label{c.-auxiliary-observed-graph-candidate-optional-gnn-refinement-input-4}
+§4)}\label{c.-auxiliary-observed-graph-candidate-optional-gnn-refinement-input-4-1}
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
@@ -832,7 +1160,7 @@ itself. \\
 \end{longtable}
 
 \subsubsection{8d. Explicitly excluded from Paper
-1}\label{d.-explicitly-excluded-from-paper-1}
+1}\label{d.-explicitly-excluded-from-paper-1-1}
 
 \begin{itemize}
 \tightlist
@@ -855,7 +1183,7 @@ itself. \\
 \end{itemize}
 
 \subsubsection{8e. One-to-one equation-symbol ↔ raw-variable
-map}\label{e.-one-to-one-equation-symbol-raw-variable-map}
+map}\label{e.-one-to-one-equation-symbol-raw-variable-map-1}
 
 Every symbol that appears in Eq. (1)--(8) is listed below with exactly
 what real NRB field (if any) it is computed from. Symbols with no raw
@@ -942,7 +1270,7 @@ component order used everywhere \(X_{i,t}\) appears in Eq. (2) and (6).
 
 \subsection{9. Known data-pipeline caveats (apply before this goes into
 the
-model)}\label{known-data-pipeline-caveats-apply-before-this-goes-into-the-model}
+model)}\label{known-data-pipeline-caveats-apply-before-this-goes-into-the-model-1}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -973,7 +1301,7 @@ model)}\label{known-data-pipeline-caveats-apply-before-this-goes-into-the-model}
 \end{enumerate}
 
 \subsection{10. Open items (not yet
-decided)}\label{open-items-not-yet-decided}
+decided)}\label{open-items-not-yet-decided-1}
 
 \begin{itemize}
 \tightlist
