@@ -32,8 +32,9 @@ def temporal_encoder_case() -> bool:
     encoder = TemporalEncoder(config)
 
     X_t = torch.randn(n, d)
+    r_t, c_t = torch.randn(n), torch.randn(n)
     h_prev = encoder.init_hidden(n)
-    h_t = encoder(X_t, h_prev)
+    h_t = encoder(X_t, r_t, c_t, h_prev)
 
     shape_ok = h_t.shape == (n, hidden)
     finite_ok = torch.isfinite(h_t).all().item()
@@ -93,8 +94,9 @@ def gradient_flow_case() -> bool:
     decoder = PairwiseDecoder(config)
 
     X_t = torch.randn(n, d)
+    r_t, c_t = torch.randn(n), torch.randn(n)
     h_prev = encoder.init_hidden(n)
-    h_t = encoder(X_t, h_prev)
+    h_t = encoder(X_t, r_t, c_t, h_prev)
     logits = posterior(h_t)
     z_soft = F.softmax(logits, dim=-1)
     eta, lam = decoder(h_t, z_soft)

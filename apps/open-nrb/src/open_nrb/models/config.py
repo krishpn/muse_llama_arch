@@ -105,3 +105,10 @@ class TrainStepConfig:
     lambda_reg: float
     recon_zero_tol: float = 1e-6  # |W_true_ij| below this counts as a structural zero
     delta: float = 1e-12          # log-stabilizer
+    kl_beta: float = 1.0          # Eq. 9's beta_t: KL weight, 1.0 = original unweighted
+                                   # term. Mutable per-epoch by the caller to implement
+                                   # annealing (Sec 10): ramping beta 0 -> 1 early in
+                                   # training lets q_psi(z) latch onto block signal
+                                   # before the KL penalty pulls it to the uniform prior
+                                   # -- defaults to the pre-annealing behavior so existing
+                                   # callers that never set it are unaffected.

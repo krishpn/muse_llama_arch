@@ -54,7 +54,6 @@ _TOTAL_ASSETS_RE = re.compile(r"total\s+assets?", re.IGNORECASE)
 _HEADER = "source_file,year_bs,month_bs,page,statement,bfi_name,item_code,line_item,value_mn_npr\n"
 _HEADER = "source_file,year_bs,month_bs,page,statement,bfi_name,item_code,line_item,value_mn_npr\n"
 
-
 def _write_csv(path: Path, rows: list[str]) -> None:
     path.write_text(_HEADER + "".join(rows))
 
@@ -247,6 +246,42 @@ def covariate_formula_case() -> bool:
     return ok
 
 
+def optional_asset_category_blank_case() -> bool:
+    """A single optional asset category with a blank value cell (e.g. a smaller BFI that
+    doesn't report '9 EXPENSES NOT WRITTEN OFF') is dropped entirely by read_rows (Sec 9
+    blank-value note), so it's simply absent from rec -- not a zero. 'size' must still sum
+    the other 9 categories via _lookup_field_or_zero and the cell must load successfully,
+    not raise ValueError / drop the whole bfi-period cell the way strict _lookup_field did."""
+    rows_csv = _full_period_rows(
+        "k.pdf", 2080, "Asar", "NBL",
+        liquid_funds=40, loans_advances=50, interbank_r=10,
+        capital_fund=20, deposits=25,
+        borrowings_nrb=4, borrowings_interbank=6, borrowings_total=10,
+    )
+    rows_csv = [
+        row.rsplit(",", 1)[0] + ",\n" if "9 EXPENSES NOT WRITTEN OFF" in row else row
+        for row in rows_csv
+    ]
+    raised = False
+    panel = None
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "sample.csv"
+        _write_csv(path, rows_csv)
+        try:
+            panel = load_panel(path)
+        except ValueError:
+            raised = True
+
+    ok = not raised
+    if ok:
+        x = panel.X[0, 0]
+        # size = 40 (liquid) + 50 (loans) + 10 (interbank r) + zeros; blank "9 ..." -> 0, not KeyError
+        expected = torch.tensor([100.0, 20 / 100, 40 / 100, 50 / 25, 4 / 10])
+        ok = torch.isfinite(x).all().item() and torch.allclose(x, expected, atol=1e-6)
+    print(f"[optional_asset_category_blank_case] raised={raised} -> {'PASS' if ok else 'FAIL'}")
+    return ok
+
+
 def borrowings_fallback_case() -> bool:
     """When '2 BORROWINGS' subtotal is unreported, denominator falls back to the
     sum of confirmed real sub-items a.-e. (Sec 8b/9.4 note on X^(5))."""
@@ -377,6 +412,7 @@ CASES = [
     unwatched_label_collision_case,
     multi_bank_interleaved_case,
     covariate_formula_case,
+    optional_asset_category_blank_case,
     borrowings_fallback_case,
     period_chronology_rollover_case,
     missing_field_raises_case,
@@ -402,6 +438,10 @@ def test_multi_bank_interleaved():
 
 def test_covariate_formula():
     assert covariate_formula_case()
+
+
+def test_optional_asset_category_blank():
+    assert optional_asset_category_blank_case()
 
 
 def test_borrowings_fallback():

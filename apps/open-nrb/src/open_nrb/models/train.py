@@ -134,7 +134,10 @@ def train_step(
             intended prior is uniform or the generative pi (Sec 10 open item).
         projection_config, reparam_config, train_config: hyperparameters for
             Algorithm 1, the reparameterized samplers, and
-            lambda_smooth/lambda_reg/recon_zero_tol/delta respectively.
+            lambda_smooth/lambda_reg/recon_zero_tol/delta/kl_beta respectively.
+            train_config.kl_beta (Eq. 9's beta_t) is read fresh on every call, so
+            a caller implementing KL annealing (Sec 10) just mutates
+            train_config.kl_beta between calls rather than passing a schedule in.
         generator: Optional torch.Generator for reproducible sampling.
 
     Returns:
@@ -155,7 +158,7 @@ def train_step(
 
     for period in batch:
         # Steps 2-3: temporal encoder (no GNN refinement -- optional, Sec 8c, not built)
-        h = model.encoder(period.X, h)
+        h = model.encoder(period.X, period.r, period.c, h)
 
         # Steps 4-5: block-assignment posterior + reparameterized sample (Eq. 7)
         q = F.softmax(model.posterior(h), dim=-1)
@@ -190,10 +193,17 @@ def train_step(
             smooth_terms.append((W_t - W_prev).pow(2).sum())
         W_prev = W_t
 
-    # Steps 16-18: smoothness, weight regularization, total loss
+    # Steps 16-18: smoothness, weight regularization, total loss (Eq. 9's beta_t
+    # anneals the KL term's weight -- see TrainStepConfig.kl_beta; defaults to 1.0,
+    # the original unweighted term, so callers that never set it are unaffected)
     L_smooth = torch.stack(smooth_terms).sum() if smooth_terms else torch.zeros((), device=device, dtype=dtype)
     L_reg = model.Lambda.pow(2).sum() + model.w.pow(2).sum()
-    loss = total_recon + total_kl + train_config.lambda_smooth * L_smooth + train_config.lambda_reg * L_reg
+    loss = (
+        total_recon
+        + train_config.kl_beta * total_kl
+        + train_config.lambda_smooth * L_smooth
+        + train_config.lambda_reg * L_reg
+    )
 
     # Step 19: backprop and optimizer step
     optimizer.zero_grad()

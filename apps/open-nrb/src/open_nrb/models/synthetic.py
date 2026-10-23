@@ -22,7 +22,7 @@ def sample_synthetic_network(
     Lambda: torch.Tensor,
     w: torch.Tensor,
     sigma2: torch.Tensor,
-    eta: torch.Tensor,
+    eta_block: torch.Tensor,
     cap: torch.Tensor,
     projection_config: CapacityProjectionConfig,
     config: SyntheticConfig,
@@ -42,7 +42,10 @@ def sample_synthetic_network(
         2. phi_i = exp(w^T X_i)                                     Eq. 2
         3. lambda_ij = Lambda[z_i, z_j] * phi_i * phi_j, i != j      Eq. 3 (no h_i.h_j
            term -- no history yet for a one-shot sample)
-        4. e_ij ~ Bernoulli(sigmoid(eta_ij))                         Eq. 4 existence gate
+        4. eta_ij = eta_block[z_i, z_j]                              Eq. 4 existence
+           e_ij ~ Bernoulli(sigmoid(eta_ij))                         logit, block-
+                                                                      structured same
+                                                                      as step 3's lambda
         5. W_tilde_ij = e_ij * LogNormal_sample(log(lambda_ij), sigma2)
         6. r, c = row/col sums of W_tilde (pre-projection marginals)
         7. W_true = CapacitatedProjection(W_tilde, r, c, cap)        Eq. 8, Algorithm 1
@@ -53,7 +56,14 @@ def sample_synthetic_network(
         Lambda: Block-pair intensity matrix (K, K), >= 0.
         w: Fitness weight vector (d,).
         sigma2: Log-normal dispersion (scalar tensor), > 0.
-        eta: Zero-inflation logits (N, N) -- Pr(W_ij != 0) = sigmoid(eta_ij).
+        eta_block: Block-pair zero-inflation logit matrix (K, K) -- Pr(W_ij != 0) =
+            sigmoid(eta_block[z_i, z_j]), mirroring how Lambda sets the block-pair edge
+            intensity (Eq. 3). Block-structured rather than a free (N, N) tensor so that
+            existence, not just magnitude, carries a block-dependent pattern the
+            amortized posterior q_psi(z) actually has a signal to recover -- an (N, N)
+            eta independent of z (an earlier version of this scenario-building code) left
+            the existence channel pure noise, giving training no incentive to learn z
+            through that path at all.
         cap: Per-row regulatory single-obligor cap (N,) = kappa * K_cap. Must be set
             generously enough relative to the sampled row sums (N * cap_i >= r_i) or
             step 7's projection has no feasible solution for that row -- the ground
@@ -83,8 +93,9 @@ def sample_synthetic_network(
     Lambda_zz = Lambda[z.unsqueeze(1), z.unsqueeze(0)]
     lam = Lambda_zz * phi.unsqueeze(1) * phi.unsqueeze(0)
 
-    # 4. Zero-inflated existence gate (Eq. 4)
-    e = torch.bernoulli(torch.sigmoid(eta), generator=generator)
+    # 4. Zero-inflated existence gate (Eq. 4), block-structured same as step 3's lambda
+    eta_zz = eta_block[z.unsqueeze(1), z.unsqueeze(0)]
+    e = torch.bernoulli(torch.sigmoid(eta_zz), generator=generator)
 
     # 5. Log-normal weight, gated by existence. torch.distributions.LogNormal.sample()
     # doesn't take a generator, so sample the underlying Normal directly (same

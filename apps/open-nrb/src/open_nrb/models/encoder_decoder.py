@@ -17,21 +17,31 @@ except ImportError:
 
 
 class TemporalEncoder(nn.Module):
-    """GRU temporal encoder, Eq. 6: h_{i,t} = GRU_theta(X_{i,t}, h_{i,t-1}).
+    """GRU temporal encoder, Eq. 6: h_{i,t} = GRU_theta([X_{i,t}; r_{i,t}; c_{i,t}], h_{i,t-1}).
 
     One GRUCell shared across all N banks -- N is just the batch dimension at call
     time (inferred from the input's shape), not fixed at construction. Only
     input_dim (d) and hidden_dim come from config, since those set the GRU's weight
-    matrix shapes and have to be fixed when the module is built.
+    matrix shapes and have to be fixed when the module is built. The GRU's actual
+    input width is input_dim + 2, not input_dim -- see forward()'s r_t/c_t args.
     """
 
     def __init__(self, config: EncoderDecoderConfig):
         super().__init__()
-        self.cell = nn.GRUCell(config.input_dim, config.hidden_dim)
+        self.cell = nn.GRUCell(config.input_dim + 2, config.hidden_dim)  # +2 for r_t, c_t
 
-    def forward(self, X_t: torch.Tensor, h_prev: torch.Tensor) -> torch.Tensor:
-        """X_t: (N, input_dim) covariates this period. h_prev: (N, hidden_dim)."""
-        return self.cell(X_t, h_prev)
+    def forward(self, X_t: torch.Tensor, r_t: torch.Tensor, c_t: torch.Tensor, h_prev: torch.Tensor) -> torch.Tensor:
+        """X_t: (N, input_dim) covariates this period. r_t, c_t: (N,) observed
+        interbank lending/borrowing marginals this period -- real, measured
+        aggregate fields (Sec 8), not derived from the model's own inference of
+        the latent bilateral W_t, so including them here isn't circular (Sec 4).
+        Without them, z (block membership) is unrecoverable from X alone: the
+        generative model draws z independently of X (Eq. 1 vs Eq. 2), so q_psi(z)
+        had no signal to learn from before this fix (Sec 10). h_prev: (N,
+        hidden_dim).
+        """
+        inputs = torch.cat([X_t, r_t.unsqueeze(-1), c_t.unsqueeze(-1)], dim=-1)
+        return self.cell(inputs, h_prev)
 
     def init_hidden(self, n: int, device=None, dtype=None) -> torch.Tensor:
         return torch.zeros(n, self.cell.hidden_size, device=device, dtype=dtype)

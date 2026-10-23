@@ -222,7 +222,7 @@
 
 \title{Bayesian Network Reconstruction of Interbank Exposures (Nepal)}
 \author{Krishna Neupane}
-\date{2026-10-22}
+\date{2026-10-23}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -235,8 +235,11 @@ text text
 Exposures
 (Nepal)}\label{paper-1-bayesian-network-reconstruction-of-interbank-exposures-nepal}
 
-\textbf{Status:} design settled, not yet implemented. \textbf{Target
-venue:} ICLR / NeurIPS / ICAIF, ≤7 pages.
+\textbf{Status:} core algorithms (capacitated projection, synthetic
+generator, amortized training step) implemented and unit-tested; first
+end-to-end synthetic validation experiment (§6/§12) running and under
+active iteration --- not yet a final result. \textbf{Target venue:} ICLR
+/ NeurIPS / ICAIF, ≤7 pages.
 
 \textbf{One-line description:} Reconstruct the latent bilateral
 interbank exposure matrix \(W_t\) for Nepali BFIs from NRB bulletin
@@ -267,39 +270,25 @@ problem of statistical inference under partial observability, not
 analysis over a topology that is already known or self-reported.
 (Revisit/tighten this paragraph later --- current form is a first pass.)
 
-\textbf{Contribution to policy.}
-
-\begin{itemize}
-\item
-  Zero New Reporting Burden: No central bank in a resource-constrained
-  setting is going to mandate new bilateral exposure reporting purely
-  for a research exercise --- that is a costly, politically slow
-  regulatory change. The contribution here is that this doesn't require
-  that change: a usable, continuously-updatable estimate of systemic
-  interconnectedness is produced from data NRB (or any
-  similarly-resourced central bank) already publishes every month, with
-  zero new reporting burden. That is, by relying exclusively on
-  aggregate publicly available data, the model requires zero new
-  regulatory compliannce overhead.
-\item
-  Unlocking an answerable Supervisory Question: At present, there is no
-  way to ask \emph{who is exposed to whom} or \emph{which banks are
-  structurally systemic} --- not because the question doesn't matter,
-  but because answering it was assumed to require data that isn't
-  collected. \textbf{This method shows it doesn't.} It converts a
-  previously unanswerable supervisory question into an answerable one,
-  cheaply, and produces a reusable pipeline that other analyses can plug
-  into. In summary, the \emph{data barrier} can be bypassed
-  computationally. The method hence turns the blind spot in systemic
-  risk monitoring into generalized framework providing where the future
-  policy framework implemention can and should be aimed at.
-\item
-  Generalization: This also generalizes beyond Nepal: most
-  emerging-market central banks publish the same kind of aggregate
-  call-report data and face the identical constraint, so the method is a
-  template for resource-constrained regulators broadly, not a
-  Nepal-specific workaround.
-\end{itemize}
+\textbf{Contribution to policy.} No central bank in a
+resource-constrained setting is going to mandate new bilateral exposure
+reporting purely for a research exercise --- that is a costly,
+politically slow regulatory change. The contribution here is that this
+doesn't require that change: a usable, continuously-updatable estimate
+of systemic interconnectedness is produced from data NRB (or any
+similarly-resourced central bank) already publishes every month, with
+zero new reporting burden. Put to a central banker directly: today there
+is no way to ask ``who is exposed to whom'' or ``which banks are
+structurally systemic'' --- not because the question doesn't matter, but
+because answering it was assumed to require data that isn't collected.
+This method shows it doesn't. It converts a previously unanswerable
+supervisory question into an answerable one, cheaply, and produces a
+reusable pipeline that other analyses (stress tests, contagion
+simulations, Paper 2's spillover estimation) can plug into. This also
+generalizes beyond Nepal: most emerging-market central banks publish the
+same kind of aggregate call-report data and face the identical
+constraint, so the method is a template for resource-constrained
+regulators broadly, not a Nepal-specific workaround.
 
 \subsection{1. Why this is its own
 paper}\label{why-this-is-its-own-paper}
@@ -326,18 +315,16 @@ Meaning
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-\(i, j \in \{1,...,N\}\) & individual banking and financial
-institutions \\
+\(i, j \in \{1,...,N\}\) & institutions (BFIs) \\
 \(t \in \{1,...,T\}\) & periods (NRB bulletin months) \\
-\(X_{i,t} \in \mathbb{R}^d\) & observed node covariates for bank \(i\)
-at time \(t\) \\
+\(X_{i,t} \in \mathbb{R}^d\) & node covariates for bank \(i\) at time
+\(t\) \\
 \(r_{i,t}, c_{i,t} \ge 0\) & observed interbank lending / borrowing
 marginals \\
-\(K_{i,t}\) & core capitalof the bank, that defines the the regulatory
-single-obligor cap) \\
-\(W_t \in \mathbb{R}_{\ge 0}^{N \times N}\) & The true \textbf{latent}
-bilateral interbank exposure matrix --- never observed, the
-reconstruction target \\
+\(K_{i,t}\) & core capital (used to set the regulatory single-obligor
+cap) \\
+\(W_t \in \mathbb{R}_{\ge 0}^{N \times N}\) & \textbf{latent} bilateral
+exposure matrix --- never observed, the reconstruction target \\
 \(z_i \in \{1,...,K\}\) & latent block/tier membership (e.g.~core
 vs.~periphery) \\
 \end{longtable}
@@ -347,105 +334,98 @@ vs.~periphery) \\
 \begin{itemize}
 \tightlist
 \item
-  Block membership: Banks are sorted into latent tiers (SBM priors) :
-  \(z_i \sim \text{Categorical}(\pi)\) --- (Eq. 1).
+  Block membership: \(z_i \sim \text{Categorical}(\pi)\) --- (Eq. 1)
 \item
   Block-pair intensity: \(\Lambda \in \mathbb{R}_{\ge0}^{K\times K}\)
   --- the SBM core
 \item
-  Fitness/degree-correction from covariates: bank baseline activity
-  scales with covariates: \(\phi_{i,t} = \exp(w^\top X_{i,t})\) --- (Eq.
-  2)
+  Fitness/degree-correction from covariates:
+  \(\phi_{i,t} = \exp(w^\top X_{i,t})\) --- (Eq. 2)
 \item
-  Bilateral Latent edge intensity: the exposure magnigute is a fucntion
-  of tier interaction and invidivudal fitness.
+  Latent edge intensity:
   \[\lambda_{ij,t} = \Lambda_{z_i z_j} \cdot \phi_{i,t}\phi_{j,t} \cdot \exp(h_{i,t}^\top h_{j,t}) \qquad \text{(Eq. 3)}\]
 \item
-  Zero-inflated edge weight (most bank pairs have \emph{no} exposure).
-  The edges are modeled via hurle process - a Bernoulli gate determines
-  connection existence, followed by a LogNormal distribution for
-  positive exposure volumes:
+  Zero-inflated edge weight (most bank pairs have \emph{no} exposure):
   \[\Pr(\tilde W_{ij,t}=0) = \sigma(-\eta_{ij,t}), \qquad \tilde W_{ij,t} \mid \tilde W_{ij,t}>0 \sim \text{LogNormal}(\log\lambda_{ij,t}, \sigma^2) \qquad \text{(Eq. 4)}\]
 \item
   Marginals are a \textbf{deterministic function} of \(W_t\):
   \[r_{i,t} = \sum_j W_{ij,t}, \qquad c_{j,t} = \sum_i W_{ij,t} \qquad \text{(Eq. 5)}\]
   This means the marginal constraint belongs in the \emph{architecture}
-  (a hard projection), not the likelihood --- see §5. Rows and columns
-  sums mach observed micro-prudential totals (\(r_{i,t}, c_{i,t}\)),
-  enforced strictly via the Sinkhorn projection layer rather than soft
-  likelihood penalties.
+  (a hard projection), not the likelihood --- see §5.
 \end{itemize}
 
 \subsection{4. Inference network (amortized, PyG GNN +
 GRU)}\label{inference-network-amortized-pyg-gnn-gru}
 
+The encoder runs on covariates/history only --- it cannot message-pass
+over \(W_t\) itself, since that would be circular (the whole point is
+that \(W_t\) is unobserved).
+
 \begin{itemize}
-\item
-  Design Principle: The encoder processes covariates/history only --- it
-  cannot message-pass over \(W_t\) itself, since that would be circular
-  (the whole point is that \(W_t\) is unobserved). This design principle
-  is implemented because in the standard graph autoencodersv(GAEs), the
-  adjacency matrix defined by bilateral or multilateral relationshhips
-  is an input to encoder which in turn uses message-passing across
-  \emph{known connections} to learn the node embeddings. In the current
-  context, the true interbank (\(W_t\)) network is not known publicly -
-  that is why the paper aims to \emph{reconstruct} interbank network
-  from publicly available data. Because the encoder has an input
-  \(W_t\), but the goal is to figure out the what \(W_t\) is, then
-  modeling is trapped into logical circularity which is why this
-  principle is adopted in order answer before it becomes burden in
-  downstream task.
+\tightlist
 \item
   Temporal encoder:
-  \(h_{i,t} = \text{GRU}_\theta(X_{i,t}, h_{i,t-1}) \qquad \text{(Eq. 6)}\),
+  \(h_{i,t} = \text{GRU}_\theta([X_{i,t}; r_{i,t}; c_{i,t}], h_{i,t-1}) \qquad \text{(Eq. 6)}\),
   optionally refined by a GNN layer over an auxiliary \emph{observed}
-  graph if one exists (e.g.~common-sector exposure --- see §8).
+  graph if one exists (e.g. common-sector exposure --- see §8).
+  \(r_{i,t}, c_{i,t}\) (observed interbank lending/borrowing marginals
+  --- real, measured aggregate fields, not derived from the model's own
+  inference of the latent \(W_t\), so this doesn't violate the
+  no-message-passing-over-\(W_t\) rule above) were added to the
+  encoder's input after the first synthetic validation run showed block
+  recovery is \emph{impossible} from \(X\) alone: \(z\) is drawn
+  independently of \(X\) (Eq. 1 vs.~Eq. 2), so \(q_\psi(z)\) conditioned
+  on \(X\)-history only has no signal to learn from, no matter how the
+  KL term in Eq. 9 is weighted (§10).
 \item
   Amortized block-assignment posterior:
-  \(q_\psi(z_i \mid X_{i,1:t}) = \text{Categorical}(\text{softmax}(\text{MLP}_\psi(h_{i,t}))) \qquad \text{(Eq. 7)}\)
+  \(q_\psi(z_i \mid X_{i,1:t}, r_{i,1:t}, c_{i,1:t}) = \text{Categorical}(\text{softmax}(\text{MLP}_\psi(h_{i,t}))) \qquad \text{(Eq. 7)}\)
 \item
   Pairwise decoder produces \((\eta_{ij,t}, \lambda_{ij,t})\) from
   \((h_{i,t}, h_{j,t}, z_i, z_j)\) --- full amortized variational
   posterior \(q_\psi(W_t \mid X_{1:t}, r_t, c_t)\)
 \item
-  Reparameterized sampling: Generates log-normal reparam trick for the
-  continuous weight, and Gumbel-softmax for the discrete existence gate.
+  Reparameterized sampling: log-normal reparam trick for the continuous
+  weight, Gumbel-softmax for the discrete existence gate.
 \end{itemize}
 
-\subsection{5. Constraint-satisfaction layer (the technical
-core)}\label{constraint-satisfaction-layer-the-technical-core}
+\subsection{5. Constraint-satisfaction layer (the technical core of the
+paper)}\label{constraint-satisfaction-layer-the-technical-core-of-the-paper}
 
-Differentiable \textbf{capacitated Sinkhorn / entropic-optimal transport
-projection}:
+Differentiable \textbf{capacitated marginal projection}, via Dykstra's
+alternating-projections algorithm (an ADMM-family method) onto the
+intersection of three convex sets:
 
-\[W_t = \text{Sinkhorn}_{\text{cap}}(\tilde W_t;\; r_t, c_t, \kappa K_t) \qquad \text{(Eq. 8)}\]
+\[W_t = \text{Proj}_{\mathcal{R}\cap\mathcal{C}\cap\mathcal{B}}(\tilde W_t) \qquad \text{(Eq. 8)}\]
 
-Enforces, exactly and differentiably:
+where \(\mathcal{R} = \{W : \sum_j W_{ij}=r_{i,t}\}\),
+\(\mathcal{C} = \{W : \sum_i W_{ij}=c_{j,t}\}\),
+\(\mathcal{B} = \{W : 0 \le W_{ij} \le \kappa K_{i,t}\ \forall j\}\) ---
+i.e.~the nearest-in-Euclidean- norm matrix to \(\tilde W_t\) that
+satisfies the observed marginals and the regulatory single-obligor cap
+\emph{exactly}, not approximately.
 
-\begin{itemize}
-\tightlist
-\item
-  \begin{enumerate}
-  \def\labelenumi{\arabic{enumi}.}
-  \tightlist
-  \item
-    row/column marginals match the observed \(r_{i,t}, c_{i,t}\)
-  \end{enumerate}
-\item
-  \begin{enumerate}
-  \def\labelenumi{\arabic{enumi}.}
-  \setcounter{enumi}{1}
-  \tightlist
-  \item
-    the regulatory single-obligor cap \(W_{ij,t} \le \kappa K_{i,t}\)
-  \end{enumerate}
-\end{itemize}
+\textbf{Revision note (superseded design):} an earlier draft used a
+capacitated Sinkhorn/entropic-OT iteration with a \texttt{min(...)}
+row-scalar clip to enforce the cap. \texttt{test\_sinkhorn.py}'s
+\texttt{binding\_cap\_case} showed this doesn't implement
+\(\mathcal{B}\) at all --- a single row-scalar \(u_i\) can only rescale
+an entire row uniformly, so ``clip to satisfy the cap'' collapsed into
+capping the \emph{row sum} (\(\sum_j W_{ij} \le \kappa K_{i,t}\)) rather
+than \emph{each entry} (\(W_{ij} \le \kappa K_{i,t}\ \forall j\)) --- a
+materially different, and wrong, constraint (total interbank activity
+vs.~concentration to any one counterparty). Plain (uncapped)
+Sinkhorn/IPF is still used, unmodified, as the classical
+Gandy-Veraart/RAS baseline in §7/§12 --- that comparison never needed
+the cap in the first place, so it's unaffected by this fix.
 
-References: Cuturi (2013) entropic OT; Mena et al.~(2018)
-Gumbel-Sinkhorn. Flagged explicitly as ``the one genuinely nontrivial
-implementation piece'' in the design discussion --- this is the part
-most likely to need real engineering effort, not the GNN/GRU scaffolding
-around it.
+References: Cuturi (2013) entropic OT (for the uncapped baseline); Boyle
+\& Dykstra (1986) for the alternating-projection algorithm; Mena et
+al.~(2018) Gumbel-Sinkhorn (unrelated to this layer --- that's the
+discrete existence gate, Eq. 4). Flagged explicitly as ``the one
+genuinely nontrivial implementation piece'' in the design discussion ---
+this is the part most likely to need real engineering effort, not the
+GNN/GRU scaffolding around it.
 
 \textbf{Correction vs.~the earlier \texttt{feature\_model\_mapping.md}:}
 there is no ``Bayesian-net structural-constraint edge'' tying
@@ -457,37 +437,65 @@ component of the generative model or the constraint layer.
 
 \subsection{6. Training objective}\label{training-objective}
 
-\[\mathcal{L} = -\mathbb{E}_q[\log p(W_t^{\text{true}})]_{\text{synthetic only}} + \text{KL}(q_\psi(z)\,\|\,p(z)) + \lambda_{\text{smooth}}\sum_t \|W_t - W_{t-1}\|_F^2 + \lambda_{\text{reg}}\|\Lambda, w\|^2\]
+\[\mathcal{L} = -\mathbb{E}_q[\log p(W_t^{\text{true}})]_{\text{synthetic only}} + \beta_t\,\text{KL}(q_\psi(z)\,\|\,p(z)) + \lambda_{\text{smooth}}\sum_t \|W_t - W_{t-1}\|_F^2 + \lambda_{\text{reg}}\|\Lambda, w\|^2\]
 
 \begin{itemize}
 \item
-  \textbf{Synthetic Validation data} (known ground-truth \(W_t\) from an
-  SBM generator): the first term is a real supervised reconstruction
-  loss --- this is the main validation evidence. That, when training on
-  synthetic data generated via the SBM (where the true networks
-  \(W_t^{true}\) are known), the first term acts as a suprvised
-  reconstruction loss, which in turn serves as the primary validation of
-  the model's accuracy.
+  \textbf{\(\beta_t\) (KL annealing weight)}: added after the first
+  synthetic validation run showed the unweighted (\(\beta_t = 1\)
+  always) KL term collapsing \(q_\psi(z)\) to the uniform prior almost
+  immediately (§10) --- the block-assignment posterior was getting worse
+  than a trivial majority-guess baseline as training proceeded, even
+  while the reconstruction likelihood kept improving via the decoder's
+  direct use of \(h\). \(\beta_t\) ramps linearly \(0 \to \beta_{\max}\)
+  over the first \texttt{KL\_WARMUP\_EPOCHS} epochs (standard
+  \(\beta\)-VAE warm-up), giving \(q_\psi(z)\) room to latch onto block
+  signal before the KL penalty pulls it toward \(p(z)\).
+  \textbf{\(\beta_{\max} < 1\) (not \(1\))}: after the Eq. 6-7 encoder
+  fix (feeding \(r_t, c_t\) in) made real block recovery possible ---
+  block-recovery accuracy peaked at 0.85, well above the trivial
+  baseline, while \(\beta_t\) was still small --- annealing all the way
+  to \(\beta_t = 1\) reproduced the same collapse on a delay: accuracy
+  decayed back toward/below the trivial baseline in lockstep with
+  \(\beta_t\)'s climb, well before warm-up even finished. So the fix
+  wasn't ramp \emph{speed}, it was the \emph{ceiling}: \(\beta_t = 1\)
+  always eventually out-competes whatever reconstruction-gradient signal
+  keeps \(q_\psi(z)\) informative. Current value:
+  \(\beta_{\max} = 0.15\) (\texttt{KL\_BETA\_MAX} in the synthetic
+  experiment script) --- \textbf{validated}: a full 3000-epoch re-run
+  with this cap held block-recovery accuracy at 0.7578--0.7682
+  throughout (vs.~that run's trivial baseline of 0.7344) rather than
+  decaying back down, with \(\text{KL}\) stabilizing around 266 instead
+  of collapsing to \textasciitilde0; see §10 for the caveat on how large
+  a margin this actually is.
 \item
-  \textbf{Real data} (no \(W_t\) is ever observed): When applied to a
-  real world central bank data where \(W_t\) is unobserved, the
-  supervised reconstruction term drops out entirely, the first term
-  drops out entirely. What's left is a regularized/MAP-style constrained
-  fit, \emph{not} likelihood-based estimation. That is, in a standard
-  statiscal or ML models, the model looks into observed ground trught
-  answers (eg \(W_t^{true}\)). The model is trained by calculating the
-  likelihood of model's guesses against the actual answers followed by
-  parameter optimization to maximize the likelhood. However in this
-  case, the true \(W_t^{true}\) does not exist in publicly available
-  data, therefore a Maximum Likelhood calculation falls apart.
-  Therefore, by implementing MAP instead of model fitting into known
-  potentially right answers, the model aims to learn the most possible
-  configuration of the network given the structural priors (eg latent
-  tiers \(z_i\)) and regulatory rules.
+  \textbf{Synthetic data} (known ground-truth \(W_t\) from an SBM
+  generator): the first term is a real supervised reconstruction loss
+  --- this is the main validation evidence.
 \item
-  Real World Evaluation: Evaluation on real data has to rely on indirect
-  evidence: temporal stability of the recovered \(W_t\) sequence, and
-  comparison against a classical baseline (§8).
+  \textbf{Real data} (no \(W_t\) is ever observed): the first term drops
+  out entirely. What's left is a regularized/MAP-style constrained fit,
+  \emph{not} likelihood-based estimation. Evaluation on real data has to
+  rely on indirect evidence: temporal stability of the recovered \(W_t\)
+  sequence, and comparison against a classical baseline (§8).
+\item
+  \textbf{Point estimate at inference/evaluation time}: training
+  (Algorithm 3) samples \(z, e, W\) via the reparameterized
+  Gumbel-softmax/Gumbel-sigmoid/log-normal draws so gradients can flow,
+  but reporting \(\hat W_t\) from a single such draw carries irreducible
+  sampling variance even once \((\eta, \lambda, q)\) are well-calibrated
+  --- this showed up empirically as a flat/noisy
+  \texttt{model\_rel\_error} in the first synthetic run while the
+  reconstruction likelihood term improved steadily underneath it. At
+  inference/evaluation time, \(\hat W_t\) should instead be built from
+  the posterior-predictive \textbf{mean} at each stage: \(q_\psi(z)\)
+  itself (no Gumbel-softmax draw), \(\sigma(\eta)\) for existence (no
+  Gumbel-sigmoid draw), and \(\lambda \cdot e^{\sigma^2/2}\) for
+  magnitude (the log-normal mean, no reparameterized draw) --- then
+  project through Algorithm 1 as usual. This is a deliberate design
+  decision, not just an experiment-script detail: it governs how both
+  the synthetic validation (§12) and the real-data baseline comparison
+  (§7) numbers get computed.
 \end{itemize}
 
 \subsection{7. Design rationale}\label{design-rationale}
@@ -704,12 +712,12 @@ Transformation
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-\(r_{i,t}\) & Eq. (5), (8) & \texttt{a.\ Interbank\ Lending} (sub-item
-of \texttt{3\ SHARE\ \&\ OTHER\ INVESTMENT}) & Balance Sheet, Assets &
+\(r_{i,t}\) & Eq. (5), (6), (7), (8) & \texttt{a.\ Interbank\ Lending}
+(sub-item of \texttt{3\ SHARE\ \&\ OTHER\ INVESTMENT}) & Balance Sheet,
+Assets & identity (reported value) \\
+\(c_{i,t}\) & Eq. (5), (6), (7), (8) & \texttt{b.\ Interbank\ Borrowing}
+(sub-item of \texttt{2\ BORROWINGS}) & Balance Sheet, Liabilities &
 identity (reported value) \\
-\(c_{i,t}\) & Eq. (5), (8) & \texttt{b.\ Interbank\ Borrowing} (sub-item
-of \texttt{2\ BORROWINGS}) & Balance Sheet, Liabilities & identity
-(reported value) \\
 \(K_{i,t}\) & Eq. (8), \(\kappa K_{i,t}\) cap &
 \texttt{1\ CAPITAL\ FUND} & Balance Sheet, Liabilities & identity
 (reported value) --- note: raw value here, \emph{not} the ratio used in
@@ -737,8 +745,9 @@ denominator falls back to the sum of \texttt{a.}--\texttt{e.} sub-items
 \(\Lambda\) & Eq. (3) & --- & --- & \textbf{learned} (\(K\times K\)
 block-pair intensity matrix) \\
 \(h_{i,t}\) & Eq. (3), (6), (7) & \(X^{(1\text{-}5)}_{i,t}\) (all 5
-covariates, fed in as the GRU input vector) & --- & \textbf{learned
-embedding}, GRU output --- not read directly off any single field \\
+covariates) and the observed marginals \(r_{i,t}, c_{i,t}\),
+concatenated as the GRU input vector & --- & \textbf{learned embedding},
+GRU output --- not read directly off any single field \\
 \(\theta\) (GRU weights) & Eq. (6) & --- & --- & \textbf{learned} \\
 \(\psi\) (posterior-net weights) & Eq. (7) & --- & --- &
 \textbf{learned} \\
@@ -811,6 +820,14 @@ model)}\label{known-data-pipeline-caveats-apply-before-this-goes-into-the-model}
   extraction order). The extractor should carry this parent link
   explicitly (a \texttt{parent\_item} or \texttt{section} column) rather
   than requiring every consumer to replay the state machine itself.
+  \textbf{Side can differ across the same reused label, too}:
+  \texttt{e.\ \ \ \ Others} appears under both \texttt{3\ DEPOSITS}
+  (Liabilities) and \texttt{8\ OTHER\ ASSETS} (Assets) in the same
+  bulletin (confirmed \texttt{Asar-2074.pdf}/NBL, 2026-10-22).
+  Side-consistency checks therefore must only be enforced for the small
+  set of labels the model actually reads (§8b/§8e's 8 fields) ---
+  requiring every label in the bulletin to resolve to one consistent
+  side will raise on this kind of legitimate, unrelated collision.
 \item
   \textbf{Truncated-text duplicate rows}: some extractions clip a label
   mid-word (e.g.~\texttt{4\ LOANS\ \&} alongside the correct
@@ -819,6 +836,37 @@ model)}\label{known-data-pipeline-caveats-apply-before-this-goes-into-the-model}
   Confirmed via \texttt{cut\ -d,\ -f7,8\ ...\ \textbar{}\ sort\ -u} on
   the real CSV (2026-10-22). Treat these as the same field (prefix match
   or longest-label-wins), not as missing data for the truncated variant.
+\item
+  \textbf{Pre-2075-era bulletins never extract a
+  \texttt{TOTAL\ Liabilities} marker row at all} (confirmed against real
+  \texttt{Asar-2074.pdf}, 2026-10-22) --- the Liabilities section just
+  ends and the Assets section starts back at \texttt{item\_code\ "1"}
+  with no boundary row to key off. Side inference needs a fallback for
+  this era that doesn't depend on the marker existing: a drop back to a
+  lower top-level bare-digit \texttt{item\_code} while still in the
+  Liabilities state is itself the side boundary (top-level codes
+  strictly increase within one side).
+\item
+  \textbf{Real bulletins extract row-major by line item, interleaved
+  across banks} --- bank A's row for item N is immediately followed by
+  bank B's row for item N, not bank A's entire sheet followed by bank
+  B's (confirmed 2026-10-22; caused a live ``inconsistent side'' error
+  before this was known). Side inference must replay its
+  liabilities/assets state machine \textbf{per
+  \texttt{(source\_file,\ bfi\_name)} bank-block}, re-sorted by original
+  extraction order --- not as one shared state machine over the raw file
+  order --- or one bank's \texttt{TOTAL\ LIABILITIES} marker flips the
+  state for every other bank's very next row too.
+\item
+  \textbf{Blank value cells are dropped from extraction entirely, not
+  reported as a zero.} A row with an empty value field (seen on
+  optional/granular categories some banks don't report,
+  e.g.~\texttt{9\ EXPENSES\ \ \ \ NOT\ WRITTEN\ OFF}) is simply absent
+  from that bank/period's record, not present with value 0. Any field
+  built by summing a fixed list of categories (e.g.~the \texttt{size}
+  covariate, §8b) must treat a missing category as 0 explicitly rather
+  than looking it up strictly --- a strict lookup wrongly drops the
+  entire bank/period cell over one legitimately-absent optional row.
 \end{enumerate}
 
 \subsection{10. Open items (not yet
@@ -841,488 +889,190 @@ decided)}\label{open-items-not-yet-decided}
   guarantees for a downstream interference estimator (which would also
   strengthen the Paper 1 → Paper 2 link). \textbf{Not resolved} ---
   needs a decision before drafting.
+\item
+  \textbf{Posterior collapse on the block-assignment KL term --- root
+  cause identified, architecture fix plus capped KL ceiling validated to
+  sustain block recovery, margin-above-baseline still modest}: Eq. 9's
+  \(\text{KL}(q_\psi(z)\|p(z))\) under the original unweighted
+  (\(\beta_t = 1\) always) term collapsed to \textasciitilde0 almost
+  immediately in the first synthetic validation run. A direct check
+  (\texttt{argmax(q)} vs.~the synthetic ground-truth \(z\), best
+  accuracy over label permutations since block labels are
+  unidentifiable) confirmed this is real collapse, not just a
+  small-but-harmless KL value: block-recovery accuracy \emph{fell below}
+  the trivial ``always guess the majority block'' baseline
+  (\texttt{max(pi)}, not \(1/K\), since \texttt{pi} is imbalanced) as
+  training proceeded. This persisted even after §11 Algorithm 2's
+  existence-gate fix (giving \(\eta\) a block-dependent structure via
+  \texttt{eta\_block}, mirroring \(\Lambda\)) and after \(\beta_t\) KL
+  annealing (linear warm-up, §6, \texttt{TrainStepConfig.kl\_beta}):
+  annealing stopped block-recovery accuracy from falling \emph{below}
+  the trivial baseline, but it only ever plateaued exactly at that
+  baseline, never above it. Root cause: \(q_\psi(z_i)\), prior to the
+  Eq. 6-7 fix, was conditioned on \(X_{i,1:t}\) alone --- but the
+  generative model draws \(z_i\) (Eq. 1) and \(X_i\) (Eq. 2)
+  independently, so the encoder had \emph{zero} information from which
+  to ever recover \(z\) above the trivial majority-class floor,
+  regardless of how the loss is reweighted. Fix: the encoder's input was
+  widened to \([X_{i,t}; r_{i,t}; c_{i,t}]\) --- the observed interbank
+  lending/borrowing marginals, which \emph{are} functions of \(z\)
+  through \(\Lambda[z_i,z_j]\) --- matching §4's own already-stated (but
+  previously unimplemented) intent of
+  \(q_\psi(W_t \mid X_{1:t}, r_t, c_t)\). The first re-run with it in
+  place showed block-recovery accuracy \emph{peak at 0.85} --- well
+  above the trivial baseline --- confirming \(r_t, c_t\) do carry real
+  block signal once the encoder can see them, but accuracy then decayed
+  back toward/below the trivial baseline as \(\beta_t\) annealed toward
+  \(1\): annealing to a full \(\beta_t=1\) reproduces the original
+  collapse on a delay, this time by out-competing a signal that
+  \emph{does} exist rather than one that never did. Mitigation: cap
+  \(\beta_t\)'s asymptote at \(\beta_{\max} = 0.15 < 1\) instead of
+  annealing to \(1\) (§6). \textbf{Validated}: a full 3000-epoch re-run
+  with this cap held block-recovery accuracy at 0.7578--0.7682 for the
+  entire run (epoch 200 through 2999), against that run's trivial
+  baseline of 0.7344 --- \(\text{KL}\) stabilized around 266 rather than
+  collapsing, and \(\hat W_t\)'s relative Frobenius error kept improving
+  in parallel (to 0.4297, vs.~baseline 0.5965), so both channels are
+  healthy simultaneously now. \textbf{New open item --- margin size}:
+  the sustained gap above baseline is real but modest (roughly 3 points,
+  \textasciitilde0.76 vs.~\textasciitilde0.73) and plateaus rather than
+  keeps climbing --- a stable equilibrium, not a trajectory still
+  improving. Whether this margin is strong enough to support the paper's
+  claim that ``the model identifies which banks are core'' (vs.~only
+  ``recovers block structure better than chance'') is \textbf{not
+  resolved} --- candidates to widen the margin if needed: longer
+  training, more capacity in \texttt{BlockPosteriorMLP}, or retuning
+  \(\beta_{\max}\) lower still.
 \end{itemize}
 
 \subsection{11. Algorithms (pseudocode)}\label{algorithms-pseudocode}
 
-Three algorithms, in dependency order: the capacitated Sinkhorn
-projection (the hard constraint layer, Eq. 8) is standalone and testable
-without the rest of the model; the generative forward pass (Eq. 1--5, 8)
-samples a synthetic \(W_t\) for validation; training (Eq. 6--9) wraps
-the amortized encoder/decoder of §4 around the same projection layer.
-All three are written over \emph{symbol-level} inputs
-(\(N, K, d, \kappa\), etc.) --- nothing below is a fixed dataset size or
-constant; see §12 for how these get threaded through as config, not
-literals.
+Three algorithms, in dependency order: the capacitated projection (the
+hard constraint layer, Eq. 8) is standalone and testable without the
+rest of the model; the generative forward pass (Eq. 1-5, 8) samples a
+synthetic \(W_t\) for validation; training (Eq. 6-9) wraps the amortized
+encoder/decoder of §4 around the same projection layer. All three are
+written over \emph{symbol-level} inputs (\(N\), \(K\), \(d\),
+\(\kappa\), etc.) --- nothing below is a fixed dataset size or constant;
+see §12 for how these get threaded through as config, not literals.
 
-\begin{algorithm}
-\caption{\textsc{CapacitatedSinkhornProjection} (Eq. 8)}
-\begin{algorithmic}[1]
-\Require $\tilde{W} \in \mathbb{R}_{\ge 0}^{N \times N}$ (raw/sampled edge weights), $r, c \in \mathbb{R}_{\ge 0}^N$ (target marginals), $\text{cap} \in \mathbb{R}_{\ge 0}^N$ (per-row cap, $\text{cap}_i = \kappa \cdot K_{i,t}$), $\varepsilon > 0$ (entropic regularization), $n_{\text{iters}}, \text{tol}$ (stopping criteria)
-\Ensure $W \in \mathbb{R}_{\ge 0}^{N \times N}$ satisfying row/col marginals and $W_{ij} \le \text{cap}_i$ exactly
-\State $\text{Kern} \leftarrow \exp(\log(\tilde{W} + \delta) / \varepsilon)$ \Comment{$\delta$ tiny avoids $\log(0)$; config, not literal}
-\State $u \leftarrow \mathbf{1}_N$; $v \leftarrow \mathbf{1}_N$
-\For{$\text{iter} = 1 \dots n_{\text{iters}}$}
-    \State $u_{\text{new}} \leftarrow r / (\text{Kern} \cdot v)$
-    \State $u_{\text{new}} \leftarrow \min\left(u_{\text{new}}, \text{cap} / (\text{Kern} \cdot v)\right)$ \Comment{Enforce row-wise cap}
-    \State $v_{\text{new}} \leftarrow c / (\text{Kern}^T \cdot u_{\text{new}})$
-    \If{$\|u_{\text{new}} - u\| < \text{tol}$ \textbf{and} $\|v_{\text{new}} - v\| < \text{tol}$} \State \textbf{break}
-    \EndIf
-    \State $u, v \leftarrow u_{\text{new}}, v_{\text{new}}$
-\EndFor
-\State $W \leftarrow \text{diag}(u) \cdot \text{Kern} \cdot \text{diag}(v)$
-\State \textbf{return} $W$
-\end{algorithmic}
-\end{algorithm}
-\begin{algorithm}
-\caption{\textsc{SampleSyntheticNetwork} (Eq. 1–5, 8; ground truth for validation, §6)}
-\begin{algorithmic}[1]
-\Require $N, K, d$ (problem dimensions), $\pi \in \Delta^K, \Lambda \in \mathbb{R}_{\ge 0}^{K \times K}, w \in \mathbb{R}^d, \sigma^2$ (generative params), $X_{1:N} \in \mathbb{R}^{N \times d}$ (covariates), $\kappa, K_{\text{cap}} \in \mathbb{R}^N$ (regulatory cap inputs)
-\Ensure $W_{\text{true}} \in \mathbb{R}_{\ge 0}^{N \times N}, r, c \in \mathbb{R}^N$ (ground-truth network + marginals)
-\For{$i = 1 \dots N$} 
-    \State $z_i \sim \text{Categorical}(\pi)$ \Comment{Eq. 1}
-\EndFor
-\For{$i = 1 \dots N$} 
-    \State $\varphi_i \leftarrow \exp(w^T X_i)$ \Comment{Eq. 2}
-\EndFor
-\For{$i, j = 1 \dots N$ ($i \neq j$)}
-    \State $\lambda_{ij} \leftarrow \Lambda[z_i, z_j] \cdot \varphi_i \cdot \varphi_j$ \Comment{Eq. 3}
-    \State $e_{ij} \sim \text{Bernoulli}(\sigma(\eta_{ij}))$ \Comment{Eq. 4, zero-inflation param}
-    \State $\tilde{W}_{ij} \leftarrow e_{ij} \cdot \text{LogNormalSample}(\log \lambda_{ij}, \sigma^2)$
-\EndFor
-\State $r \leftarrow \text{row\_sums}(\tilde{W})$; $c \leftarrow \text{col\_sums}(\tilde{W})$
-\State $W_{\text{true}} \leftarrow \textsc{CapacitatedSinkhornProjection}(\tilde{W}, r, c, \kappa \cdot K_{\text{cap}})$ \Comment{Eq. 8}
-\State \textbf{return} $W_{\text{true}}, \text{row\_sums}(W_{\text{true}}), \text{col\_sums}(W_{\text{true}})$
-\end{algorithmic}
-\end{algorithm}
-\begin{algorithm}
-\caption{\textsc{TrainStep} (Eq. 6–9; amortized inference + one optimizer step)}
-\begin{algorithmic}[1]
-\Require Batch of periods $\{X_{1:N,t}, r_t, c_t, K_t\}_{t \in \text{batch}}$, optional $W_{\text{true},t}$, model params $\theta, \psi, \Lambda, w, \sigma^2$, hyperparams $\lambda_{\text{smooth}}, \lambda_{\text{reg}}, \kappa$
-\Statex \textbf{State:} $h_{i,t-1}$ carried across periods (GRU hidden state)
-\Ensure Loss value; updated $\theta, \psi, \Lambda, w$ after one gradient step
-\For{$t \in \text{batch}$ (temporal order)}
-    \For{$i = 1 \dots N$}
-        \State $h_{i,t} \leftarrow \text{GRU}_\theta(X_{i,t}, h_{i,t-1})$ \Comment{Eq. 6}
-        \State [Optional] $h_{i,t} \leftarrow \text{GNN\_refine}(h_{i,t}, A_{\text{obs},t})$ \Comment{§4, §8c}
-        \State $q_i \leftarrow \text{softmax}(\text{MLP}_\psi(h_{i,t}))$ \Comment{Eq. 7}
-        \State $z_i \sim \text{GumbelSoftmaxSample}(q_i)$ \Comment{Reparameterized}
-    \EndFor
-    \For{$i, j = 1 \dots N$ ($i \neq j$)}
-        \State $(\eta_{ij,t}, \lambda_{ij,t}) \leftarrow \text{Decoder}_\psi(h_{i,t}, h_{j,t}, z_i, z_j)$ \Comment{Eq. 3–4}
-        \State $e_{ij,t} \sim \text{GumbelSigmoidSample}(\eta_{ij,t})$ \Comment{Reparameterized gate}
-        \State $\tilde{W}_{ij,t} \leftarrow e_{ij,t} \cdot \text{LogNormalSample}(\log \lambda_{ij,t}, \sigma^2)$
-    \EndFor
-    \State $W_t \leftarrow \textsc{CapacitatedSinkhornProjection}(\tilde{W}_t, r_t, c_t, \kappa \cdot K_t)$ \Comment{Eq. 8, Alg. 1}
-    \If{$W_{\text{true},t}$ is given (synthetic branch)}
-        \State $L_{\text{recon},t} \leftarrow -\log p(W_{\text{true},t} \mid \lambda_t, \eta_t, \sigma^2)$ \Comment{Eq. 9, first term}
-    \Else
-        \State $L_{\text{recon},t} \leftarrow 0$ \Comment{Real data: no ground truth}
-    \EndIf
-    \State $L_{\text{KL},t} \leftarrow \text{KL}(q_\psi(z_t) \parallel p(z))$
-\EndFor
-\State $L_{\text{smooth}} \leftarrow \sum_t \|W_t - W_{t-1}\|_F^2$ \Comment{Over consecutive periods in batch}
-\State $L_{\text{reg}} \leftarrow \|\Lambda\|^2 + \|w\|^2$
-\State $L \leftarrow \sum_t (L_{\text{recon},t} + L_{\text{KL},t}) + \lambda_{\text{smooth}} \cdot L_{\text{smooth}} + \lambda_{\text{reg}} \cdot L_{\text{reg}}$
-\State Backpropagate $L$; update $\theta, \psi, \Lambda, w$ via optimizer step
-\State \textbf{return} $L$
-\end{algorithmic}
-\end{algorithm}
+\subsubsection{\texorpdfstring{Algorithm 1 ---
+\texttt{CapacitatedProjection} (Eq. 8, Dykstra's alternating-projections
+algorithm)}{Algorithm 1 --- CapacitatedProjection (Eq. 8, Dykstra's alternating-projections algorithm)}}\label{algorithm-1-capacitatedprojection-eq.-8-dykstras-alternating-projections-algorithm}
 
-Sinkhorn (operating on a non-negative matrix, enforcing row/col
-marginals ≥ 0 via the kernel) is only the last step. The full pipeline
-per Algorithm 3 (§11) and Eq. 1-8:
+\begin{verbatim}
+Input:  W̃ ∈ R^{N×N}_{≥0}      raw/sampled edge weights
+        r, c ∈ R^N_{≥0}        target row/column marginals (observed r_i,t, c_i,t)
+        cap ∈ R^N_{≥0}         per-row obligor cap, cap_i = κ · K_i,t
+        n_iters, tol           stopping criteria (n_iters counts full row→col→box
+                                passes, not single-set applications)
+Output: W ∈ R^{N×N}            satisfies row/col marginals and W_ij ≤ cap_i for all j,
+                                exactly (up to tol), when the intersection is non-empty
 
-\begin{itemize}
-\tightlist
-\item
-  \begin{enumerate}
-  \def\labelenumi{\arabic{enumi}.}
-  \tightlist
-  \item
-    SBM block assignment + covariate fitness → gives each bank pair a
-    prior edge intensity \(\lambda_{ij,t}\) (Eq. 1-3), informed by
-    \(z_i\) and the 5 covariates.
-  \end{enumerate}
-\item
-  \begin{enumerate}
-  \def\labelenumi{\arabic{enumi}.}
-  \setcounter{enumi}{1}
-  \tightlist
-  \item
-    GNN/GRU encoder + pairwise decoder → turns that into
-    \((\eta_{ij,t}, \lambda_{ij,t})\) per pair, learned from data (Eq.
-    6-7, §4).
-  \end{enumerate}
-\item
-  \begin{enumerate}
-  \def\labelenumi{\arabic{enumi}.}
-  \setcounter{enumi}{2}
-  \tightlist
-  \item
-    Zero-inflated log-normal sampling → produces the raw guess
-    \(\tilde W_t\) (Eq.~4) --- this is where the actual ``who's
-    connected to whom, roughly how much'' signal comes from.
-  \end{enumerate}
-\item
-  \begin{enumerate}
-  \def\labelenumi{\arabic{enumi}.}
-  \setcounter{enumi}{3}
-  \tightlist
-  \item
-    Only then does Sinkhorn project \(\tilde W_t\) onto the feasible set
-    that exactly matches the observed marginals \(r_t,c_t\) and the
-    regulatory cap (Eq.~8) --- a correction/projection step, not a
-    generative one.
-  \end{enumerate}
-\end{itemize}
+ 1:  W ← W̃
+ 2:  I_row, I_col, I_box ← zeros(N,N), zeros(N,N), zeros(N,N)   # Dykstra correction terms
+ 3:  for iter = 1 .. n_iters:
+ 4:      W_prev ← W
+ 5:      Y ← W + I_row
+ 6:      W ← Y + (r − row_sums(Y)) / N          # Proj onto {row sums = r}, broadcast per row
+ 7:      I_row ← Y − W
+ 8:      Y ← W + I_col
+ 9:      W ← Y + (c − col_sums(Y)) / N          # Proj onto {col sums = c}, broadcast per col
+10:      I_col ← Y − W
+11:      Y ← W + I_box
+12:      W ← clip(Y, 0, cap)                     # Proj onto {0 ≤ W_ij ≤ cap_i}, per-row cap,
+                                                   #   applied to EVERY entry in row i
+13:      I_box ← Y − W
+14:      if ‖W − W_prev‖ < tol: break
+15: return W
+\end{verbatim}
 
-In summary, plain Sinkhorn/IPF applied to a uniform prior (no
-covariates, no learned structure) is exactly the classical
-Gandy-Veraart/RAS maximum-entropy reconstruction --- that's the baseline
-this paper compares against (§7, §12 baseline requirement). The
-contribution is that Sinkhorn here operates on a covariate- and
-block-structure-informed \(\tilde W_t\), not blind uniform mass --- so
-you justify why Sinkhorn
+Note: unlike the superseded Sinkhorn-clip draft (see §5's revision
+note), this provably converges to the \emph{exact} Euclidean projection
+onto the intersection of all three constraint sets whenever that
+intersection is non-empty (Boyle \& Dykstra, 1986) --- not a heuristic.
+All three per-set projections (lines 6, 9, 12) are closed-form and
+differentiable (the clip has the usual subgradient at the boundary, same
+as a ReLU), so gradients flow through to \(\tilde W_t\) exactly as Eq. 8
+requires for Algorithm 3's step 10. If the intersection is empty ---
+e.g.~\(\kappa K_{i,t}\) set so tight that
+\(N \cdot \kappa K_{i,t} < r_{i,t}\) for some \(i\), meaning the cap
+can't physically supply the required row total even by maxing out every
+entry --- this converges to a least-violation compromise instead, which
+should be treated as an infeasible-cap data/parameter error, not
+silently accepted (\texttt{test\_capacity\_projection.py}'s
+\texttt{infeasible\_case} checks for this --- the cap itself must still
+hold even when the row marginal can't be reached).
 
-(it's the natural, differentiable way to enforce known hard constraints
-exactly, à la Cuturi 2013) separately from why not Sinkhorn alone
-(because unlike RAS/Gandy-Veraart, the prior it's projecting isn't
-uninformed).
+\subsubsection{\texorpdfstring{Algorithm 2 ---
+\texttt{SampleSyntheticNetwork} (Eq. 1-5, 8; ground truth for
+validation,
+§6)}{Algorithm 2 --- SampleSyntheticNetwork (Eq. 1-5, 8; ground truth for validation, §6)}}\label{algorithm-2-samplesyntheticnetwork-eq.-1-5-8-ground-truth-for-validation-6}
 
-\section*{Methodological Literature Synthesis}
+\begin{verbatim}
+Input:  N, K, d                 problem size (num banks, num blocks, covariate dim)
+        π ∈ Δ^K, Λ ∈ R^{K×K}_{≥0}, H ∈ R^{K×K}, w ∈ R^d, σ²        generative params (drawn
+                                                        from a prior or fixed per synthetic
+                                                        scenario); H is the block-pair
+                                                        zero-inflation logit matrix (Eq. 4),
+                                                        block-structured the same way Λ is
+                                                        (Eq. 3) — existence, not just
+                                                        magnitude, needs a block-dependent
+                                                        pattern for q_psi(z) to have any
+                                                        recon-loss signal to recover it from
+        X_{1:N} ∈ R^{N×d}        covariates for this period (synthetic or real)
+        κ, K_cap ∈ R^N           regulatory cap inputs
+Output: W_true ∈ R^{N×N}_{≥0}, r, c ∈ R^N      ground-truth network + its implied marginals
 
-The model bridges three major streams of literature: classical financial
-network reconstruction, entropic optimal transport, and amortized deep
-latent variable modeling.
+1:  for i = 1 .. N: z_i ~ Categorical(π)                      # Eq. 1
+2:  for i = 1 .. N: φ_i ← exp(w^T X_i)                        # Eq. 2
+3:  for i, j = 1 .. N (i ≠ j):
+4:      λ_ij ← Λ[z_i, z_j] · φ_i · φ_j                        # Eq. 3 (no h_i·h_j term — no
+                                                               #   history yet for a one-shot sample)
+5:      η_ij ← H[z_i, z_j]; e_ij ~ Bernoulli(σ(η_ij))          # Eq. 4, block-structured same as step 4
+6:      W̃_ij ← e_ij · LogNormal_sample(log λ_ij, σ²)
+7:  r ← row_sums(W̃); c ← col_sums(W̃)                         # pre-projection marginals
+8:  W_true ← CapacitatedProjection(W̃, r, c, κ·K_cap)           # Eq. 8 — ground truth MUST
+                                                               #   also satisfy the cap, or the
+                                                               #   model is validated against an
+                                                               #   infeasible target
+9:  return W_true, row_sums(W_true), col_sums(W_true)
+\end{verbatim}
 
-\subsection*{Classical Interbank Matrix Reconstruction}
+\subsubsection{\texorpdfstring{Algorithm 3 --- \texttt{TrainStep} (Eq.
+6-9; amortized inference + one optimizer
+step)}{Algorithm 3 --- TrainStep (Eq. 6-9; amortized inference + one optimizer step)}}\label{algorithm-3-trainstep-eq.-6-9-amortized-inference-one-optimizer-step}
 
-Early efforts to estimate missing bilateral exposures (\(W_t\)) from
-aggregated call reports relied primarily on Maximum Entropy (ME)
-principles \cite{upper2011simulation}. While ME models successfully
-match row and column balance sheet totals (\(r_t, c_t\)), they typically
-yield fully connected, overly dense matrices that understate systemic
-fragility. Modern maximum-entropy and fitness framework extensions
-attempt to introduce sparsity \cite{squartini2018reconstruction}, yet
-these classical models rely on rigid functional forms and cannot easily
-learn complex temporal dynamics or non-linear node covariate signals
-(\(X_{i,t}\)).
+\begin{verbatim}
+Input:  batch of periods {X_{1:N,t}, r_t, c_t, K_t}_{t ∈ batch}, optional W_true_t (synthetic only)
+        model params θ (GRU), ψ (block/decoder nets), Λ, w, σ²
+        hyperparams λ_smooth, λ_reg, κ
+State:  h_{i,t-1} carried across periods (GRU hidden state)
+Output: loss value; updated θ, ψ, Λ, w after one gradient step
 
-\subsection*{Entropic Optimal Transport \& Differentiable Constraints}
+1:  for t in batch (in temporal order):
+2:      for i = 1 .. N: h_{i,t} ← GRU_θ([X_{i,t}; r_{i,t}; c_{i,t}], h_{i,t-1})  # Eq. 6
+3:      [optional] h_{i,t} ← GNN_refine(h_{i,t}, A_obs_t)                 # §4, §8c
+4:      for i = 1 .. N: q_i ← softmax(MLP_ψ(h_{i,t}))                    # Eq. 7
+5:      for i = 1 .. N: z_i ← GumbelSoftmaxSample(q_i)                    # reparameterized
+6:      for i, j = 1 .. N (i ≠ j):
+7:          (η_ij,t, λ_ij,t) ← Decoder_ψ(h_i,t, h_j,t, z_i, z_j)          # Eq. 3-4
+8:          e_ij,t ← GumbelSigmoidSample(η_ij,t)                          # reparameterized gate
+9:          W̃_ij,t ← e_ij,t · LogNormalSample(log λ_ij,t, σ²)            # reparameterized weight
+10:     W_t ← CapacitatedProjection(W̃_t, r_t, c_t, κ·K_t)         # Eq. 8, Algorithm 1
+11:     if W_true_t is given (synthetic branch):
+12:         L_recon,t ← -log p(W_true_t | λ_t, η_t, σ²)                   # Eq. 9, first term
+13:     else:
+14:         L_recon,t ← 0                                                 # real data: no ground truth
+15:     L_KL,t ← KL(q_ψ(z_t) ‖ p(z))
+16: L_smooth ← Σ_t ‖W_t - W_{t-1}‖_F²            over consecutive periods in the batch
+17: L_reg ← ‖Λ‖² + ‖w‖²
+18: L ← Σ_t (L_recon,t + L_KL,t) + λ_smooth · L_smooth + λ_reg · L_reg
+19: backprop L; update θ, ψ, Λ, w via optimizer step
+20: return L
+\end{verbatim}
 
-To enforce macro-prudential constraints differentiably, the model builds
-on entropic optimal transport (EOT) frameworks.
-\cite{cuturi2013sinkhorn} demonstrated that adding an entropic
-regularizer to optimal transport transforms non-differentiable linear
-programs into computationally efficient, GPU-parallelizable scaling
-operations via the Sinkhorn-Knopp algorithm. Further extensions by
-\cite{mena2018learning} showed that applying the Sinkhorn operator
-directly to neural network outputs enables gradient backpropagation
-through continuous matrix transformations and discrete topology
-decisions. In our pipeline, this capacitated Sinkhorn projection
-enforces row/column totals (\(r_t, c_t\)) and regulatory single-obligor
-exposure limits (\(W_{ij,t} \le \kappa K_{i,t}\)) directly inside the
-forward pass.
-
-\subsection*{Amortized Variational Inference for Graphs}
-
-Standard Graph Autoencoders require observing the graph adjacency matrix
-to compute node representations. To bypass this circularity on
-unobserved networks, our inference architecture draws inspiration from
-Neural Relational Inference (NRI) \cite{kipf2018neural}. NRI established
-that latent relational structures can be inferred purely from dynamic
-node trajectories (\(X_{1:T}\)) using a graph variational autoencoder.
-By conditioning the GNN/GRU temporal encoder strictly on independent
-node covariates and history rather than unobserved edges, our pipeline
-avoids circular identification logic while predicting continuous weight
-distributions and discrete connection gates.
-
-\subsection{8. Variable inventory (what actually feeds the
-model)}\label{variable-inventory-what-actually-feeds-the-model-1}
-
-Net statement from the design discussion: \textbf{the reconstruction
-model needs \textasciitilde5 covariates per node per period, plus the
-two interbank marginals. Everything else in the NRB bulletins is either
-a Paper 2 outcome variable or not usable given current data coverage.}
-
-\subsubsection{8a. The two marginals (non-negotiable --- the
-reconstruction
-target)}\label{a.-the-two-marginals-non-negotiable-the-reconstruction-target-1}
-
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 4\tabcolsep) * \real{0.3333}}@{}}
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-NRB field
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Statement / side
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Symbol
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-\texttt{2.b\ Interbank\ Borrowing} & Balance Sheet, \textbf{Liabilities}
-& \(c_{i,t}\) (column marginal) \\
-\texttt{INTERBANK\ LENDING\ (Marginal\ r\_i)} & Balance Sheet,
-\textbf{Assets} & \(r_{i,t}\) (row marginal) \\
-\end{longtable}
-
-These are the actual payoff variables for the whole method ---
-everything else exists to help infer the matrix whose row/column sums
-these fix.
-
-\subsubsection{\texorpdfstring{8b. Node covariates \(X_{i,t}\)
-(block-membership / fitness
-prior)}{8b. Node covariates X\_\{i,t\} (block-membership / fitness prior)}}\label{b.-node-covariates-x_it-block-membership-fitness-prior-1}
-
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 6\tabcolsep) * \real{0.2500}}@{}}
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-\#
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Covariate
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Built from
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Role
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-1 & Size & sum of the 11 \texttt{ASSET\_TOP\_LEVEL} columns:
-\texttt{1\ LIQUID\ FUNDS}, \texttt{2\ INVESTMENT\ IN\ SECURITIES},
-\texttt{3\ SHARE\ \&\ OTHER\ INVESTMENT},
-\texttt{4\ LOANS\ \&\ ADVANCES}, \texttt{5\ BILL\ PURCHASED},
-\texttt{6\ LOANS\ AGAINST\ COLLECTED\ BILLS}, \texttt{7\ FIXED\ ASSETS},
-\texttt{8\ OTHER\ ASSETS}, \texttt{9\ EXPENSES\ NOT\ WRITTEN\ OFF},
-\texttt{10\ NON\ BANKING\ ASSETS},
-\texttt{INTERBANK\ LENDING\ (Marginal\ r\_i)} (\textbf{not} the
-\texttt{TOTAL\ ASSETS} label directly --- see data caveat below) & SBM
-block/fitness prior, scale control \\
-2 & Capital ratio & \texttt{1\ CAPITAL\ FUND} (Liabilities) ÷ size &
-solvency/fitness term; also sets the obligor cap \(K_{i,t}\) \\
-3 & Liquidity ratio & \texttt{1\ LIQUID\ FUNDS} (Assets) ÷ size &
-liquidity position \\
-4 & Loan-to-deposit pressure & \texttt{4\ LOANS\ \&\ ADVANCES} (Assets)
-÷ \texttt{3\ DEPOSITS} (Liabilities) & funding-pressure signal \\
-5 & NRB-dependence & \texttt{2.a\ Borrowings\ -\ NRB} ÷
-\texttt{2\ BORROWINGS} (both Liabilities; if \texttt{2\ BORROWINGS} is
-missing for a row --- some early-era filings never print the top-level
-subtotal --- the denominator is reconstructed as the sum of its
-sub-items: \texttt{2.a\ Borrowings\ -\ NRB},
-\texttt{2.b\ Interbank\ Borrowing},
-\texttt{2.c\ Foreign\ Banks\ and\ Financial\ Institutions},
-\texttt{2.d\ Other\ Financial\ Institutions},
-\texttt{2.e\ Bonds\ and\ Securities\ /\ NRB\ Bonds},
-\texttt{2.f\ Borrowings\ -\ Govt\ Non-Financial\ Institutions},
-\texttt{2.g\ Borrowings\ -\ Other\ Non-Financial\ Institutions}) &
-central-bank liquidity dependence --- useful for the zero-inflation gate
-(a bank funded mainly by NRB is less likely to have interbank
-exposure) \\
-\end{longtable}
-
-Optional secondary signal, not in the core 5: ownership type
-(state/private/foreign), if available --- would add homophily structure
-to the block prior.
-
-\subsubsection{8c. Auxiliary observed-graph candidate (optional GNN
-refinement input,
-§4)}\label{c.-auxiliary-observed-graph-candidate-optional-gnn-refinement-input-4-1}
-
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 2\tabcolsep) * \real{0.5000}}@{}}
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Source
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Role
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-Statement of Credit, sector-wise breakdown (12 sectors + Others) &
-shared sector-concentration = a correlated-shock signal independent of
-the interbank marginals. Candidate as the auxiliary \emph{observed}
-graph the GNN layer can refine over, since it doesn't require \(W_t\)
-itself. \\
-\end{longtable}
-
-\subsubsection{8d. Explicitly excluded from Paper
-1}\label{d.-explicitly-excluded-from-paper-1-1}
-
-\begin{itemize}
-\tightlist
-\item
-  \texttt{6\ Bills\ Payable}, \texttt{5\ Other\ Liabilities}
-  (Liabilities, minor residuals) --- not used
-\item
-  \texttt{6/10\ Reconciliation\ A/c} (both sides) --- accounting plug,
-  not economically meaningful
-\item
-  \texttt{8\ Expenses\ not\ Written\ off},
-  \texttt{9\ Non\ Banking\ Assets} (Assets) --- legacy/minor, not used
-\item
-  Everything in Profit \& Loss --- these are Paper 2 outcome variables,
-  not reconstruction inputs (see \texttt{paper2\_causal\_spillover.md})
-\item
-  \texttt{nrb\_statement\_of\_credit.csv} as a panel source --- only 2
-  years of coverage in current data, can't support a 14-year panel; not
-  worth cleaning further unless more years turn up uncollected
-\end{itemize}
-
-\subsubsection{8e. One-to-one equation-symbol ↔ raw-variable
-map}\label{e.-one-to-one-equation-symbol-raw-variable-map-1}
-
-Every symbol that appears in Eq. (1)--(8) is listed below with exactly
-what real NRB field (if any) it is computed from. Symbols with no raw
-field are latent or learned --- they're estimated by the model, not read
-off the bulletin.
-
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}
-  >{\raggedright\arraybackslash}p{(\linewidth - 8\tabcolsep) * \real{0.2000}}@{}}
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Symbol
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Appears in
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Raw NRB field
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Statement / side
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Transformation
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-\(r_{i,t}\) & Eq. (5), (8) &
-\texttt{INTERBANK\ LENDING\ (Marginal\ r\_i)} & Balance Sheet, Assets &
-identity (reported value) \\
-\(c_{i,t}\) & Eq. (5), (8) & \texttt{2.b\ Interbank\ Borrowing} &
-Balance Sheet, Liabilities & identity (reported value) \\
-\(K_{i,t}\) & Eq. (8), \(\kappa K_{i,t}\) cap &
-\texttt{1\ CAPITAL\ FUND} & Balance Sheet, Liabilities & identity
-(reported value) --- note: raw value here, \emph{not} the ratio used in
-\(X^{(2)}_{i,t}\) below \\
-\(X^{(1)}_{i,t}\) & Eq. (2), component of \(X_{i,t}\) & sum of the 11
-\texttt{ASSET\_TOP\_LEVEL} columns (listed in §8b) & Balance Sheet,
-Assets & sum (not the \texttt{TOTAL\ ASSETS} label --- see §9.1) \\
-\(X^{(2)}_{i,t}\) & Eq. (2) & \texttt{1\ CAPITAL\ FUND} & Balance Sheet,
-Liabilities & ÷ \(X^{(1)}_{i,t}\) (capital ratio) \\
-\(X^{(3)}_{i,t}\) & Eq. (2) & \texttt{1\ LIQUID\ FUNDS} & Balance Sheet,
-Assets & ÷ \(X^{(1)}_{i,t}\) (liquidity ratio) \\
-\(X^{(4)}_{i,t}\) & Eq. (2) & \texttt{4\ LOANS\ \&\ ADVANCES} ÷
-\texttt{3\ DEPOSITS} & Balance Sheet, Assets ÷ Liabilities & ratio
-across statement sides \\
-\(X^{(5)}_{i,t}\) & Eq. (2) & \texttt{2.a\ Borrowings\ -\ NRB} ÷
-\texttt{2\ BORROWINGS} & Balance Sheet, Liabilities (both) & ratio
-within Liabilities; denominator falls back to the sum of
-\texttt{2.a}--\texttt{2.g} sub-items when \texttt{2\ BORROWINGS} is
-unreported (§8b) \\
-\(w\) & Eq. (2) & --- & --- & \textbf{learned} (fitness weight vector,
-\(\dim = 5\), no raw field) \\
-\(z_i\) & Eq. (1), (3), (7) & --- & --- & \textbf{latent} (inferred via
-\(q_\psi\), Eq. 7); optionally informed by ownership type if used
-(§8b) \\
-\(\Lambda\) & Eq. (3) & --- & --- & \textbf{learned} (\(K\times K\)
-block-pair intensity matrix) \\
-\(h_{i,t}\) & Eq. (3), (6), (7) & \(X^{(1\text{-}5)}_{i,t}\) (all 5
-covariates, fed in as the GRU input vector) & --- & \textbf{learned
-embedding}, GRU output --- not read directly off any single field \\
-\(\theta\) (GRU weights) & Eq. (6) & --- & --- & \textbf{learned} \\
-\(\psi\) (posterior-net weights) & Eq. (7) & --- & --- &
-\textbf{learned} \\
-\(\eta_{ij,t}\) & Eq. (4) & --- & --- & \textbf{learned} (zero-inflation
-logit, decoder output) \\
-\(\sigma^2\) & Eq. (4) & --- & --- & \textbf{learned} (log-normal
-dispersion --- global or per-block, §10) \\
-\(\kappa\) & Eq. (8) & --- & --- & \textbf{exogenous regulatory
-constant} (single-obligor exposure limit; not reported in the bulletin
-itself --- a known regulatory parameter) \\
-\(A^{\text{obs}}\) (auxiliary GNN graph, §4) & Eq. (6) refinement,
-optional & sector-wise credit, 12 sectors & Statement of Credit &
-co-exposure adjacency built from shared-sector lending shares \\
-\end{longtable}
-
-\textbf{Reading guide}:
-\(X_{i,t} = \big(X^{(1)}_{i,t}, ..., X^{(5)}_{i,t}\big) \in \mathbb{R}^5\)
-is the concrete instantiation of the generic \(X_{i,t}\in\mathbb{R}^d\)
-in §2 --- i.e.~\(d=5\) for this model, and the ordering above (size,
-capital ratio, liquidity ratio, LDR, NRB-dependence) is the fixed
-component order used everywhere \(X_{i,t}\) appears in Eq. (2) and (6).
-
-\subsection{9. Known data-pipeline caveats (apply before this goes into
-the
-model)}\label{known-data-pipeline-caveats-apply-before-this-goes-into-the-model-1}
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{\texttt{item\_code} collision}: confirmed by re-running
-  \texttt{nrb\_extractor.py} against a real bulletin ---
-  \texttt{item\_code} is not unique across the Balance Sheet's
-  Liabilities and Assets sides. Both sides independently restart
-  numbering at 1 (e.g.~\texttt{1\ CAPITAL\ FUND} on Liabilities
-  vs.~\texttt{1\ LIQUID\ FUNDS} on Assets; same collision pattern for
-  \texttt{2}, \texttt{3}, and lettered sub-items
-  \texttt{a.}--\texttt{g.}). The extractor
-  (\texttt{nrb\_extractor.py:197-269}, \texttt{\_extract\_rows})
-  currently has no column marking which side a row is on --- that
-  currently has to be inferred externally from which \texttt{TOTAL}
-  block (\texttt{TOTAL\ \ \ \ Liabilities} vs.~\texttt{TOTAL\ ASSETS}) a
-  row falls between on the page. \textbf{Fix needed}: add a
-  \texttt{side} column to the extractor output before any join on
-  \texttt{item\_code} alone, or it will silently collide liabilities and
-  assets rows that share a code (e.g.~covariates 2 and 3 above, which
-  both use an \texttt{item\_code\ ==\ 1} row from different sides).
-\item
-  Rotated bank-name header recovery (\texttt{recover\_bank\_names},
-  \texttt{nrb\_extractor.py:130-171}) and the layout-mode row extraction
-  are both working as validated against the real sample PDF --- no open
-  bug there as of this pass.
-\end{enumerate}
-
-\subsection{10. Open items (not yet
-decided)}\label{open-items-not-yet-decided-1}
-
-\begin{itemize}
-\tightlist
-\item
-  \(K\) (number of SBM blocks): start with \(K=2\) (core/periphery),
-  treat larger \(K\) as a robustness check, not the headline
-  specification.
-\item
-  \(\sigma^2\) (log-normal dispersion): learned, either globally or
-  per-block --- not yet decided which.
-\item
-  \textbf{Venue/scope hook}: ICAIF fit is comfortable at the current
-  scope (methods + real-data case study). ICLR/NeurIPS main track would
-  need an added theoretical hook --- e.g.~a provable statement on how
-  reconstruction uncertainty in \(\hat W_t\) propagates into coverage
-  guarantees for a downstream interference estimator (which would also
-  strengthen the Paper 1 → Paper 2 link). \textbf{Not resolved} ---
-  needs a decision before drafting.
-\end{itemize}
-
-\subsection{11. Paper structure (≤7
+\subsection{12. Paper structure (≤7
 pages)}\label{paper-structure-7-pages}
 
 \begin{longtable}[]{@{}
