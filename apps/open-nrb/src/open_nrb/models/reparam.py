@@ -18,12 +18,14 @@ except ImportError:
 def _rand_like(x: torch.Tensor, generator: torch.Generator | None) -> torch.Tensor:
     if generator is None:
         return torch.rand_like(x)
+    # Draw uniform noise -> Uniform(0, 1) using the explicit torch.Generator
     return torch.rand(x.shape, generator=generator, device=x.device, dtype=x.dtype)
 
 
 def _randn_like(x: torch.Tensor, generator: torch.Generator | None) -> torch.Tensor:
     if generator is None:
         return torch.randn_like(x)
+    # Draw standard normal noise -> N(0, 1) using the explicit torch.Generator
     return torch.randn(x.shape, generator=generator, device=x.device, dtype=x.dtype)
 
 
@@ -49,7 +51,9 @@ def gumbel_softmax_sample(
     """
     u = _rand_like(probs, generator)
     gumbel_noise = -torch.log(-torch.log(u + config.delta) + config.delta)
+    # Perturbing Log-Probabilities (Gumbel-Max Trick)
     logits = torch.log(probs + config.delta) + gumbel_noise
+    # Temperature-Scaled Softmax Relaxation
     return F.softmax(logits / config.gumbel_softmax_tau, dim=-1)
 
 
@@ -71,8 +75,11 @@ def gumbel_sigmoid_sample(
     Returns:
         Same shape as eta, values in (0, 1), differentiable w.r.t. eta.
     """
+    # Draw uniform noise -> u ~ Uniform(0, 1)
     u = _rand_like(eta, generator)
+    # Compute logistic noise -> log(u + delta) - log(1 - u + delta)
     logistic_noise = torch.log(u + config.delta) - torch.log(1 - u + config.delta)
+    # Add noise to logits, scale by temperature tau, and apply sigmoid -> sigma((eta + noise) / tau)
     return torch.sigmoid((eta + logistic_noise) / config.gumbel_sigmoid_tau)
 
 
@@ -96,5 +103,7 @@ def lognormal_rsample(
     Returns:
         Same shape as loc, strictly positive, differentiable w.r.t. loc and scale.
     """
+    # Draw standard normal noise -> eps ~ N(0, 1) using the isolated generator
     eps = _randn_like(loc, generator)
+    # Apply the reparameterization trick for Log-Normal -> exp(loc + scale * eps)
     return torch.exp(loc + scale * eps)

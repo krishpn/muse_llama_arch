@@ -26,6 +26,7 @@ import warnings
 
 import torch
 
+
 BS_MONTHS = [
     "Baisakh", "Jestha", "Asar", "Shrawan", "Bhadra", "Ashwin",
     "Kartik", "Mangsir", "Poush", "Magh", "Falgun", "Chaitra",
@@ -129,9 +130,86 @@ class _Row:
     order: int
 
 
+_SOURCE_FILE_PERIOD_RE = re.compile(r"Monthly_Statistics-(\d{4})-(\d{2})-")
+# A second, punctuation-swapped numeric convention confirmed 2026-10-25 in a ~24-month
+# contiguous run (2076-05 .. 2078-04, roughly Sep 2019 - Aug 2021 -- a different bulletin
+# production era): "Monthly-Statistics-_-{year_bs}_{month_num:02d}..." (dash after "Monthly",
+# "_-" before the year, underscore between year/month, vs. the primary pattern's underscore
+# after "Monthly" and dash everywhere else). Same 1-indexed-from-Baisakh month numbering.
+_SOURCE_FILE_PERIOD_RE_ALT = re.compile(r"Monthly-Statistics-_-(\d{4})_(\d{2})")
+# A third convention, confirmed 2026-10-25 in the residual unrecoverable sample, spells the
+# month as a Nepali-month-name abbreviation instead of a number, e.g. "Bhadau_2075Mid-Sep-
+# 2018.pdf", "Saun-2074.pdf", "Chait-2074.pdf" -- never seen in the CSV's own month_bs column
+# (that uses _MONTH_ALIASES' spellings instead), so kept as its own table rather than folded
+# into _MONTH_ALIASES.
+_SOURCE_FILE_MONTH_NAME_RE = re.compile(r"^([A-Za-z]+)[_-](\d{4})")
+_SOURCE_FILE_MONTH_NAMES: dict[str, str] = {
+    "Baisakh": "Baisakh", "Jestha": "Jestha", "Asar": "Asar", "Saun": "Shrawan",
+    "Bhadau": "Bhadra", "Ashwin": "Ashwin", "Kattik": "Kartik", "Mangsir": "Mangsir",
+    "Paush": "Poush", "Magh": "Magh", "Falgun": "Falgun", "Chait": "Chaitra",
+}
+_NEW_SUFFIX_RE = re.compile(r"^(.*)-NEW(\.\w+)$")
+
+
+def _recover_period_from_source_file(source_file: str) -> tuple[int, str] | None:
+    """Recovers (year_bs, month_bs) from source_file's own naming convention(s) -- confirmed
+    2026-10-25 against Everest/Himalaya/Siddhartha/NIBL, whose rows are 94-98% blank-month_bs
+    in the CSV column yet those banks are known continuously-operating commercial banks, not
+    real entry/exit. Primary numeric convention's month numbering confirmed via the 2069-12 ->
+    2070-01 (Chaitra -> Baisakh) BS-new-year rollover across consecutive real filenames. Three
+    conventions are tried in order (see the regexes above); used only as a fallback when the
+    CSV's own month_bs column is blank -- the column is trusted first since it's unambiguous
+    when present.
+    """
+    m = _SOURCE_FILE_PERIOD_RE.search(source_file)
+    if m is not None:
+        year_bs, month_num = int(m.group(1)), int(m.group(2))
+        if 1 <= month_num <= 12:
+            return year_bs, BS_MONTHS[month_num - 1]
+
+    m = _SOURCE_FILE_PERIOD_RE_ALT.search(source_file)
+    if m is not None:
+        year_bs, month_num = int(m.group(1)), int(m.group(2))
+        if 1 <= month_num <= 12:
+            return year_bs, BS_MONTHS[month_num - 1]
+
+    m = _SOURCE_FILE_MONTH_NAME_RE.match(source_file)
+    if m is not None:
+        month_name, year_bs = m.group(1), int(m.group(2))
+        canonical = _SOURCE_FILE_MONTH_NAMES.get(month_name)
+        if canonical is not None:
+            return year_bs, canonical
+
+    return None
+
+
+def _superseded_source_files(csv_path: Path) -> set[str]:
+    """A '-NEW' bulletin filename (e.g. '...-Oct-2014-NEW.pdf') is a full resubmission of its
+    non-NEW counterpart ('...-Oct-2014.pdf') for the same year/month -- confirmed both present
+    in real data (2026-10-25). Treated as superseding the whole file, not a per-row conflict:
+    every row from the non-NEW counterpart is dropped wherever both exist, so the panel never
+    mixes rows from two versions of the same bulletin.
+    """
+    seen: set[str] = set()
+    with open(csv_path, newline="") as f:
+        for rec in csv.DictReader(f):
+            seen.add(rec["source_file"])
+    superseded: set[str] = set()
+    for name in seen:
+        m = _NEW_SUFFIX_RE.match(name)
+        if m is not None:
+            base = m.group(1) + m.group(2)
+            if base in seen:
+                superseded.add(base)
+    return superseded
+
+
 def read_rows(csv_path: Path) -> list[_Row]:
+    superseded = _superseded_source_files(csv_path)
     rows: list[_Row] = []
     blank_month_count = 0
+    recovered_count = 0
+    superseded_count = 0
     total_count = 0
     with open(csv_path, newline="") as f:
         for i, rec in enumerate(csv.DictReader(f)):
@@ -142,22 +220,29 @@ def read_rows(csv_path: Path) -> list[_Row]:
                 # absent row, not a parse error. `i` is kept as the enumerate index over
                 # the unfiltered reader so extraction order (used by infer_sides) is intact.
                 continue
+            source_file = rec["source_file"]
+            if source_file in superseded:
+                superseded_count += 1
+                continue
             total_count += 1
             month_bs = _normalize_month(rec["month_bs"].strip())
             if month_bs == "":
-                # Confirmed at large volume in real data (2026-10-23 column count: 477221
-                # blank-month_bs rows vs. 387721 across all 16 named-month spellings combined
-                # -- i.e. MORE rows than every real month put together). Too large to be a
-                # rare extraction glitch; flagged and skipped rather than silently absorbed
-                # like the blank-value skip above, since it likely means something is wrong
-                # upstream for a large share of rows, not that these rows are legitimately
-                # monthless. Open item -- not yet investigated what these rows actually are.
-                blank_month_count += 1
-                continue
+                # Confirmed at large volume in real data (2026-10-25: ~472942/859996 rows
+                # with a non-blank value have blank month_bs) -- mostly recoverable from
+                # source_file's own naming convention rather than a genuine monthless row
+                # (see _recover_period_from_source_file).
+                recovered = _recover_period_from_source_file(source_file)
+                if recovered is None:
+                    blank_month_count += 1
+                    continue
+                recovered_count += 1
+                year_bs, month_bs = recovered
+            else:
+                year_bs = int(rec["year_bs"])
             rows.append(
                 _Row(
-                    source_file=rec["source_file"],
-                    year_bs=int(rec["year_bs"]),
+                    source_file=source_file,
+                    year_bs=year_bs,
                     month_bs=month_bs,
                     bfi_name=rec["bfi_name"],
                     item_code=rec["item_code"],
@@ -166,11 +251,23 @@ def read_rows(csv_path: Path) -> list[_Row]:
                     order=i,
                 )
             )
+    if superseded_count:
+        warnings.warn(
+            f"{superseded_count} rows dropped: belong to a source_file superseded by a "
+            "'-NEW' resubmission of the same bulletin",
+            stacklevel=2,
+        )
+    if recovered_count:
+        warnings.warn(
+            f"{recovered_count}/{total_count} rows had blank month_bs in the CSV but were "
+            "recovered via source_file's own year/month naming convention",
+            stacklevel=2,
+        )
     if blank_month_count:
         warnings.warn(
             f"{blank_month_count}/{total_count} rows with a non-blank value have blank "
-            "month_bs (after alias normalization) and were skipped -- investigate before "
-            "trusting panel coverage",
+            "month_bs (after alias normalization) AND an unparseable source_file -- "
+            "investigate before trusting panel coverage",
             stacklevel=2,
         )
     return rows
@@ -254,6 +351,76 @@ class Panel:
     K: torch.Tensor      # (N, T) raw capital fund, for kappa * K cap
 
 
+# Confirmed (2026-10-25) commercial ("A" class) bank name/code prefixes actually present in
+# bfi_name, via `awk -F, '{print $N}' nrb_balance_sheet.csv | grep -E '^(...)' | sort -u` against
+# the real CSV -- NRB's monthly bulletin format is shared across commercial banks, development
+# banks, finance companies, and microfinance institutions, and bfi_name alone carries no explicit
+# BFI-class column, so prefix matching is the only way to scope the panel to commercial banks only
+# (the standard population for an interbank-network/systemic-risk study, Sec 8/11).
+#
+# "Nepal" was in the original candidate pattern but only ever matched "NepalAawas" in the real
+# data -- almost certainly Nepal Aawas Bikas Bank, historically a "B" class development bank, not
+# commercial. Dropped from this list rather than silently including a bank that only matched by
+# prefix accident; revisit if that bank's actual class is confirmed otherwise.
+#
+# Added 2026-10-25 after reviewing the full non-commercial dropped-bank list (banks total: 33,
+# too low): "NSBI" (Nepal SBI Bank), "Lumbini" (Lumbini Bank, a commercial bank pre-merger --
+# distinct from "LumbiniDB", a separate development-bank entity also present in the raw data) and
+# "Prabhu" (Prabhu Bank -- distinct from "PRABHU", already listed, and "PrabhuDB", a separate
+# development-bank entity; "PRABHU"/"Prabhu" both appearing suggests the same institution is
+# split across two raw name castings in different bulletin eras -- added as its own literal
+# entry rather than case-folding the whole match, since case-insensitive matching would also
+# sweep in "PrabhuDB", "FewaDB", "GandakiDB", etc., which are genuinely different, non-commercial
+# entities in this dataset's "...DB" naming convention). "CTBNL" (possibly Commerz and Trust Bank
+# Nepal Ltd) was flagged but NOT added -- confirm before including.
+COMMERCIAL_BANK_PREFIXES = {
+    "ADBNL", "BOK", "CBL", "Century", "Citizen", "Citizens", "Civil", "EBL", "Everest",
+    "Global", "HBL", "Himalaya", "Kumari", "Laxmi", "Lumbini", "MBL", "Mega", "NABIL", "NBB",
+    "NBBL", "NBL", "NCC", "NIBL", "NIC", "NIMB", "NMB", "NSBI", "PRABHU", "Prabhu", "Prime",
+    "RBB", "SBL", "SCBNL", "Sanima", "Siddhartha", "Sunrise",
+}
+
+
+
+def is_commercial_bank(bfi_name: str) -> bool:
+    # "...DB" suffix marks a development-bank sibling of a commercial-bank prefix (e.g.
+    # "LumbiniDB", "PrabhuDB" -- distinct institutions from "Lumbini"/"Prabhu"/"PRABHU",
+    # see COMMERCIAL_BANK_PREFIXES comment) -- excluded before the prefix check below,
+    # otherwise plain startswith() would also match these non-commercial siblings.
+    if bfi_name.endswith("DB"):
+        return False
+    return any(bfi_name.startswith(prefix) for prefix in COMMERCIAL_BANK_PREFIXES)
+
+
+def filter_commercial_banks(panel: Panel) -> Panel:
+    """Scopes panel down to commercial banks only (Sec 8/11) -- see COMMERCIAL_BANK_PREFIXES.
+    Warns with the dropped names rather than silently shrinking N, same convention as
+    load_panel's other diagnostic warnings.
+    """
+    keep = [i for i, name in enumerate(panel.bfi_names) if is_commercial_bank(name)]
+    dropped = sorted(name for name in panel.bfi_names if not is_commercial_bank(name))
+    if dropped:
+        # Full list, not truncated: a short preview can't distinguish "correctly excluded
+        # non-commercial BFI" from "real commercial bank whose name just doesn't match any
+        # COMMERCIAL_BANK_PREFIXES entry" (e.g. a spelling variant, same failure mode
+        # _MONTH_ALIASES exists to cover for months) -- that distinction can only be made by
+        # eyeballing every dropped name, not a sample of 10.
+        warnings.warn(
+            f"{len(dropped)}/{len(panel.bfi_names)} banks excluded as non-commercial (no match "
+            f"in COMMERCIAL_BANK_PREFIXES): {dropped}",
+            stacklevel=2,
+        )
+    idx = torch.tensor(keep, dtype=torch.long)
+    return Panel(
+        bfi_names=[panel.bfi_names[i] for i in keep],
+        periods=panel.periods,
+        X=panel.X[idx],
+        r=panel.r[idx],
+        c=panel.c[idx],
+        K=panel.K[idx],
+    )
+
+
 def load_panel(csv_path: Path) -> Panel:
     rows = read_rows(csv_path)
     sides = infer_sides(rows)
@@ -284,7 +451,8 @@ def load_panel(csv_path: Path) -> Panel:
     c_t = torch.full((N, T), float("nan"))
     K_t = torch.full((N, T), float("nan"))
 
-    missing: list[str] = []
+    missing_field_count = 0
+    missing_examples: list[str] = []
     zero_denominator_count = 0
     for i, name in enumerate(names_sorted):
         for t, pk in enumerate(periods_seen):
@@ -294,7 +462,18 @@ def load_panel(csv_path: Path) -> Panel:
             try:
                 x, r_val, c_val, k_val = _compute_fields(rec)
             except KeyError as exc:
-                missing.append(f"{name} @ {period_labels[t]}: missing {exc}")
+                # A required field (capital_fund/liquid_funds/loans_advances/deposits) has no
+                # row at all for this bfi/period -- confirmed present as a real extraction gap
+                # even among institutions later dropped by filter_commercial_banks (2026-10-25:
+                # 583 such cells surfaced once the month_bs recovery fix stopped hiding most
+                # periods for most banks). load_panel builds a dense panel for EVERY raw
+                # bfi_name, not just whatever subset a caller filters to afterward, so one
+                # messy institution's gap shouldn't block the whole panel from loading -- left
+                # as NaN (X/r/c/K are already NaN-initialized above) rather than a hard failure,
+                # same convention as the zero-denominator case below.
+                missing_field_count += 1
+                if len(missing_examples) < 5:
+                    missing_examples.append(f"{name} @ {period_labels[t]}: missing {exc}")
                 continue
             except ZeroDivisionError:
                 # size==0/deposits==0 is a legitimate real-data case (e.g. a non-deposit-taking
@@ -316,10 +495,11 @@ def load_panel(csv_path: Path) -> Panel:
             stacklevel=2,
         )
 
-    if missing:
-        raise ValueError(
-            f"{len(missing)} (bfi, period) cells missing required fields, e.g.: "
-            + "; ".join(missing[:5])
+    if missing_field_count:
+        warnings.warn(
+            f"{missing_field_count} (bfi, period) cells missing a required field were left "
+            "as NaN, e.g.: " + "; ".join(missing_examples),
+            stacklevel=2,
         )
 
     return Panel(bfi_names=names_sorted, periods=period_labels, X=X, r=r_t, c=c_t, K=K_t)
