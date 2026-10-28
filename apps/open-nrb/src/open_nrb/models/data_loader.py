@@ -421,6 +421,40 @@ def filter_commercial_banks(panel: Panel) -> Panel:
     )
 
 
+# Confirmed (2026-10-28, diagnose via raw-file-vs-CSV diff) that extraction produces zero
+# balance_sheet rows for 25 real monthly bulletins, clustered in two contiguous blocks: BS
+# 2068-03 through 2069-12 (2011-2013, 22 months) and BS 2071-12 through 2072-02 (2015, 3
+# months, overlapping the Apr-2015 earthquake) -- root cause not yet diagnosed (likely an
+# older-era bulletin title/TOC layout find_section_pages/_find_commercial_bank_section_bounds
+# doesn't match). Rather than root-cause the pre-2070s gap, scoped the study window to start
+# at BS 2072-03 (Asar), the first period with a genuinely unbroken monthly run through the
+# latest available data (BS 2083) -- ~10 consecutive years, decided sufficient for now.
+MIN_PERIOD = (2072, "Asar")
+
+
+def filter_from_period(panel: Panel, start: tuple[int, str] = MIN_PERIOD) -> Panel:
+    """Scopes panel to periods >= `start` (inclusive), dropping the T axis accordingly.
+    See MIN_PERIOD comment for why BS 2072-03 is the current study-window start.
+    """
+    start_key = _period_key(*start)
+    keep = [t for t, (year, month) in enumerate(panel.periods) if _period_key(year, month) >= start_key]
+    dropped = [panel.periods[t] for t in range(len(panel.periods)) if t not in keep]
+    if dropped:
+        warnings.warn(
+            f"{len(dropped)}/{len(panel.periods)} periods excluded as before {start}: {dropped}",
+            stacklevel=2,
+        )
+    idx = torch.tensor(keep, dtype=torch.long)
+    return Panel(
+        bfi_names=panel.bfi_names,
+        periods=[panel.periods[t] for t in keep],
+        X=panel.X[:, idx],
+        r=panel.r[:, idx],
+        c=panel.c[:, idx],
+        K=panel.K[:, idx],
+    )
+
+
 def load_panel(csv_path: Path) -> Panel:
     rows = read_rows(csv_path)
     sides = infer_sides(rows)
@@ -510,12 +544,30 @@ def _labels_for(periods_seen: list[tuple[int, int]]) -> list[tuple[int, str]]:
     return [(year, month_by_index[midx]) for year, midx in periods_seen]
 
 
+_LEADING_NUMERAL_RE = re.compile(r"^\d+(\.\d+)?\s+")
+
+
+def _strip_leading_numeral(s: str) -> str:
+    return _LEADING_NUMERAL_RE.sub("", s, count=1)
+
+
 def _lookup_field(rec: dict[str, float], canonical: str) -> float:
     """Find canonical's value among rec's normalized labels, tolerating mid-word truncation
     in either direction (Sec 9.5) -- item_code is never consulted (Sec 9.3/9.4)."""
     canonical_n = _normalize_label(canonical)
     for label, value in rec.items():
         if label == canonical_n or label.startswith(canonical_n) or canonical_n.startswith(label):
+            return value
+    # Confirmed 2026-10-28: starting BS 2076 Shrawan, NRB restructured the asset-side numbering
+    # so "4 LOANS & ADVANCES" became sub-item "4.1 LOANS & ADVANCES" under a merged parent "4"
+    # (paired with new "4.2 BILL PURCHASED") -- the leading item-number is embedded in line_item
+    # TEXT itself, not just item_code (which Sec 9.3/9.4 already correctly ignore), so "4 " vs
+    # "4.1 " diverge at the 2nd character and the mutual-prefix match above never fires. Retry
+    # once on the descriptive text alone, after stripping a leading "<n>" or "<n>.<n>" token from
+    # both sides, before giving up.
+    canonical_stripped = _strip_leading_numeral(canonical_n)
+    for label, value in rec.items():
+        if _strip_leading_numeral(label) == canonical_stripped:
             return value
     raise KeyError(canonical)
 

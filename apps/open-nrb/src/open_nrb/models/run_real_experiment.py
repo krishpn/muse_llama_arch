@@ -38,13 +38,13 @@ import torch.nn.functional as F
 
 try:
     from .config import CapacityProjectionConfig, EncoderDecoderConfig, ReparamConfig, SinkhornConfig, TrainStepConfig
-    from .data_loader import  COVARIATE_ORDER, Panel, filter_commercial_banks, load_panel
+    from .data_loader import  COVARIATE_ORDER, Panel, filter_commercial_banks, load_panel,  filter_commercial_banks, filter_from_period, load_panel
     from .run_synthetic_experiment import _forward_pass_components, _kl_beta_schedule, KL_BETA_MAX, KL_WARMUP_EPOCHS
     from .sinkhorn import sinkhorn_projection
     from .train import Period, ReconstructionModel, train_step
 except ImportError:
     from config import CapacityProjectionConfig, EncoderDecoderConfig, ReparamConfig, SinkhornConfig, TrainStepConfig
-    from data_loader import  COVARIATE_ORDER, Panel, filter_commercial_banks, load_panel
+    from data_loader import  COVARIATE_ORDER, Panel, filter_commercial_banks, load_panel,  filter_commercial_banks, filter_from_period, load_panel
     from run_synthetic_experiment import _forward_pass_components, _kl_beta_schedule, KL_BETA_MAX, KL_WARMUP_EPOCHS
     from sinkhorn import sinkhorn_projection
     from train import Period, ReconstructionModel, train_step
@@ -342,6 +342,7 @@ def main() -> None:
     print(f"device: {DEVICE}")
     panel = load_panel(args.csv)
     panel = filter_commercial_banks(panel)
+    panel = filter_from_period(panel)
     bfi_names, X, r, c, K_raw, period_labels = _filter_complete_banks(panel)
     n, t = len(bfi_names), len(period_labels)
     print(f"\ntraining panel: N={n} banks, T={t} periods")

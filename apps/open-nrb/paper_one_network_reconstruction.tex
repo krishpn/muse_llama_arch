@@ -93,6 +93,39 @@
 \makeatother
 
 
+% definitions for citeproc citations
+\NewDocumentCommand\citeproctext{}{}
+\NewDocumentCommand\citeproc{mm}{%
+  \begingroup\def\citeproctext{#2}\cite{#1}\endgroup}
+\makeatletter
+ % allow citations to break across lines
+ \let\@cite@ofmt\@firstofone
+ % avoid brackets around text for \cite:
+ \def\@biblabel#1{}
+ \def\@cite#1#2{{#1\if@tempswa , #2\fi}}
+\makeatother
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newenvironment{CSLReferences}[2] % #1 hanging-indent, #2 entry-spacing
+ {\begin{list}{}{%
+  \setlength{\itemindent}{0pt}
+  \setlength{\leftmargin}{0pt}
+  \setlength{\parsep}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+   \setlength{\leftmargin}{\cslhangindent}
+   \setlength{\itemindent}{-1\cslhangindent}
+  \fi
+  % set entry spacing
+  \setlength{\itemsep}{#2\baselineskip}}}
+ {\end{list}}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{\hfill\break\parbox[t]{\linewidth}{\strut\ignorespaces#1\strut}}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
 
 
 
@@ -106,9 +139,15 @@
  
 
 
+% ==========================================
+% --- STYLE & FORMATTING SWITCH FLAG ---
+% ==========================================
+% Options: 'preprint', 'apa7', 'aaai'
+\def\targetstyle{apa7} 
+% ==========================================
+
 % --- Layout & Document Setup ---
-\usepackage[margin=1in]{geometry}
-\usepackage{setspace}
+\usepackage{iftex}
 \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{float}
@@ -123,6 +162,21 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 
+% Conditional Geometry & Spacing based on flag
+\usepackage{setspace}
+\ifx\targetstyle\string\aaai
+    % AAAI uses strict two-column and tight margins
+    \usepackage[letterpaper, left=1in, right=1in, top=1in, bottom=1in]{geometry} 
+\else\ifx\targetstyle\string\apa7
+    % APA 7th edition standard margins
+    \usepackage[letterpaper, margin=1in]{geometry}
+    \doublespacing
+\else
+    % Default: Preprint / Working Paper setup
+    \usepackage[margin=1in]{geometry}
+    \onehalfspacing
+\fi\fi
+
 % --- Mathematical Enhancements ---
 \usepackage{amsmath, amssymb, amsfonts}
 \setlength{\abovedisplayskip}{6pt}
@@ -132,32 +186,38 @@
 \usepackage{hyperref}
 \usepackage[backend=biber]{biblatex}
 \usepackage{lineno}
-% \linenumbers % Uncomment to enable line numbering for faculty review [cite: 2026-02-08]
+% \linenumbers % Uncomment to enable line numbering for faculty review
 
-% --- Consolidated Header/Footer Logic for H1 Collection ---
+% --- Conditional Header/Footer Logic ---
 \usepackage{fancyhdr}
-\pagestyle{fancy}
-\fancyhf{} 
 
-% Standard Page Configuration
-\fancyhead[L,R]{\small\color{red}PREPRINT/WORKING PAPER}
-\fancyhead[C]{\small\color{red}\url{https://krishpn.github.io}}
-\fancyfoot[L,R]{\small\color{red}PREPRINT/WORKING PAPER}
-\fancyfoot[C]{\thepage}
-\renewcommand{\headrulewidth}{0.4pt}
-\renewcommand{\footrulewidth}{0.4pt}
+\ifx\targetstyle\string\aaai
+    % AAAI strictly forbids running headers/footers of this type in final publication, 
+    % but can use plain pagestyle if needed. We disable custom fancy headers for AAAI.
+    \pagestyle{plain}
+\else
+    % Active Fancy Headers for Preprint / Working Paper / APA Drafts
+    \pagestyle{fancy}
+    \fancyhf{} 
 
-% First Page (Title Page) Style Override
-\fancypagestyle{plain}{
-  \fancyhf{}
-  \fancyhead[L,R]{\small\color{red}PREPRINT/WORKING PAPER}
-  \fancyhead[C]{%
-    \small\color{red}\url{https://krishpn.github.io}
-  }
-  \fancyfoot[L,R]{\small\color{red}PREPRINT/WORKING PAPER}
-  \fancyfoot[C]{\thepage}
-}
+    \fancyhead[L,R]{\small\color{red}PREPRINT/WORKING PAPER}
+    \fancyhead[C]{\small\color{red}\url{https://krishpn.github.io}}
+    \fancyfoot[L,R]{\small\color{red}PREPRINT/WORKING PAPER}
+    \fancyfoot[C]{\thepage}
+    % \renewcommand{\headrulewidth}{0.4pt}
+    % \renewcommand{\footrulewidth}{0.4pt}
 
+    % First Page (Title Page) Style Override
+    \fancypagestyle{plain}{
+      \fancyhf{}
+      \fancyhead[L,R]{\small\color{red}PREPRINT/WORKING PAPER}
+      \fancyhead[C]{%
+        \small\color{red}\url{https://krishpn.github.io}
+      }
+      \fancyfoot[L,R]{\small\color{red}PREPRINT/WORKING PAPER}
+      \fancyfoot[C]{\thepage}
+    }
+\fi
 
 % --- Custom Math Commands ---
 \newcommand{\R}{\mathbb{R}}
@@ -222,7 +282,7 @@
 
 \title{Bayesian Network Reconstruction of Interbank Exposures (Nepal)}
 \author{Krishna Neupane}
-\date{2026-10-23}
+\date{2026-10-26}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -235,11 +295,11 @@ text text
 Exposures
 (Nepal)}\label{paper-1-bayesian-network-reconstruction-of-interbank-exposures-nepal}
 
-\textbf{Status:} core algorithms (capacitated projection, synthetic
-generator, amortized training step) implemented and unit-tested; first
-end-to-end synthetic validation experiment (§6/§12) running and under
-active iteration --- not yet a final result. \textbf{Target venue:} ICLR
-/ NeurIPS / ICAIF, ≤7 pages.
+Upper (2011) \textbf{Status:} core algorithms (capacitated projection,
+synthetic generator, amortized training step) implemented and
+unit-tested; first end-to-end synthetic validation experiment (§6/§12)
+running and under active iteration --- not yet a final result.
+\textbf{Target venue:} ICLR / NeurIPS / ICAIF, ≤7 pages.
 
 \textbf{One-line description:} Reconstruct the latent bilateral
 interbank exposure matrix \(W_t\) for Nepali BFIs from NRB bulletin
@@ -299,6 +359,43 @@ reconstruction method with no causal-identification content; Paper 2's
 contribution is a causal-identification design that \emph{consumes} this
 paper's output as a fixed input. Bundling them would force a methods
 paper to carry a policy narrative it doesn't need, and vice versa.
+
+\subsection{Literature Review}\label{literature-review}
+
+The empirical study of interbank networks faces a fundamental hurdle:
+while regulatory balance sheets provide aggregate asset and liability
+totals, exact bilateral counterparty exposures remain unobserved. To
+address this missing-data problem, researchers have relied on two main
+approaches---classical maximum-entropy optimization and, more recently,
+amortized variational inference.
+
+Early network reconstruction relied heavily on matrix-balancing
+techniques adapted from Deming and Stephan (1940) and Stone (1961).
+Upper (2011) and Gandy and Veraart (2013) applied these methods to model
+interbank markets from marginal balance-sheet constraints. Squartini and
+Garlaschelli (2017) and Squartini et al. (2018) synthesized these
+entropy-maximizing ensembles, showing that while they provide reliable
+uncapacitated baselines, they tend to over-disperse edges and
+underestimate systemic risk by generating overly dense topologies
+(Anand, Craig, and Peter (2018)).
+
+To better capture real-world structures like core-periphery hierarchies
+(Clementi, Gallegati, and Squartini (2019)), researchers build upon the
+foundational stochastic blockmodels of Holland, Laskey, and Leinhardt
+(1983) and Nowicki and Snijders (2001). Modern frameworks combine these
+probabilistic structures with deep relational learning to avoid slow
+Markov Chain Monte Carlo methods. For example, Kipf et al. (2018)
+introduced Neural Relational Inference to recover interaction graphs via
+amortized variational inference, while Mena et al. (2018) used
+Gumbel-Sinkhorn networks to handle discrete matching constraints
+differentiably.
+
+Combining these ideas allows models to capture temporal dynamics and
+regulatory constraints---such as exposure caps---while remaining
+trainable via gradient descent. Because true bilateral exposures are
+unobserved in central bank panels, models are validated using indirect
+metrics like temporal stability and divergence from classical
+maximum-entropy benchmarks (Anand, Craig, and Peter (2018)).
 
 \subsection{2. Notation}\label{notation}
 
@@ -1140,6 +1237,77 @@ temporal-stability evidence \\
 Discussion/limitations & \textasciitilde0.5p & honest treatment of the
 no-ground-truth-on-real-data limitation \\
 \end{longtable}
+
+\subsection*{References}\label{references}
+\addcontentsline{toc}{subsection}{References}
+
+\phantomsection\label{refs}
+\begin{CSLReferences}{1}{0}
+\bibitem[\citeproctext]{ref-anand2018filling}
+Anand, Kartik, Ben Craig, and Goetz von Peter. 2018. {``Filling in the
+Blanks: Network Structure and Interbank Contagion.''} \emph{Quantitative
+Finance} 18 (4): 625--36.
+
+\bibitem[\citeproctext]{ref-clementi2019tiered}
+Clementi, Fabio, Mauro Gallegati, and Tiziano Squartini. 2019. {``The
+Tiered Structure of Interbank Networks: A Quantitative Framework.''}
+\emph{Journal of Economic Dynamics and Control} 103: 145--68.
+
+\bibitem[\citeproctext]{ref-deming1940least}
+Deming, W Edwards, and Frederick F Stephan. 1940. {``On a Least Squares
+Adjustment of a Sampled Frequency Table When the Expected Marginal
+Totals Are Known.''} \emph{The Annals of Mathematical Statistics} 11
+(4): 427--44.
+
+\bibitem[\citeproctext]{ref-gandy2013financial}
+Gandy, Axel, and Silvia Veraart. 2013. {``A Graph-Theoretic Approach to
+the Generation of Realistic Interbank Networks.''} \emph{Computational
+Management Science} 10 (4): 315--43.
+
+\bibitem[\citeproctext]{ref-holland1983stochastic}
+Holland, Paul W, Kathryn Blackmond Laskey, and Samuel Leinhardt. 1983.
+{``Stochastic Blockmodels: First Steps.''} \emph{Social Networks} 5 (2):
+109--37.
+
+\bibitem[\citeproctext]{ref-kipf2018neural}
+Kipf, Thomas, Ethan Fetaya, Kuan-Chieh Wang, Max Welling, and Richard
+Zemel. 2018. {``Neural Relational Inference for Interacting Systems.''}
+In \emph{Proceedings of the 35th International Conference on Machine
+Learning (ICML)}, 80:2688--97.
+\url{https://doi.org/10.48550/arxiv.1802.04687}.
+
+\bibitem[\citeproctext]{ref-mena2018learning}
+Mena, Gonzalo, David Belanger, Scott Linderman, and Jasper Snoek. 2018.
+{``Learning Latent Permutations with {Gumbel-Sinkhorn} Networks.''} In
+\emph{International Conference on Learning Representations (ICLR)}.
+\url{https://doi.org/10.48550/arxiv.1802.08665}.
+
+\bibitem[\citeproctext]{ref-nowicki2001estimation}
+Nowicki, Krzysztof, and Tom A B Snijders. 2001. {``Estimation and
+Prediction for Stochastic Blockstructures.''} \emph{Journal of the
+American Statistical Association} 96 (455): 1077--87.
+
+\bibitem[\citeproctext]{ref-squartini2018reconstruction}
+Squartini, Tiziano, Guido Caldarelli, Giulio Cimini, Andrea Gabrielli,
+and Diego Garlaschelli. 2018. {``Reconstruction Methods for Networks:
+The Case of Economic and Financial Systems.''} \emph{Physics Reports}
+757: 1--47. \url{https://doi.org/10.1016/j.physrep.2018.06.008}.
+
+\bibitem[\citeproctext]{ref-squartini2017maximum}
+Squartini, Tiziano, and Diego Garlaschelli. 2017. {``Maximum-Entropy
+Networks: A Foundational Perspective.''} \emph{Physics Reports} 710:
+1--49.
+
+\bibitem[\citeproctext]{ref-stone1961input}
+Stone, Richard. 1961. \emph{Input-Output Relationships, 1954-1966}.
+Chapman; Hall.
+
+\bibitem[\citeproctext]{ref-upper2011simulation}
+Upper, Christian. 2011. {``Simulation Methods to Assess the Contagion
+Risk in Interbank Markets.''} \emph{Journal of Financial Stability} 7
+(3): 111--25. \url{https://doi.org/10.1016/j.jfs.2011.05.001}.
+
+\end{CSLReferences}
 
 
 

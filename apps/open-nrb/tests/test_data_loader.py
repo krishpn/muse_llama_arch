@@ -54,6 +54,9 @@ _TOTAL_ASSETS_RE = re.compile(r"total\s+assets?", re.IGNORECASE)
 _HEADER = "source_file,year_bs,month_bs,page,statement,bfi_name,item_code,line_item,value_mn_npr\n"
 _HEADER = "source_file,year_bs,month_bs,page,statement,bfi_name,item_code,line_item,value_mn_npr\n"
 
+_HEADER = "source_file,year_bs,month_bs,page,statement,bfi_name,item_code,line_item,value_mn_npr\n"
+
+
 def _write_csv(path: Path, rows: list[str]) -> None:
     path.write_text(_HEADER + "".join(rows))
 
@@ -327,9 +330,13 @@ def period_chronology_rollover_case() -> bool:
     return ok
 
 
-def missing_field_raises_case() -> bool:
-    """A cell missing a required field (e.g. no DEPOSITS row) should fail loudly,
-    not silently produce a NaN/garbage ratio."""
+def missing_field_left_nan_case() -> bool:
+    """A cell missing a required field entirely (e.g. no DEPOSITS row at all) is a real
+    extraction gap, confirmed present even among institutions later dropped by
+    filter_commercial_banks (2026-10-25) -- load_panel builds a dense panel for every raw
+    bfi_name, not just whatever subset a caller filters to afterward, so this must load
+    successfully with the cell left NaN (same convention as zero_deposits_left_nan_case),
+    not kill the whole panel load the way it used to."""
     rows_csv = _full_period_rows(
         "f.pdf", 2080, "Asar", "NBL",
         liquid_funds=1, loans_advances=1, interbank_r=1,
@@ -337,15 +344,91 @@ def missing_field_raises_case() -> bool:
         borrowings_nrb=1, borrowings_interbank=1, borrowings_total=1,
     )
     raised = False
+    panel = None
     with tempfile.TemporaryDirectory() as d:
         path = Path(d) / "sample.csv"
         _write_csv(path, rows_csv)
         try:
-            load_panel(path)
+            panel = load_panel(path)
         except ValueError:
             raised = True
-    print(f"[missing_field_raises_case] raised_on_missing_deposits={raised} -> {'PASS' if raised else 'FAIL'}")
-    return raised
+
+    ok = not raised and panel.X[0, 0].isnan().all().item()
+    print(f"[missing_field_left_nan_case] raised={raised} -> {'PASS' if ok else 'FAIL'}")
+    return ok
+
+
+def omitted_nrb_borrowing_case() -> bool:
+    """'a. NRB' omitted entirely (not printed as 0), confirmed live in real data (1546 cells,
+    e.g. ADBNL across many periods) for a bank/period with no NRB borrowing -- same
+    leaf-omission convention as the optional asset categories above (borrowings_nrb is now
+    looked up via _lookup_field_or_zero, not the strict _lookup_field). Must load successfully
+    with nrb_dependence computed as 0, not raise."""
+    rows_csv = _full_period_rows(
+        "onb.pdf", 2080, "Asar", "NBL",
+        liquid_funds=10, loans_advances=10, interbank_r=5,
+        capital_fund=5, deposits=10,
+        borrowings_nrb=0, borrowings_interbank=3, borrowings_total=10,
+    )
+    rows_csv = [row for row in rows_csv if "a. NRB" not in row]
+    raised = False
+    panel = None
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "sample.csv"
+        _write_csv(path, rows_csv)
+        try:
+            panel = load_panel(path)
+        except ValueError:
+            raised = True
+
+    ok = not raised
+    if ok:
+        nrb_dependence = panel.X[0, 0, 4].item()
+        ok = math.isclose(nrb_dependence, 0.0, abs_tol=1e-9)
+    print(f"[omitted_nrb_borrowing_case] raised={raised} -> {'PASS' if ok else 'FAIL'}")
+    return ok
+
+
+def zero_borrowings_total_case() -> bool:
+    """borrowings_total==0 means NO borrowing of any kind (confirmed live in real data, caused
+    a ZeroDivisionError) -- borrowings_nrb is a strict subset of borrowings_total, so this is
+    legitimately 0 NRB dependence, not missing data; the cell must load successfully."""
+    rows_csv = _full_period_rows(
+        "zbt.pdf", 2080, "Asar", "NBL",
+        liquid_funds=10, loans_advances=10, interbank_r=5,
+        capital_fund=5, deposits=10,
+        borrowings_nrb=0, borrowings_interbank=0, borrowings_total=0,
+    )
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "sample.csv"
+        _write_csv(path, rows_csv)
+        panel = load_panel(path)
+
+    nrb_dependence = panel.X[0, 0, 4].item()
+    ok = math.isclose(nrb_dependence, 0.0, abs_tol=1e-9)
+    print(f"[zero_borrowings_total_case] nrb_dependence={nrb_dependence} -> {'PASS' if ok else 'FAIL'}")
+    return ok
+
+
+def zero_deposits_left_nan_case() -> bool:
+    """deposits==0 (e.g. a non-deposit-taking BFI, confirmed live in real data) has no
+    principled ldr substitute value -- unlike zero_borrowings_total_case, this must leave the
+    cell NaN (same convention as a bank with zero rows that period), NOT raise/kill the whole
+    load the way a genuinely missing field does."""
+    rows_csv = _full_period_rows(
+        "zd.pdf", 2080, "Asar", "NBL",
+        liquid_funds=10, loans_advances=10, interbank_r=5,
+        capital_fund=5, deposits=0,
+        borrowings_nrb=2, borrowings_interbank=3, borrowings_total=10,
+    )
+    with tempfile.TemporaryDirectory() as d:
+        path = Path(d) / "sample.csv"
+        _write_csv(path, rows_csv)
+        panel = load_panel(path)
+
+    ok = panel.X[0, 0].isnan().all().item()
+    print(f"[zero_deposits_left_nan_case] all_nan={ok} -> {'PASS' if ok else 'FAIL'}")
+    return ok
 
 
 def truncated_label_matching_case() -> bool:
@@ -415,7 +498,10 @@ CASES = [
     optional_asset_category_blank_case,
     borrowings_fallback_case,
     period_chronology_rollover_case,
-    missing_field_raises_case,
+    missing_field_left_nan_case,
+    omitted_nrb_borrowing_case,
+    zero_borrowings_total_case,
+    zero_deposits_left_nan_case,
     truncated_label_matching_case,
 ]
 
@@ -452,8 +538,20 @@ def test_period_chronology_rollover():
     assert period_chronology_rollover_case()
 
 
-def test_missing_field_raises():
-    assert missing_field_raises_case()
+def test_missing_field_left_nan():
+    assert missing_field_left_nan_case()
+
+
+def test_omitted_nrb_borrowing():
+    assert omitted_nrb_borrowing_case()
+
+
+def test_zero_borrowings_total():
+    assert zero_borrowings_total_case()
+
+
+def test_zero_deposits_left_nan():
+    assert zero_deposits_left_nan_case()
 
 
 def test_truncated_label_matching():

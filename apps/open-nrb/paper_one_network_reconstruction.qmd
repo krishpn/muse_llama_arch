@@ -40,7 +40,7 @@ format:
 ---
 
 # Paper 1 — Bayesian Network Reconstruction of Interbank Exposures (Nepal)
-
+@upper2011simulation
 **Status:** core algorithms (capacitated projection, synthetic generator, amortized training step)
 implemented and unit-tested; first end-to-end synthetic validation experiment (§6/§12) running and
 under active iteration — not yet a final result. **Target venue:** ICLR / NeurIPS / ICAIF, ≤7 pages.
@@ -88,6 +88,16 @@ unrelated: this paper's contribution is a reconstruction method with no causal-i
 content; Paper 2's contribution is a causal-identification design that *consumes* this paper's
 output as a fixed input. Bundling them would force a methods paper to carry a policy
 narrative it doesn't need, and vice versa.
+
+
+## Literature Review 
+The empirical study of interbank networks faces a fundamental hurdle: while regulatory balance sheets provide aggregate asset and liability totals, exact bilateral counterparty exposures remain unobserved. To address this missing-data problem, researchers have relied on two main approaches—classical maximum-entropy optimization and, more recently, amortized variational inference.
+
+Early network reconstruction relied heavily on matrix-balancing techniques adapted from @deming1940least and @stone1961input. @upper2011simulation and @gandy2013financial applied these methods to model interbank markets from marginal balance-sheet constraints. @squartini2017maximum and @squartini2018reconstruction synthesized these entropy-maximizing ensembles, showing that while they provide reliable uncapacitated baselines, they tend to over-disperse edges and underestimate systemic risk by generating overly dense topologies (@anand2018filling).
+
+To better capture real-world structures like core-periphery hierarchies (@clementi2019tiered), researchers build upon the foundational stochastic blockmodels of @holland1983stochastic and @nowicki2001estimation. Modern frameworks combine these probabilistic structures with deep relational learning to avoid slow Markov Chain Monte Carlo methods. For example, @kipf2018neural introduced Neural Relational Inference to recover interaction graphs via amortized variational inference, while @mena2018learning used Gumbel-Sinkhorn networks to handle discrete matching constraints differentiably.
+
+Combining these ideas allows models to capture temporal dynamics and regulatory constraints—such as exposure caps—while remaining trainable via gradient descent. Because true bilateral exposures are unobserved in central bank panels, models are validated using indirect metrics like temporal stability and divergence from classical maximum-entropy benchmarks (@anand2018filling).
 
 ## 2. Notation
 
@@ -266,6 +276,7 @@ exists to help infer the matrix whose row/column sums these fix.
 
 Optional secondary signal, not in the core 5: ownership type (state/private/foreign), if available
 — would add homophily structure to the block prior.
+
 
 ### 8c. Auxiliary observed-graph candidate (optional GNN refinement input, §4)
 
@@ -546,10 +557,15 @@ Output: loss value; updated θ, ψ, Λ, w after one gradient step
 
 ## 12. Paper structure (≤7 pages)
 
-| Section | Length | Content |
+| Section | Length | Content |s
 |---|---|---|
 | Intro + related work | ~1.5p | position against Aronow-Samii/Leung (network assumed *known*), Elliott-Golub-Jackson (network assumed known, no reconstruction), Gandy-Veraart (reconstruction without covariate-informed priors or regulatory constraints) |
 | Method | ~2.5p | §3–6 above |
 | Synthetic validation | ~1.5p | SBM-generated ground truth, baseline comparison |
 | Real-data case study | ~1p | Nepal panel, temporal-stability evidence |
 | Discussion/limitations | ~0.5p | honest treatment of the no-ground-truth-on-real-data limitation |
+
+## References {.unnumbered}
+
+::: {#refs}
+:::

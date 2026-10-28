@@ -49,6 +49,9 @@ try:
 except ImportError:
     from data_loader import Panel, filter_commercial_banks, load_panel, read_rows
 
+
+                   #/src/open_nrb/data/processed/monthly_statistical_bfis/nrb_balance_sheet.csv
+
 DEFAULT_CSV = Path("src/open_nrb/data/processed/monthly_statistical_bfis/nrb_balance_sheet.csv")
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
 FIGURES_DIR = RESULTS_DIR / "figures"
@@ -80,8 +83,7 @@ def classify_banks(panel: Panel, has_rows: torch.Tensor) -> dict[str, list[int]]
     n, t = has_rows.shape
     nan_any_cell = (
         panel.X.isnan().any(dim=2) | panel.r.isnan() | panel.c.isnan() | panel.K.isnan()
-    )  # (N, T) bool, true wherever load_panel left ANY of X/r/c/K NaN that cell
-
+    )  
     buckets: dict[str, list[int]] = {
         "complete": [], "late_entry": [], "early_exit": [], "internal_gap": [],
         "zero_denom_only": [],
