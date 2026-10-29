@@ -6,40 +6,23 @@
 # ]
 # ///
 
-import torch
-
-from dataclasses import dataclass
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-try:
-    from .capacity_projection import capacitated_projection
-    from .config import CapacityProjectionConfig, EncoderDecoderConfig, ReparamConfig, TrainStepConfig
-    from .encoder_decoder import BlockPosteriorMLP, PairwiseDecoder, TemporalEncoder
-    from .reparam import gumbel_sigmoid_sample, gumbel_softmax_sample, lognormal_rsample
-except ImportError:
-    from capacity_projection import capacitated_projection
-    from config import CapacityProjectionConfig, EncoderDecoderConfig, ReparamConfig, TrainStepConfig
-    from encoder_decoder import BlockPosteriorMLP, PairwiseDecoder, TemporalEncoder
-    from reparam import gumbel_sigmoid_sample, gumbel_softmax_sample, lognormal_rsample
-
+import sys
+from pathlib import Path
 
 import torch
 
 try:
-    from .config import (
+    from open_nrb.models.config import (
         CapacityProjectionConfig,
         EncoderDecoderConfig,
         ReparamConfig,
         SyntheticConfig,
         TrainStepConfig,
     )
-    from .synthetic import sample_synthetic_network
-    from .train import Period, ReconstructionModel, train_step
-
+    from open_nrb.models.synthetic import sample_synthetic_network
+    from open_nrb.models.train import Period, ReconstructionModel, train_step
 except ImportError:
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "models"))
     from config import (
         CapacityProjectionConfig,
         EncoderDecoderConfig,

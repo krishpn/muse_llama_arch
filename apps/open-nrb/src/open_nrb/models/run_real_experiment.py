@@ -5,21 +5,6 @@
 #     "torch",
 # ]
 # ///
-
-
-
-from __future__ import annotations
-
-import csv, re, json
-from collections import defaultdict
-from dataclasses import dataclass
-from pathlib import Path
-import itertools
-import argparse
-import warnings
-import json
-from pathlib import Path
-
 """Real-data validation experiment (design doc Sec 8/12): train the full
 reconstruction model (Algorithm 3) against the real NRB balance-sheet panel
 (data_loader.load_panel) and report the indirect evidence Sec 6/12 commit to
@@ -32,72 +17,25 @@ supports and nothing more.
 Usage: uv run run_real_experiment.py [--csv PATH]
 """
 
-import torch
-import torch.nn.functional as F
+import argparse
+import json
+import warnings
+from pathlib import Path
 
+import torch
 
 try:
     from .config import CapacityProjectionConfig, EncoderDecoderConfig, ReparamConfig, SinkhornConfig, TrainStepConfig
-    from .data_loader import  COVARIATE_ORDER, Panel, filter_commercial_banks, load_panel,  filter_commercial_banks, filter_from_period, load_panel
+    from .data_loader import COVARIATE_ORDER, Panel, filter_commercial_banks, filter_from_period, load_panel
     from .run_synthetic_experiment import _forward_pass_components, _kl_beta_schedule, KL_BETA_MAX, KL_WARMUP_EPOCHS
     from .sinkhorn import sinkhorn_projection
     from .train import Period, ReconstructionModel, train_step
 except ImportError:
     from config import CapacityProjectionConfig, EncoderDecoderConfig, ReparamConfig, SinkhornConfig, TrainStepConfig
-    from data_loader import  COVARIATE_ORDER, Panel, filter_commercial_banks, load_panel,  filter_commercial_banks, filter_from_period, load_panel
+    from data_loader import COVARIATE_ORDER, Panel, filter_commercial_banks, filter_from_period, load_panel
     from run_synthetic_experiment import _forward_pass_components, _kl_beta_schedule, KL_BETA_MAX, KL_WARMUP_EPOCHS
     from sinkhorn import sinkhorn_projection
     from train import Period, ReconstructionModel, train_step
-
-
-# same convention as verify_real_csv.py's default_path.
-DEFAULT_CSV = Path("src/open_nrb/data/processed/monthly_statistical_bfis/nrb_balance_sheet.csv")
-
-D = len(COVARIATE_ORDER)
-K = 2  # SBM blocks -- core/periphery, same convention as run_synthetic_experiment.py
-HIDDEN, DECODER_HIDDEN = 16, 16
-KAPPA = 0.05  # NRB's single-obligor exposure cap multiplier (confirmed by user, Sec 11)
-EPOCHS = 3000  # first-pass pipeline smoke test, NOT a tuned final run -- real T is likely much
-              # bigger than the synthetic script's 16, so per-epoch cost is unknown until this
-              # runs once; bump after seeing real wall-clock
-EVAL_EVERY = 100
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-RESULTS_DIR = Path(__file__).resolve().parent / "results"
-
-# Narrows the period window used for the complete-case bank filter below. Default is the full
-# range load_panel finds; retune after seeing the real missingness printout if the full-range
-# filter keeps too few banks (Nepal's BFI sector has a long merger history, Sec 8 note).
-START_PERIOD: tuple[int, str] | None = None
-END_PERIOD: tuple[int, str] | None = None
-
-# Narrows the period window used for the complete-case bank filter below. Default is the full
-# range load_panel finds; retune after seeing the real missingness printout if the full-range
-# filter keeps too few banks (Nepal's BFI sector has a long merger history, Sec 8 note).
-START_PERIOD: tuple[int, str] | None = None
-END_PERIOD: tuple[int, str] | None = None
-
-
-# Relative to CWD at invocation (run from the repo root, not from inside paper1_model/) --
-# same convention as verify_real_csv.py's default_path.
-DEFAULT_CSV = Path("src/open_nrb/data/processed/monthly_statistical_bfis/nrb_balance_sheet.csv")
-
-D = len(COVARIATE_ORDER)
-K = 2  # SBM blocks -- core/periphery, same convention as run_synthetic_experiment.py
-HIDDEN, DECODER_HIDDEN = 16, 16
-KAPPA = 0.05  # NRB's single-obligor exposure cap multiplier (confirmed by user, Sec 11)
-EPOCHS = 500  # confirmed live (components_trend diagnostic): kl collapses to ~0 and smooth_w
-              # hits its floor by epoch ~300, in lockstep with kl_beta reaching KL_BETA_MAX --
-              # loss is bit-for-bit flat for 2700+ further epochs after that on a 3000-epoch run,
-              # so anything past ~300-400 is wasted GPU time on this panel size (N=36, T=77).
-EVAL_EVERY = 25
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-RESULTS_DIR = Path(__file__).resolve().parent / "results"
-
-# Narrows the period window used for the complete-case bank filter below. Default is the full
-# range load_panel finds; retune after seeing the real missingness printout if the full-range
-# filter keeps too few banks (Nepal's BFI sector has a long merger history, Sec 8 note).
-START_PERIOD: tuple[int, str] | None = None
-END_PERIOD: tuple[int, str] | None = None
 
 
 # Relative to CWD at invocation (run from the repo root, not from inside paper1_model/) --
@@ -116,7 +54,13 @@ EPOCHS = 500  # confirmed live (components_trend diagnostic): kl collapses to ~0
               # the larger commercial-bank-filtered N upstream of the complete-case filter).
 EVAL_EVERY = 25
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-RESULTS_DIR = Path(__file__).resolve().parent / "results"
+# Lives under open_nrb's own data tree, next to where DEFAULT_CSV already reads from --
+# deliberately outside paper1_model/ (not a repo-relative "sibling of this script" path) so
+# results survive independently of this scripts directory.
+RESULTS_DIR = Path(
+    "/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/"
+    "muse_llama_arch/apps/open-nrb/src/open_nrb/results"
+)
 
 # Narrows the period window used for the complete-case bank filter below. Default is the full
 # range load_panel finds; retune after seeing the real missingness printout if the full-range
@@ -337,7 +281,22 @@ def _check_finite(W_hats: list[torch.Tensor], qs: list[torch.Tensor], period_lab
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", type=Path, default=DEFAULT_CSV)
+    # Override for the posterior-collapse ablation (Sec 10's open item, now unmitigated on real
+    # data since total_recon is always exactly 0 here -- see the components_trend comment below):
+    # kl is the ONLY term with gradient signal for q_psi(z) besides smooth_weighted, so ramping it
+    # up to even KL_BETA_MAX=0.15 (synthetic's already-reduced ceiling, chosen because beta=1
+    # eventually wins there too) may be enough to force exact collapse with zero competing signal.
+    # Default stays KL_BETA_MAX so normal runs are unaffected; pass --kl-beta-max 0.0 to test
+    # whether q ever moves off uniform at all once that pressure is removed.
+    parser.add_argument("--kl-beta-max", type=float, default=KL_BETA_MAX)
+    # Multi-seed variance check (reviewer pre-mortem item 1, design doc Sec 10a): the model's
+    # temporal-stability claim rests on a single seed=0 run. Varying --seed lets a caller rerun
+    # with the same data/hyperparameters and compare W_hat across runs -- artifact filenames are
+    # seed-suffixed so repeated runs don't clobber each other on disk.
+    parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
+    kl_beta_max = args.kl_beta_max
+    seed = args.seed
 
     print(f"device: {DEVICE}")
     panel = load_panel(args.csv)
@@ -374,7 +333,7 @@ def main() -> None:
 
     periods = _build_real_periods(X, r, c, K_raw)
 
-    torch.manual_seed(0)
+    torch.manual_seed(seed)
     enc_config = EncoderDecoderConfig(input_dim=D, hidden_dim=HIDDEN, num_blocks=K, decoder_hidden_dim=DECODER_HIDDEN)
     model = ReconstructionModel(enc_config).to(DEVICE)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
@@ -382,7 +341,7 @@ def main() -> None:
     projection_config = CapacityProjectionConfig()
     reparam_config = ReparamConfig()
     train_config = TrainStepConfig(lambda_smooth=0.05, lambda_reg=0.001)
-    generator = torch.Generator(device=DEVICE).manual_seed(0)
+    generator = torch.Generator(device=DEVICE).manual_seed(seed)
 
     losses = []
     # (epoch, kl, smooth_weighted, reg_weighted) -- recon is omitted, it's always exactly 0 here
@@ -393,7 +352,7 @@ def main() -> None:
     # plateau really is the whole story, not something hidden by the single scalar loss.
     components_trend = []
     for epoch in range(EPOCHS):
-        train_config.kl_beta = _kl_beta_schedule(epoch, KL_WARMUP_EPOCHS, KL_BETA_MAX)
+        train_config.kl_beta = _kl_beta_schedule(epoch, KL_WARMUP_EPOCHS, kl_beta_max)
         loss = train_step(
             model, optimizer, periods, prior_probs, projection_config, reparam_config, train_config,
             generator=generator,
@@ -467,7 +426,12 @@ def main() -> None:
             print(f"  {name:40s} {score:.4f}")
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    artifact_path = RESULTS_DIR / "real_run.pt"
+    artifact_path = RESULTS_DIR / f"real_run_seed{seed}.pt"
+    # cap is saved in real (NPR-million) units, matching W_hat/W_baseline above -- K_raw was
+    # divided by SCALE earlier in main(), so multiplying back here undoes that the same way
+    # W_hats/W_baseline already do. Needed by eda_reviewer_questions.py's cap-binding-fraction
+    # check (Sec 10a item 2) without that script having to re-derive KAPPA/SCALE itself.
+    cap_real_units = (KAPPA * K_raw * SCALE).cpu()
     torch.save(
         {
             "bfi_names": bfi_names,
@@ -475,6 +439,7 @@ def main() -> None:
             "W_hat": torch.stack(W_hats).cpu(),
             "W_baseline": torch.stack(W_baseline).cpu(),
             "q": torch.stack(qs).cpu(),
+            "cap": cap_real_units,
             "losses": losses,
             "components_trend": components_trend,
             "non_finite_periods": bad_periods,
@@ -482,20 +447,22 @@ def main() -> None:
             "model_stability": model_stability,
             "baseline_stability": baseline_stability,
             "baseline_diff": baseline_diff,
+            "seed": seed,
         },
         artifact_path,
     )
     print(f"\nsaved: {artifact_path}")
 
-    summary_path = RESULTS_DIR / "real_run_summary.json"
+    summary_path = RESULTS_DIR / f"real_run_summary_seed{seed}.json"
     with open(summary_path, "w") as f:
         json.dump(
             {
                 "csv": str(args.csv),
+                "seed": seed,
                 "n_banks": n,
                 "n_periods": t,
                 "epochs": EPOCHS,
-                "kl_beta_max": KL_BETA_MAX,
+                "kl_beta_max": kl_beta_max,
                 "kl_warmup_epochs": KL_WARMUP_EPOCHS,
                 "kappa": KAPPA,
                 "non_finite_periods": len(bad_periods),

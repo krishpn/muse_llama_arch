@@ -43,8 +43,6 @@ class CapacityProjectionConfig:
     tol: float = 1e-6
 
 
-
-
 @dataclass
 class SyntheticConfig:
     """Hyperparameters for sample_synthetic_network (Eq. 1-5, 8, Sec 11 Algorithm 2).
@@ -55,7 +53,6 @@ class SyntheticConfig:
     """
 
     delta: float = 1e-12  # log-stabilizer, avoids log(0) when a block intensity is 0
-
 
 
 @dataclass
@@ -69,11 +66,16 @@ class EncoderDecoderConfig:
     shapes used elsewhere in the same experiment.
     """
 
-    input_dim: int           # d, covariate dimension (GRU input size)
+    input_dim: int           # d, covariate dimension. TemporalEncoder's actual GRU
+                              # input width is input_dim + 2 internally (it also
+                              # concatenates the observed r_t, c_t marginals, Eq. 6)
+                              # -- this field stays "covariates only" so callers
+                              # don't need to account for the +2 themselves.
     hidden_dim: int          # GRU hidden size, h_{i,t}'s dimension; also the block-
                               # posterior MLP's hidden-layer width
     num_blocks: int          # K, number of SBM blocks
     decoder_hidden_dim: int  # pairwise decoder MLP's hidden-layer width
+
 
 @dataclass
 class ReparamConfig:
@@ -87,7 +89,6 @@ class ReparamConfig:
     gumbel_softmax_tau: float = 0.5
     gumbel_sigmoid_tau: float = 0.5
     delta: float = 1e-20  # stabilizer inside the various log(...) terms
-
 
 
 @dataclass

@@ -5,8 +5,6 @@
 #     "torch",
 # ]
 # ///
-
-
 """Load the long-format NRB balance-sheet CSV into model tensors (design doc Sec 8).
 
 Produces, per bfi x period: X in R^5 (size, capital ratio, liquidity ratio,
@@ -17,15 +15,14 @@ equation-symbol <-> raw-field map this mirrors field-for-field.
 
 from __future__ import annotations
 
-import csv
-import re
 from collections import defaultdict
+import csv
 from dataclasses import dataclass
 from pathlib import Path
+import re
 import warnings
 
 import torch
-
 
 BS_MONTHS = [
     "Baisakh", "Jestha", "Asar", "Shrawan", "Bhadra", "Ashwin",
@@ -49,6 +46,7 @@ _MONTH_ALIASES: dict[str, str] = {
 
 def _normalize_month(month_bs: str) -> str:
     return _MONTH_ALIASES.get(month_bs, month_bs)
+
 
 _TOTAL_LIABILITIES_RE = re.compile(r"total\s+liabilit", re.IGNORECASE)
 _TOTAL_ASSETS_RE = re.compile(r"total\s+assets?", re.IGNORECASE)
@@ -381,7 +379,6 @@ COMMERCIAL_BANK_PREFIXES = {
 }
 
 
-
 def is_commercial_bank(bfi_name: str) -> bool:
     # "...DB" suffix marks a development-bank sibling of a commercial-bank prefix (e.g.
     # "LumbiniDB", "PrabhuDB" -- distinct institutions from "Lumbini"/"Prabhu"/"PRABHU",
@@ -437,7 +434,10 @@ def filter_from_period(panel: Panel, start: tuple[int, str] = MIN_PERIOD) -> Pan
     See MIN_PERIOD comment for why BS 2072-03 is the current study-window start.
     """
     start_key = _period_key(*start)
-    keep = [t for t, (year, month) in enumerate(panel.periods) if _period_key(year, month) >= start_key]
+    keep = [
+        t for t, (year, month) in enumerate(panel.periods)
+        if _period_key(year, month) >= start_key
+    ]
     dropped = [panel.periods[t] for t in range(len(panel.periods)) if t not in keep]
     if dropped:
         warnings.warn(
@@ -564,10 +564,18 @@ def _lookup_field(rec: dict[str, float], canonical: str) -> float:
     # TEXT itself, not just item_code (which Sec 9.3/9.4 already correctly ignore), so "4 " vs
     # "4.1 " diverge at the 2nd character and the mutual-prefix match above never fires. Retry
     # once on the descriptive text alone, after stripping a leading "<n>" or "<n>.<n>" token from
-    # both sides, before giving up.
+    # both sides. Same startswith-either-way tolerance as above (not strict equality): confirmed
+    # 2026-10-28 that Magh/Falgun/Chaitra 2079's bulletins additionally append a trailing
+    # footnote-reference digit to several labels (e.g. "4.1 LOANS & ADVANCES 1"), so the
+    # leading-numeral-stripped candidate must still match as a prefix, not exactly.
     canonical_stripped = _strip_leading_numeral(canonical_n)
     for label, value in rec.items():
-        if _strip_leading_numeral(label) == canonical_stripped:
+        label_stripped = _strip_leading_numeral(label)
+        if (
+            label_stripped == canonical_stripped
+            or label_stripped.startswith(canonical_stripped)
+            or canonical_stripped.startswith(label_stripped)
+        ):
             return value
     raise KeyError(canonical)
 

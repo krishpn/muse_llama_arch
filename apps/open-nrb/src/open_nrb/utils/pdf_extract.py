@@ -3,9 +3,9 @@
 # requires-python = ">=3.12"
 # dependencies = [
 #     "pypdf>=5.0.0",
+#     "pdfplumber>=0.11.0",
 #     "pandas>=2.0.0",
 #     "numpy>=1.24.0",
-#     "pdfplumber>=0.11.0"
 # ]
 # ///
 
@@ -20,15 +20,22 @@ import logging
 from pathlib import Path
 import re
 from typing import Dict, List, Optional, Tuple, Any
-import pdfplumber 
+
 import pandas as pd
+import pdfplumber
 import pypdf
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("nrb_extractor")
 
-
-
+# Raw PDFs excluded from process_all_raw_pdfs entirely. Confirmed 2026-10-27
+# (diagnose_bank_order.py full-corpus run) that Kartik2078_NFRS_PublishV1-1.pdf's
+# header-reconstruction x0-clustering breaks down (garbled single-occurrence column
+# names on p18, a dropped "Global" column on p17) -- this file is an annual NFRS-format
+# report, structurally different from the regular Monthly_Statistics-*.pdf bulletin
+# series, and is the only file left with a diagnostic mismatch after the TOC-bounding
+# and Grand/BOA placeholder fixes. Excluded rather than special-cased since it's a single
+# outlier, not part of the monthly time series the model actually needs.
 EXCLUDED_RAW_PDFS = {"Kartik2078_NFRS_PublishV1-1.pdf"}
 
 
@@ -145,7 +152,9 @@ def _cluster_rows(words: List[dict], tol: float = 2.5) -> List[Dict[str, Any]]:
         if rows and abs(w["top"] - rows[-1]["top_ref"]) <= tol:
             grp = rows[-1]
             grp["words"].append(w)
-            grp["top_ref"] = (grp["top_ref"] * (len(grp["words"]) - 1) + w["top"]) / len(grp["words"])
+            grp["top_ref"] = (
+                grp["top_ref"] * (len(grp["words"]) - 1) + w["top"]
+            ) / len(grp["words"])
         else:
             rows.append({"top_ref": w["top"], "words": [w]})
     for r in rows:
@@ -489,10 +498,16 @@ class NRBFinancialExtractor:
     def extract_all(self) -> Dict[str, pd.DataFrame]:
         """Extract all target datasets into a dictionary of DataFrames."""
         return {
-            "balance_sheet": self.extract_statement_generic("statement of assets and liabilities", "balance_sheet"),
-            "profit_and_loss": self.extract_statement_generic("profit and loss statement", "profit_and_loss"),
-            "statement_of_credit": self.extract_statement_generic("statement of credit", "statement_of_credit"),
-            "bfi_list": self.extract_bfi_name_list()
+            "balance_sheet": self.extract_statement_generic(
+                "statement of assets and liabilities", "balance_sheet"
+            ),
+            "profit_and_loss": self.extract_statement_generic(
+                "profit and loss statement", "profit_and_loss"
+            ),
+            "statement_of_credit": self.extract_statement_generic(
+                "statement of credit", "statement_of_credit"
+            ),
+            "bfi_list": self.extract_bfi_name_list(),
         }
 
 
@@ -508,7 +523,9 @@ def process_all_raw_pdfs(raw_dir: Path, output_dir: Path, max_files: Optional[in
 
     logger.info(f"Discovered {len(pdf_files)} PDF reports in {raw_dir}")
 
-    all_data = {"balance_sheet": [], "profit_and_loss": [], "statement_of_credit": [], "bfi_list": []}
+    all_data = {
+        "balance_sheet": [], "profit_and_loss": [], "statement_of_credit": [], "bfi_list": []
+    }
 
     for idx, pdf_path in enumerate(pdf_files, start=1):
         logger.info(f"[{idx}/{len(pdf_files)}] Parsing: {pdf_path.name}...")
@@ -530,14 +547,26 @@ def process_all_raw_pdfs(raw_dir: Path, output_dir: Path, max_files: Optional[in
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Extract Financial Statements & BFI Lists from NRB PDFs")
-    parser.add_argument("--all", action="store_true", help="Process all PDFs in raw_pdfs directory")
-    parser.add_argument("--output", type=str, default=None, help="Output directory for processed CSV files")
-    parser.add_argument("--max-files", type=int, default=None, help="Limit number of PDFs processed")
+    parser = argparse.ArgumentParser(
+        description="Extract Financial Statements & BFI Lists from NRB PDFs"
+    )
+    parser.add_argument(
+        "--all", action="store_true", help="Process all PDFs in raw_pdfs directory"
+    )
+    parser.add_argument(
+        "--output", type=str, default=None, help="Output directory for processed CSV files"
+    )
+    parser.add_argument(
+        "--max-files", type=int, default=None, help="Limit number of PDFs processed"
+    )
 
     args = parser.parse_args()
-    default_raw_dir = Path(__file__).resolve().parent.parent / "data" / "raw_pdfs" / "monthly_statistical_bfis"
-    default_out_dir = Path(__file__).resolve().parent.parent / "data" / "processed" / "monthly_statistical_bfis"
+    default_raw_dir = (
+        Path(__file__).resolve().parent.parent / "data" / "raw_pdfs" / "monthly_statistical_bfis"
+    )
+    default_out_dir = (
+        Path(__file__).resolve().parent.parent / "data" / "processed" / "monthly_statistical_bfis"
+    )
     out_dir = Path(args.output) if args.output else default_out_dir
 
     if args.all:

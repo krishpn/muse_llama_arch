@@ -23,7 +23,12 @@ def sinkhorn_projection(
     """Uncapped Sinkhorn-Knopp/IPF marginal projection (Sec 5/7) -- the classical
     Gandy-Veraart/RAS maximum-entropy baseline this paper compares against, NOT the
     model's own constraint layer (that's capacitated_projection in
-    capacity_projection.py, Sec 11 Algorithm 1). This function takes no cap. 
+    capacity_projection.py, Sec 11 Algorithm 1). This function takes no cap: an
+    earlier draft tried to fold a per-row obligor cap into this via a row-scalar
+    `min(...)` clip, but a single row-scalar u_i can only rescale an entire row
+    uniformly, so the clip collapsed into capping the row SUM, not each entry --
+    the wrong constraint (see Sec 5's revision note). The capped projection now
+    lives in its own module instead.
 
     All ops are differentiable torch ops so gradients flow through to W_tilde.
 

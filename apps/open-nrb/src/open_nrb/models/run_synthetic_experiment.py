@@ -5,17 +5,6 @@
 #     "torch",
 # ]
 # ///
-
-
-
-from __future__ import annotations
-
-import csv, re, json
-from collections import defaultdict
-from dataclasses import dataclass
-from pathlib import Path
-import itertools
-
 """Synthetic validation experiment (design doc Sec 6/12): train the full
 reconstruction model (Algorithm 3) against a known-ground-truth SBM panel
 (Algorithm 2) and compare its recovered W_t to the classical uncapped
@@ -24,6 +13,10 @@ either way, not just when the model wins.
 
 Usage: uv run run_synthetic_experiment.py
 """
+
+import itertools
+import json
+from pathlib import Path
 
 import torch
 import torch.nn.functional as F
@@ -38,7 +31,6 @@ try:
         SyntheticConfig,
         TrainStepConfig,
     )
-    from .reparam import gumbel_sigmoid_sample, gumbel_softmax_sample, lognormal_rsample
     from .sinkhorn import sinkhorn_projection
     from .synthetic import sample_synthetic_network
     from .train import Period, ReconstructionModel, _categorical_kl, _zero_inflated_lognormal_nll, train_step
@@ -52,22 +44,26 @@ except ImportError:
         SyntheticConfig,
         TrainStepConfig,
     )
-    from reparam import gumbel_sigmoid_sample, gumbel_softmax_sample, lognormal_rsample
     from sinkhorn import sinkhorn_projection
     from synthetic import sample_synthetic_network
     from train import Period, ReconstructionModel, _categorical_kl, _zero_inflated_lognormal_nll, train_step
+
 
 N, K, D = 24, 2, 5  # banks, SBM blocks, covariate dim (matches COVARIATE_ORDER, Sec 8e)
 HIDDEN, DECODER_HIDDEN = 16, 16
 N_PERIODS = 16
 EPOCHS = 3000
-EVAL_EVERY = 100  # epochs between relative-error checkpoints, not just loss
+EVAL_EVERY = 200  # epochs between relative-error checkpoints, not just loss
 KL_WARMUP_EPOCHS = 300  # Sec 10: epochs over which Eq. 9's beta_t ramps 0 -> KL_BETA_MAX
 KL_BETA_MAX = 0.15  # Sec 10: beta_t's ceiling, NOT 1.0 -- see _kl_beta_schedule docstring
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-RESULTS_DIR = Path(__file__).resolve().parent / "results"  # saved per-seed artifacts for later
-                                                            # plotting, so a figure never requires
-                                                            # re-running GPU training
+# Saved per-seed artifacts for later plotting, so a figure never requires re-running GPU
+# training. Same absolute location (outside paper1_model/) as run_real_experiment.py's
+# RESULTS_DIR, so both experiments' artifacts land next to each other.
+RESULTS_DIR = Path(
+    "/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/"
+    "muse_llama_arch/apps/open-nrb/src/open_nrb/results"
+)
 
 
 def _kl_beta_schedule(epoch: int, warmup_epochs: int, beta_max: float) -> float:
