@@ -12,8 +12,8 @@ from pathlib import Path
 import torch
 
 try:
-    from paper1_model.models.config import CapacityProjectionConfig, SyntheticConfig
-    from paper1_model.models.synthetic import sample_synthetic_network
+    from open_nrb.models.config import CapacityProjectionConfig, SyntheticConfig
+    from open_nrb.models.synthetic import sample_synthetic_network
 except ImportError:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "models"))
     from config import CapacityProjectionConfig, SyntheticConfig

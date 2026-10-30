@@ -16,8 +16,8 @@ try:
     from open_nrb.models.capacity_projection import capacitated_projection
 except ImportError:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "models"))
-    from .config import CapacityProjectionConfig
-    from .capacity_projection import capacitated_projection
+    from config import CapacityProjectionConfig
+    from capacity_projection import capacitated_projection
 
 
 def feasible_case() -> bool:

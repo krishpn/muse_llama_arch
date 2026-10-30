@@ -1,0 +1,25 @@
+# Baseline synthetic validation experiment (design doc Sec 6/12): core/periphery SBM scenario.
+# Loaded by run_synthetic_experiment.py via --config (defaults here if --config is omitted).
+training:
+  epochs: 3000
+  eval_every: 200
+  lr: 0.01
+  kl_beta_max: 0.15
+  kl_warmup_epochs: 300
+  lambda_smooth: 0.05
+  lambda_reg: 0.001
+model:
+  hidden_dim: 16
+  decoder_hidden_dim: 16
+  num_blocks: 2
+scenario:
+  n_banks: 24
+  n_periods: 16
+  covariate_dim: 5
+  pi: [0.3, 0.7]
+  lambda_matrix: [[2.5, 0.6], [0.6, 0.2]]
+  eta_block: [[2.0, 0.0], [0.0, -2.0]]
+  w: [0.05, 0.8, 0.5, -0.3, 0.4]
+  sigma2: 0.15
+  cap: 6.0
+seeds: [0, 1, 2, 3, 4]

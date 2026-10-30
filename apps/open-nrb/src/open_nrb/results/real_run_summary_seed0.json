@@ -1,0 +1,15 @@
+{
+  "csv": "src/open_nrb/data/processed/monthly_statistical_bfis/nrb_balance_sheet.csv",
+  "seed": 0,
+  "n_banks": 16,
+  "n_periods": 133,
+  "epochs": 500,
+  "kl_beta_max": 0.0,
+  "kl_warmup_epochs": 300,
+  "kappa": 0.05,
+  "non_finite_periods": 0,
+  "degenerate_periods": 0,
+  "model_stability_mean": 1.1612137664327615,
+  "baseline_stability_mean": 2.319596036984278,
+  "baseline_diff_mean": 1.5207777946534908
+}

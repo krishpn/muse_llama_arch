@@ -13,8 +13,8 @@ import torch
 import torch.nn.functional as F
 
 try:
-    from paper1_model.models.config import ReparamConfig
-    from paper1_model.models.reparam import gumbel_sigmoid_sample, gumbel_softmax_sample, lognormal_rsample
+    from open_nrb.models.config import ReparamConfig
+    from open_nrb.models.reparam import gumbel_sigmoid_sample, gumbel_softmax_sample, lognormal_rsample
 except ImportError:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "models"))
     from config import ReparamConfig

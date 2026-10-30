@@ -3,6 +3,7 @@
 # requires-python = ">=3.12"
 # dependencies = [
 #     "torch",
+#     "pyyaml",
 # ]
 # ///
 """Real-data validation experiment (design doc Sec 8/12): train the full
@@ -14,7 +15,7 @@ run_synthetic_experiment.py this script can never report a reconstruction- or
 block-recovery-ACCURACY number; it reports what the real data actually
 supports and nothing more.
 
-Usage: uv run run_real_experiment.py [--csv PATH]
+Usage: uv run run_real_experiment.py [--csv PATH] [--config PATH]
 """
 
 import argparse
@@ -27,40 +28,33 @@ import torch
 try:
     from .config import CapacityProjectionConfig, EncoderDecoderConfig, ReparamConfig, SinkhornConfig, TrainStepConfig
     from .data_loader import COVARIATE_ORDER, Panel, filter_commercial_banks, filter_from_period, load_panel
-    from .run_synthetic_experiment import _forward_pass_components, _kl_beta_schedule, KL_BETA_MAX, KL_WARMUP_EPOCHS
+    from .experiment_config import load_real_experiment_config
+    from .run_synthetic_experiment import _forward_pass_components, _kl_beta_schedule
     from .sinkhorn import sinkhorn_projection
     from .train import Period, ReconstructionModel, train_step
 except ImportError:
     from config import CapacityProjectionConfig, EncoderDecoderConfig, ReparamConfig, SinkhornConfig, TrainStepConfig
     from data_loader import COVARIATE_ORDER, Panel, filter_commercial_banks, filter_from_period, load_panel
-    from run_synthetic_experiment import _forward_pass_components, _kl_beta_schedule, KL_BETA_MAX, KL_WARMUP_EPOCHS
+    from experiment_config import load_real_experiment_config
+    from run_synthetic_experiment import _forward_pass_components, _kl_beta_schedule
     from sinkhorn import sinkhorn_projection
     from train import Period, ReconstructionModel, train_step
 
 
-# Relative to CWD at invocation (run from the repo root, not from inside paper1_model/) --
+# Relative to CWD at invocation (run from the repo root, not from inside src/open_nrb/) --
 # same convention as verify_real_csv.py's default_path.
 DEFAULT_CSV = Path("src/open_nrb/data/processed/monthly_statistical_bfis/nrb_balance_sheet.csv")
 
 D = len(COVARIATE_ORDER)
-K = 2  # SBM blocks -- core/periphery, same convention as run_synthetic_experiment.py
-HIDDEN, DECODER_HIDDEN = 16, 16
-KAPPA = 0.05  # NRB's single-obligor exposure cap multiplier (confirmed by user, Sec 11)
-EPOCHS = 500  # confirmed live (components_trend diagnostic): kl collapses to ~0 and smooth_w
-              # hits its floor by epoch ~300, in lockstep with kl_beta reaching KL_BETA_MAX --
-              # loss is bit-for-bit flat for 2700+ further epochs after that on a 3000-epoch run,
-              # so anything past ~300-400 is wasted GPU time at this panel's scale (confirmed
-              # on the complete-case TRAINING panel, N=17 banks T=77 periods -- distinct from
-              # the larger commercial-bank-filtered N upstream of the complete-case filter).
-EVAL_EVERY = 25
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# Lives under open_nrb's own data tree, next to where DEFAULT_CSV already reads from --
-# deliberately outside paper1_model/ (not a repo-relative "sibling of this script" path) so
-# results survive independently of this scripts directory.
-RESULTS_DIR = Path(
-    "/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/"
-    "muse_llama_arch/apps/open-nrb/src/open_nrb/results"
-)
+# results/ and experiments/ are both siblings of this script's parent dir (models/) under
+# src/open_nrb/ -- data/evaluation/models/results/tests/utils/experiments all live at the same
+# depth, same __file__-relative convention as evaluation/make_plots.py's RESULTS_DIR. Safe
+# under a real install too: both live INSIDE the installable package (src/open_nrb/), so this
+# still resolves correctly from site-packages/open_nrb/... after `pip install`/`uv run` as a
+# module, not just as a script.
+RESULTS_DIR = Path(__file__).resolve().parent.parent / "results"
+DEFAULT_CONFIG = Path(__file__).resolve().parent.parent / "experiments" / "configs" / "baseline.yaml"
 
 # Narrows the period window used for the complete-case bank filter below. Default is the full
 # range load_panel finds; retune after seeing the real missingness printout if the full-range
@@ -114,9 +108,11 @@ def _filter_complete_banks(
     return kept_names, X, r, c, K_raw, period_labels
 
 
-def _build_real_periods(X: torch.Tensor, r: torch.Tensor, c: torch.Tensor, K_raw: torch.Tensor) -> list[Period]:
+def _build_real_periods(
+    X: torch.Tensor, r: torch.Tensor, c: torch.Tensor, K_raw: torch.Tensor, kappa: float
+) -> list[Period]:
     n, t, _ = X.shape
-    cap = KAPPA * K_raw
+    cap = kappa * K_raw
     return [
         Period(X=X[:, time, :], r=r[:, time], c=c[:, time], cap=cap[:, time], W_true=None)
         for time in range(t)
@@ -281,22 +277,16 @@ def _check_finite(W_hats: list[torch.Tensor], qs: list[torch.Tensor], period_lab
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", type=Path, default=DEFAULT_CSV)
-    # Override for the posterior-collapse ablation (Sec 10's open item, now unmitigated on real
-    # data since total_recon is always exactly 0 here -- see the components_trend comment below):
-    # kl is the ONLY term with gradient signal for q_psi(z) besides smooth_weighted, so ramping it
-    # up to even KL_BETA_MAX=0.15 (synthetic's already-reduced ceiling, chosen because beta=1
-    # eventually wins there too) may be enough to force exact collapse with zero competing signal.
-    # Default stays KL_BETA_MAX so normal runs are unaffected; pass --kl-beta-max 0.0 to test
-    # whether q ever moves off uniform at all once that pressure is removed.
-    parser.add_argument("--kl-beta-max", type=float, default=KL_BETA_MAX)
-    # Multi-seed variance check (reviewer pre-mortem item 1, design doc Sec 10a): the model's
-    # temporal-stability claim rests on a single seed=0 run. Varying --seed lets a caller rerun
-    # with the same data/hyperparameters and compare W_hat across runs -- artifact filenames are
-    # seed-suffixed so repeated runs don't clobber each other on disk.
-    parser.add_argument("--seed", type=int, default=0)
+    # Picks the experiment variant (baseline, an ablation, ...) -- training hyperparameters,
+    # model dims, kappa, and seed all come from this file now, not module constants or CLI
+    # flags. A variant/ablation/sweep is a new YAML file, not a code or command-line change --
+    # e.g. the posterior-collapse ablation (Sec 10's open item) is
+    # experiments/configs/ablation_no_kl_pressure.yaml, and a multi-seed rerun (reviewer
+    # pre-mortem item 1, design doc Sec 10a) is one YAML per seed.
+    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     args = parser.parse_args()
-    kl_beta_max = args.kl_beta_max
-    seed = args.seed
+    cfg = load_real_experiment_config(args.config)
+    seed = cfg.seed
 
     print(f"device: {DEVICE}")
     panel = load_panel(args.csv)
@@ -315,7 +305,7 @@ def main() -> None:
 
     # Real NRB values are in NPR millions, a wildly different scale than the synthetic
     # experiment's convenient O(1-10) scale the model's hyperparameters (lambda_smooth, lr,
-    # HIDDEN) were tuned for -- confirmed live: loss stuck flat (24,650,148 -> 24,649,156 over
+    # hidden_dim) were tuned for -- confirmed live: loss stuck flat (24,650,148 -> 24,649,156 over
     # 300 epochs) with kl_beta ramped all the way to its ceiling, i.e. nothing was learning.
     # Standardizing X per covariate and rescaling r/c/K (hence cap=kappa*K) by one global scalar
     # brings everything to a comparable training scale. This is lossless: capacitated_projection
@@ -331,16 +321,21 @@ def main() -> None:
     print(f"rescaling r/c/K by SCALE={SCALE.item():.4f} (real NPR-million magnitudes -> training scale)")
     r, c, K_raw = r / SCALE, c / SCALE, K_raw / SCALE
 
-    periods = _build_real_periods(X, r, c, K_raw)
+    periods = _build_real_periods(X, r, c, K_raw, cfg.kappa)
 
     torch.manual_seed(seed)
-    enc_config = EncoderDecoderConfig(input_dim=D, hidden_dim=HIDDEN, num_blocks=K, decoder_hidden_dim=DECODER_HIDDEN)
+    enc_config = EncoderDecoderConfig(
+        input_dim=D,
+        hidden_dim=cfg.model.hidden_dim,
+        num_blocks=cfg.model.num_blocks,
+        decoder_hidden_dim=cfg.model.decoder_hidden_dim,
+    )
     model = ReconstructionModel(enc_config).to(DEVICE)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-    prior_probs = (torch.ones(K) / K).to(DEVICE)
+    optimizer = torch.optim.Adam(model.parameters(), lr=cfg.training.lr)
+    prior_probs = (torch.ones(cfg.model.num_blocks) / cfg.model.num_blocks).to(DEVICE)
     projection_config = CapacityProjectionConfig()
     reparam_config = ReparamConfig()
-    train_config = TrainStepConfig(lambda_smooth=0.05, lambda_reg=0.001)
+    train_config = TrainStepConfig(lambda_smooth=cfg.training.lambda_smooth, lambda_reg=cfg.training.lambda_reg)
     generator = torch.Generator(device=DEVICE).manual_seed(seed)
 
     losses = []
@@ -351,14 +346,14 @@ def main() -> None:
     # data are this kl term and smooth_weighted, so if both are themselves flat here, the loss
     # plateau really is the whole story, not something hidden by the single scalar loss.
     components_trend = []
-    for epoch in range(EPOCHS):
-        train_config.kl_beta = _kl_beta_schedule(epoch, KL_WARMUP_EPOCHS, kl_beta_max)
+    for epoch in range(cfg.training.epochs):
+        train_config.kl_beta = _kl_beta_schedule(epoch, cfg.training.kl_warmup_epochs, cfg.training.kl_beta_max)
         loss = train_step(
             model, optimizer, periods, prior_probs, projection_config, reparam_config, train_config,
             generator=generator,
         )
         losses.append(loss.item())
-        if epoch % EVAL_EVERY == 0 or epoch == EPOCHS - 1:
+        if epoch % cfg.training.eval_every == 0 or epoch == cfg.training.epochs - 1:
             _, _, components = _forward_pass_components(model, periods, prior_probs, projection_config, train_config)
             components_trend.append(
                 (epoch, components["kl"], components["smooth_weighted"], components["reg_weighted"])
@@ -391,7 +386,7 @@ def main() -> None:
     model_stability = _temporal_stability(W_hats)
     baseline_stability = _temporal_stability(W_baseline)
     baseline_diff = _relative_diff(W_hats, W_baseline)
-    top_banks = _top_banks_by_block(bfi_names, qs, K)
+    top_banks = _top_banks_by_block(bfi_names, qs, cfg.model.num_blocks)
 
     def _nan_count(xs: list[float]) -> int:
         return sum(1 for x in xs if x != x)
@@ -425,13 +420,22 @@ def main() -> None:
         for name, score in ranked:
             print(f"  {name:40s} {score:.4f}")
 
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    artifact_path = RESULTS_DIR / f"real_run_seed{seed}.pt"
+    # Namespaced by the config file's stem (e.g. results/baseline/, results/
+    # ablation_no_kl_pressure/), not flat under RESULTS_DIR -- two configs can share the same
+    # seed (baseline.yaml and ablation_no_kl_pressure.yaml both use seed: 0), and a flat
+    # real_run_seed{seed}.pt would let the second run silently overwrite the first's artifact.
+    config_results_dir = RESULTS_DIR / args.config.stem
+    config_results_dir.mkdir(parents=True, exist_ok=True)
+    artifact_path = config_results_dir / f"real_run_seed{seed}.pt"
     # cap is saved in real (NPR-million) units, matching W_hat/W_baseline above -- K_raw was
     # divided by SCALE earlier in main(), so multiplying back here undoes that the same way
     # W_hats/W_baseline already do. Needed by eda_reviewer_questions.py's cap-binding-fraction
     # check (Sec 10a item 2) without that script having to re-derive KAPPA/SCALE itself.
-    cap_real_units = (KAPPA * K_raw * SCALE).cpu()
+    cap_real_units = (cfg.kappa * K_raw * SCALE).cpu()
+    # r/c restored to real NPR-million units the same way cap_real_units is -- the empirical
+    # target marginals W_hat/W_baseline were actually projected onto, needed by
+    # eda_network_structure.py's marginal-preservation check (this script only ever uses r/c
+    # in training-rescaled form in-memory, never persisted them before now).
     torch.save(
         {
             "bfi_names": bfi_names,
@@ -440,6 +444,8 @@ def main() -> None:
             "W_baseline": torch.stack(W_baseline).cpu(),
             "q": torch.stack(qs).cpu(),
             "cap": cap_real_units,
+            "r": (r * SCALE).cpu(),
+            "c": (c * SCALE).cpu(),
             "losses": losses,
             "components_trend": components_trend,
             "non_finite_periods": bad_periods,
@@ -453,18 +459,19 @@ def main() -> None:
     )
     print(f"\nsaved: {artifact_path}")
 
-    summary_path = RESULTS_DIR / f"real_run_summary_seed{seed}.json"
+    summary_path = config_results_dir / f"real_run_summary_seed{seed}.json"
     with open(summary_path, "w") as f:
         json.dump(
             {
                 "csv": str(args.csv),
+                "config": str(args.config),
                 "seed": seed,
                 "n_banks": n,
                 "n_periods": t,
-                "epochs": EPOCHS,
-                "kl_beta_max": kl_beta_max,
-                "kl_warmup_epochs": KL_WARMUP_EPOCHS,
-                "kappa": KAPPA,
+                "epochs": cfg.training.epochs,
+                "kl_beta_max": cfg.training.kl_beta_max,
+                "kl_warmup_epochs": cfg.training.kl_warmup_epochs,
+                "kappa": cfg.kappa,
                 "non_finite_periods": len(bad_periods),
                 "degenerate_periods": len(degenerate_periods),
                 "model_stability_mean": _mean(model_stability),

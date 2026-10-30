@@ -1,0 +1,17 @@
+# Posterior-collapse ablation (design doc Sec 10 open item): kl_beta_max=0.0 removes all KL
+# pressure on q_psi(z) to test whether it ever moves off the uniform prior without that
+# competing signal. Everything else matches baseline.yaml.
+training:
+  epochs: 500
+  eval_every: 25
+  lr: 0.01
+  kl_beta_max: 0.0
+  kl_warmup_epochs: 300
+  lambda_smooth: 0.05
+  lambda_reg: 0.001
+model:
+  hidden_dim: 16
+  decoder_hidden_dim: 16
+  num_blocks: 2
+kappa: 0.05
+seed: 0

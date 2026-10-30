@@ -1,0 +1,22 @@
+# Baseline real-data validation experiment (design doc Sec 8/12).
+# Loaded by run_real_experiment.py via --config (defaults here if --config is omitted).
+training:
+  # confirmed live (components_trend diagnostic): kl collapses to ~0 and smooth_w hits its
+  # floor by epoch ~300, in lockstep with kl_beta reaching kl_beta_max -- loss is bit-for-bit
+  # flat for 2700+ further epochs after that on a 3000-epoch run, so anything past ~300-400 is
+  # wasted GPU time at this panel's scale (confirmed on the complete-case TRAINING panel,
+  # N=17 banks T=77 periods -- distinct from the larger commercial-bank-filtered N upstream
+  # of the complete-case filter).
+  epochs: 500
+  eval_every: 25
+  lr: 0.01
+  kl_beta_max: 0.15
+  kl_warmup_epochs: 300
+  lambda_smooth: 0.05
+  lambda_reg: 0.001
+model:
+  hidden_dim: 16
+  decoder_hidden_dim: 16
+  num_blocks: 2
+kappa: 0.05
+seed: 0

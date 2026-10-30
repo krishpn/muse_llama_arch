@@ -3,6 +3,7 @@
 # requires-python = ">=3.12"
 # dependencies = [
 #     "torch",
+#     "pyyaml",
 # ]
 # ///
 """Synthetic validation experiment (design doc Sec 6/12): train the full
@@ -14,6 +15,7 @@ either way, not just when the model wins.
 Usage: uv run run_synthetic_experiment.py
 """
 
+import argparse
 import itertools
 import json
 from pathlib import Path
@@ -31,6 +33,7 @@ try:
         SyntheticConfig,
         TrainStepConfig,
     )
+    from .experiment_config import SyntheticExperimentConfig, SyntheticScenarioConfig, load_synthetic_experiment_config
     from .sinkhorn import sinkhorn_projection
     from .synthetic import sample_synthetic_network
     from .train import Period, ReconstructionModel, _categorical_kl, _zero_inflated_lognormal_nll, train_step
@@ -44,26 +47,21 @@ except ImportError:
         SyntheticConfig,
         TrainStepConfig,
     )
+    from experiment_config import SyntheticExperimentConfig, SyntheticScenarioConfig, load_synthetic_experiment_config
     from sinkhorn import sinkhorn_projection
     from synthetic import sample_synthetic_network
     from train import Period, ReconstructionModel, _categorical_kl, _zero_inflated_lognormal_nll, train_step
 
 
-N, K, D = 24, 2, 5  # banks, SBM blocks, covariate dim (matches COVARIATE_ORDER, Sec 8e)
-HIDDEN, DECODER_HIDDEN = 16, 16
-N_PERIODS = 16
-EPOCHS = 3000
-EVAL_EVERY = 200  # epochs between relative-error checkpoints, not just loss
-KL_WARMUP_EPOCHS = 300  # Sec 10: epochs over which Eq. 9's beta_t ramps 0 -> KL_BETA_MAX
-KL_BETA_MAX = 0.15  # Sec 10: beta_t's ceiling, NOT 1.0 -- see _kl_beta_schedule docstring
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# Saved per-seed artifacts for later plotting, so a figure never requires re-running GPU
-# training. Same absolute location (outside paper1_model/) as run_real_experiment.py's
-# RESULTS_DIR, so both experiments' artifacts land next to each other.
-RESULTS_DIR = Path(
-    "/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/"
-    "muse_llama_arch/apps/open-nrb/src/open_nrb/results"
-)
+# results/ and experiments/ are both siblings of this script's parent dir (models/) under
+# src/open_nrb/ -- data/evaluation/models/results/tests/utils/experiments all live at the same
+# depth, same __file__-relative convention as run_real_experiment.py's RESULTS_DIR/
+# DEFAULT_CONFIG (and evaluation/make_plots.py's RESULTS_DIR). Safe under a real install too:
+# both live INSIDE the installable package (src/open_nrb/), so this still resolves correctly
+# from site-packages/open_nrb/... as a module, not just as a standalone script.
+RESULTS_DIR = Path(__file__).resolve().parent.parent / "results"
+DEFAULT_CONFIG = Path(__file__).resolve().parent.parent / "experiments" / "configs" / "synthetic_baseline.yaml"
 
 
 def _kl_beta_schedule(epoch: int, warmup_epochs: int, beta_max: float) -> float:
@@ -99,7 +97,9 @@ def _trivial_majority_baseline(zs: list[torch.Tensor], k: int) -> float:
     return (counts.max() / counts.sum()).item()
 
 
-def _build_panel(generator: torch.Generator, device: torch.device) -> tuple[list[Period], list[torch.Tensor]]:
+def _build_panel(
+    generator: torch.Generator, device: torch.device, scenario: SyntheticScenarioConfig
+) -> tuple[list[Period], list[torch.Tensor]]:
     """A fixed core/periphery SBM scenario: Lambda's core-core cell (2.5) set well
     above core-periphery (0.6) and periphery-periphery (0.2) -- the textbook
     core/periphery pattern this method is meant to recover. eta_block mirrors that same
@@ -122,19 +122,19 @@ def _build_panel(generator: torch.Generator, device: torch.device) -> tuple[list
     just whether W_hat matches W_true, since those can diverge (Sec 10's open item on
     KL collapse).
     """
-    pi = torch.tensor([0.3, 0.7], device=device)
-    Lambda = torch.tensor([[2.5, 0.6], [0.6, 0.2]], device=device)
-    eta_block = torch.tensor([[2.0, 0.0], [0.0, -2.0]], device=device)
-    w = torch.tensor([0.05, 0.8, 0.5, -0.3, 0.4], device=device)
-    sigma2 = torch.tensor(0.15, device=device)
-    cap = torch.full((N,), 6.0, device=device)
+    pi = torch.tensor(scenario.pi, device=device)
+    Lambda = torch.tensor(scenario.lambda_matrix, device=device)
+    eta_block = torch.tensor(scenario.eta_block, device=device)
+    w = torch.tensor(scenario.w, device=device)
+    sigma2 = torch.tensor(scenario.sigma2, device=device)
+    cap = torch.full((scenario.n_banks,), scenario.cap, device=device)
     proj_config = CapacityProjectionConfig()
     syn_config = SyntheticConfig()
 
     periods = []
     zs = []
-    for _ in range(N_PERIODS):
-        X = torch.randn(N, D, generator=generator, device=device) * 0.5
+    for _ in range(scenario.n_periods):
+        X = torch.randn(scenario.n_banks, scenario.covariate_dim, generator=generator, device=device) * 0.5
         W_true, r, c, z = sample_synthetic_network(
             X, pi, Lambda, w, sigma2, eta_block, cap, proj_config, syn_config, generator=generator
         )
@@ -238,14 +238,17 @@ def _relative_frobenius_errors(W_hats: list[torch.Tensor], periods: list[Period]
     return errors
 
 
-def _baseline_errors(periods: list[Period]) -> list[float]:
+def _baseline_errors(periods: list[Period]) -> tuple[list[float], list[torch.Tensor]]:
     """Gandy-Veraart/RAS baseline (Sec 7's mandatory comparison): uncapped
     Sinkhorn/IPF balancing of a uniform off-diagonal prior onto the SAME observed
     marginals the model gets -- no covariates, no cap, matching what the classical
-    method actually is.
+    method actually is. Returns the per-period matrices too (not just the error
+    scalars) so eda_network_structure.py can run the same structural checks on the
+    baseline that it runs on W_hat, instead of only having a single error number.
     """
     sinkhorn_config = SinkhornConfig()
     errors = []
+    baseline_matrices = []
     for period in periods:
         n = period.X.shape[0]
         prior = torch.ones(n, n, device=period.X.device) - torch.eye(n, device=period.X.device)
@@ -253,11 +256,8 @@ def _baseline_errors(periods: list[Period]) -> list[float]:
         denom = period.W_true.norm().item()
         num = (W_baseline - period.W_true).norm().item()
         errors.append(num / denom if denom > 0 else float("nan"))
-    return errors
-
-
-SEEDS = [0, 1, 2, 3, 4]  # Sec 10 open item: is the block_acc margin over the trivial
-                         # baseline a real, repeatable effect or single-seed noise?
+        baseline_matrices.append(W_baseline)
+    return errors, baseline_matrices
 
 
 def _mean_std(xs: list[float]) -> tuple[float, float]:
@@ -269,33 +269,36 @@ def _mean_std(xs: list[float]) -> tuple[float, float]:
     return m, var**0.5
 
 
-def _run_once(seed: int) -> dict:
+def _run_once(seed: int, cfg: SyntheticExperimentConfig, results_dir: Path) -> dict:
     torch.manual_seed(seed)  # governs nn.Module weight init (CPU global RNG, before .to(DEVICE))
     print(f"\n--- seed {seed} ---")
     print(f"device: {DEVICE}")
     generator = torch.Generator(device=DEVICE).manual_seed(seed)
 
-    periods, zs = _build_panel(generator, DEVICE)
+    periods, zs = _build_panel(generator, DEVICE, cfg.scenario)
 
     enc_config = EncoderDecoderConfig(
-        input_dim=D, hidden_dim=HIDDEN, num_blocks=K, decoder_hidden_dim=DECODER_HIDDEN
+        input_dim=cfg.scenario.covariate_dim,
+        hidden_dim=cfg.model.hidden_dim,
+        num_blocks=cfg.model.num_blocks,
+        decoder_hidden_dim=cfg.model.decoder_hidden_dim,
     )
     model = ReconstructionModel(enc_config).to(DEVICE)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-    prior_probs = (torch.ones(K) / K).to(DEVICE)
+    optimizer = torch.optim.Adam(model.parameters(), lr=cfg.training.lr)
+    prior_probs = (torch.ones(cfg.model.num_blocks) / cfg.model.num_blocks).to(DEVICE)
     projection_config = CapacityProjectionConfig()
     reparam_config = ReparamConfig()
-    train_config = TrainStepConfig(lambda_smooth=0.05, lambda_reg=0.001)
+    train_config = TrainStepConfig(lambda_smooth=cfg.training.lambda_smooth, lambda_reg=cfg.training.lambda_reg)
 
-    baseline_errors = _baseline_errors(periods)
+    baseline_errors, baseline_matrices = _baseline_errors(periods)
     baseline_mean = sum(baseline_errors) / len(baseline_errors)
     print(f"RAS/Sinkhorn baseline mean rel. error (fixed, doesn't depend on training): {baseline_mean:.4f}\n")
 
     losses = []
     error_trend = []  # (epoch, model_mean_rel_error) -- is the gap to baseline closing, not just loss?
     block_acc_trend = []  # (epoch, block_acc) -- same cadence as error_trend, for later plotting
-    for epoch in range(EPOCHS):
-        train_config.kl_beta = _kl_beta_schedule(epoch, KL_WARMUP_EPOCHS, KL_BETA_MAX)
+    for epoch in range(cfg.training.epochs):
+        train_config.kl_beta = _kl_beta_schedule(epoch, cfg.training.kl_warmup_epochs, cfg.training.kl_beta_max)
         loss = train_step(
             model,
             optimizer,
@@ -307,13 +310,13 @@ def _run_once(seed: int) -> dict:
             generator=generator,
         )
         losses.append(loss.item())
-        if epoch % EVAL_EVERY == 0 or epoch == EPOCHS - 1:
+        if epoch % cfg.training.eval_every == 0 or epoch == cfg.training.epochs - 1:
             W_hats, qs, components = _forward_pass_components(
                 model, periods, prior_probs, projection_config, train_config
             )
             model_errors = _relative_frobenius_errors(W_hats, periods)
             model_mean = sum(model_errors) / len(model_errors)
-            block_acc = _block_recovery_accuracy(qs, zs, K)
+            block_acc = _block_recovery_accuracy(qs, zs, cfg.model.num_blocks)
             error_trend.append((epoch, model_mean))
             block_acc_trend.append((epoch, block_acc))
             print(
@@ -329,8 +332,8 @@ def _run_once(seed: int) -> dict:
     )
     model_errors = _relative_frobenius_errors(W_hats, periods)
     model_mean = sum(model_errors) / len(model_errors)
-    block_acc = _block_recovery_accuracy(qs, zs, K)
-    trivial_baseline = _trivial_majority_baseline(zs, K)
+    block_acc = _block_recovery_accuracy(qs, zs, cfg.model.num_blocks)
+    trivial_baseline = _trivial_majority_baseline(zs, cfg.model.num_blocks)
 
     print(f"\n=== SYNTHETIC VALIDATION (Sec 6/12) -- seed {seed} ===")
     print(f"loss: first={losses[0]:.3f} last={losses[-1]:.3f}")
@@ -347,8 +350,8 @@ def _run_once(seed: int) -> dict:
         else "model does NOT beat classical baseline -- report honestly (Sec 7)"
     )
 
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    artifact_path = RESULTS_DIR / f"seed_{seed}.pt"
+    results_dir.mkdir(parents=True, exist_ok=True)
+    artifact_path = results_dir / f"seed_{seed}.pt"
     torch.save(
         {
             "seed": seed,
@@ -356,6 +359,7 @@ def _run_once(seed: int) -> dict:
                                           # later block-recovery plot/confusion matrix
             "W_true": torch.stack([p.W_true for p in periods]).cpu(),  # (N_PERIODS, N, N)
             "W_hat_final": torch.stack(W_hats).cpu(),  # (N_PERIODS, N, N), post-training
+            "W_baseline": torch.stack(baseline_matrices).cpu(),  # (N_PERIODS, N, N), fixed
             "q_final": torch.stack(qs).cpu(),  # (N_PERIODS, N, K), post-training posterior
             "losses": losses,
             "error_trend": error_trend,
@@ -379,14 +383,26 @@ def _run_once(seed: int) -> dict:
 
 
 def main() -> None:
-    """Loops _run_once over SEEDS (Sec 10 open item): a single seed's block_acc
+    """Loops _run_once over cfg.seeds (Sec 10 open item): a single seed's block_acc
     margin over the trivial baseline could be a real, repeatable effect of the
     r_t/c_t encoder fix, or just that one seed's draw of z/X/noise landing
     favorably. Report mean +/- std of the margin across seeds so that question
     has an actual answer before investing in more model capacity or a lower
     beta_max to try to widen it further.
     """
-    results = [_run_once(seed) for seed in SEEDS]
+    parser = argparse.ArgumentParser()
+    # Picks the experiment variant (baseline, an ablation, a sweep) -- the ground-truth SBM
+    # scenario, training hyperparameters, and seed list all come from this file now, not
+    # module constants.
+    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
+    args = parser.parse_args()
+    cfg = load_synthetic_experiment_config(args.config)
+    # Namespaced by the config file's stem (e.g. results/synthetic_baseline/) -- two configs
+    # can share overlapping seeds, and a flat seed_{seed}.pt/multiseed_summary.json would let a
+    # second variant's run silently overwrite the first's artifacts.
+    config_results_dir = RESULTS_DIR / args.config.stem
+
+    results = [_run_once(seed, cfg, config_results_dir) for seed in cfg.seeds]
 
     print("\n=== MULTI-SEED SUMMARY (Sec 10: is the block_acc margin real or single-seed noise?) ===")
     for r in results:
@@ -424,15 +440,16 @@ def main() -> None:
     trivial_mean_agg, trivial_std_agg = _mean_std(trivial_baselines)
     gap_mean_agg, gap_std_agg = _mean_std(gaps)
 
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    summary_path = RESULTS_DIR / "multiseed_summary.json"
+    config_results_dir.mkdir(parents=True, exist_ok=True)
+    summary_path = config_results_dir / "multiseed_summary.json"
     with open(summary_path, "w") as f:
         json.dump(
             {
-                "seeds": SEEDS,
-                "epochs": EPOCHS,
-                "kl_beta_max": KL_BETA_MAX,
-                "kl_warmup_epochs": KL_WARMUP_EPOCHS,
+                "config": str(args.config),
+                "seeds": cfg.seeds,
+                "epochs": cfg.training.epochs,
+                "kl_beta_max": cfg.training.kl_beta_max,
+                "kl_warmup_epochs": cfg.training.kl_warmup_epochs,
                 "per_seed": results,
                 "aggregates": {
                     "model_rel_error": {"mean": model_mean_agg, "std": model_std_agg},
@@ -449,7 +466,7 @@ def main() -> None:
             indent=2,
         )
     print(f"\nsaved: {summary_path}")
-    print(f"saved per-seed artifacts (zs, W_true, W_hat, q, trajectories) under: {RESULTS_DIR}")
+    print(f"saved per-seed artifacts (zs, W_true, W_hat, q, trajectories) under: {config_results_dir}")
 
 
 if __name__ == "__main__":
