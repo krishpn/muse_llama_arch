@@ -6,7 +6,7 @@
 """YAML config loading for run_real_experiment.py / run_synthetic_experiment.py (experiments/
 configs/*.yaml) -- lets a named variant (baseline, an ablation, a sweep) be a file diff instead
 of a code edit. Dataclass fields have no defaults: a config file is expected to be complete,
-same "caller must set it explicitly" convention as TrainStepConfig.lambda_smooth/lambda_reg in
+same "caller must set it explicitly" convention as TrainStepConfig.lambda_smooth in
 config.py.
 """
 
@@ -23,8 +23,9 @@ class TrainingConfig:
     lr: float
     kl_beta_max: float
     kl_warmup_epochs: int
+    kl_free_bits: float
+    lambda_mi: float
     lambda_smooth: float
-    lambda_reg: float
 
 
 @dataclass

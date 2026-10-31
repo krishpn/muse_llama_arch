@@ -335,11 +335,15 @@ def main() -> None:
     prior_probs = (torch.ones(cfg.model.num_blocks) / cfg.model.num_blocks).to(DEVICE)
     projection_config = CapacityProjectionConfig()
     reparam_config = ReparamConfig()
-    train_config = TrainStepConfig(lambda_smooth=cfg.training.lambda_smooth, lambda_reg=cfg.training.lambda_reg)
+    train_config = TrainStepConfig(
+        lambda_smooth=cfg.training.lambda_smooth,
+        kl_free_bits=cfg.training.kl_free_bits,
+        lambda_mi=cfg.training.lambda_mi,
+    )
     generator = torch.Generator(device=DEVICE).manual_seed(seed)
 
     losses = []
-    # (epoch, kl, smooth_weighted, reg_weighted) -- recon is omitted, it's always exactly 0 here
+    # (epoch, kl, smooth_weighted) -- recon is omitted, it's always exactly 0 here
     # (W_true=None every real Period, Sec 8). Needed to tell a benign converged fixed point apart
     # from e.g. KL already collapsed to the uniform prior well before loss itself visibly
     # flattens -- the only two terms with ANY gradient signal for q_psi(z)/the decoder on real
@@ -356,12 +360,11 @@ def main() -> None:
         if epoch % cfg.training.eval_every == 0 or epoch == cfg.training.epochs - 1:
             _, _, components = _forward_pass_components(model, periods, prior_probs, projection_config, train_config)
             components_trend.append(
-                (epoch, components["kl"], components["smooth_weighted"], components["reg_weighted"])
+                (epoch, components["kl"], components["smooth_weighted"])
             )
             print(
                 f"epoch {epoch:5d}  loss={loss.item():10.3f}  kl_beta={train_config.kl_beta:.3f}  "
-                f"kl={components['kl']:8.3f}  smooth_w={components['smooth_weighted']:8.3f}  "
-                f"reg_w={components['reg_weighted']:7.4f}"
+                f"kl={components['kl']:8.3f}  smooth_w={components['smooth_weighted']:8.3f}"
             )
 
     W_hats, qs, _ = _forward_pass_components(model, periods, prior_probs, projection_config, train_config)
@@ -429,12 +432,12 @@ def main() -> None:
     artifact_path = config_results_dir / f"real_run_seed{seed}.pt"
     # cap is saved in real (NPR-million) units, matching W_hat/W_baseline above -- K_raw was
     # divided by SCALE earlier in main(), so multiplying back here undoes that the same way
-    # W_hats/W_baseline already do. Needed by eda_reviewer_questions.py's cap-binding-fraction
+    # W_hats/W_baseline already do. Needed by eda_model_checks.py's cap-binding-fraction
     # check (Sec 10a item 2) without that script having to re-derive KAPPA/SCALE itself.
     cap_real_units = (cfg.kappa * K_raw * SCALE).cpu()
     # r/c restored to real NPR-million units the same way cap_real_units is -- the empirical
     # target marginals W_hat/W_baseline were actually projected onto, needed by
-    # eda_network_structure.py's marginal-preservation check (this script only ever uses r/c
+    # eda_model_checks.py's marginal-preservation check (this script only ever uses r/c
     # in training-rescaled form in-memory, never persisted them before now).
     torch.save(
         {

@@ -16,7 +16,9 @@ from Nepal Rastra Bank monthly statistical bulletin PDFs.
 """
 
 import argparse
+import concurrent.futures
 import logging
+import os
 from pathlib import Path
 import re
 from typing import Dict, List, Optional, Tuple, Any
@@ -511,7 +513,15 @@ class NRBFinancialExtractor:
         }
 
 
-def process_all_raw_pdfs(raw_dir: Path, output_dir: Path, max_files: Optional[int] = None):
+def _extract_one(pdf_path: Path) -> Tuple[str, Dict[str, pd.DataFrame]]:
+    """Run the full per-PDF extraction pipeline for one file. Each PDF is parsed from a fresh
+    NRBFinancialExtractor with its own pypdf/pdfplumber handles -- no state is shared across
+    files -- so this is safe to fan out across a ProcessPoolExecutor in process_all_raw_pdfs."""
+    extractor = NRBFinancialExtractor(pdf_path)
+    return pdf_path.name, extractor.extract_all()
+
+
+def process_all_raw_pdfs(raw_dir: Path, output_dir: Path, max_files: Optional[int] = None, workers: Optional[int] = None):
     raw_dir = Path(raw_dir)
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -527,16 +537,35 @@ def process_all_raw_pdfs(raw_dir: Path, output_dir: Path, max_files: Optional[in
         "balance_sheet": [], "profit_and_loss": [], "statement_of_credit": [], "bfi_list": []
     }
 
-    for idx, pdf_path in enumerate(pdf_files, start=1):
-        logger.info(f"[{idx}/{len(pdf_files)}] Parsing: {pdf_path.name}...")
-        try:
-            extractor = NRBFinancialExtractor(pdf_path)
-            results = extractor.extract_all()
-            for key, df in results.items():
-                if not df.empty:
-                    all_data[key].append(df)
-        except Exception as e:
-            logger.error(f"Failed to process {pdf_path.name}: {e}")
+    n_workers = workers if workers is not None else min(len(pdf_files), os.cpu_count() or 1)
+    if n_workers <= 1 or len(pdf_files) <= 1:
+        for idx, pdf_path in enumerate(pdf_files, start=1):
+            logger.info(f"[{idx}/{len(pdf_files)}] Parsing: {pdf_path.name}...")
+            try:
+                _, results = _extract_one(pdf_path)
+                for key, df in results.items():
+                    if not df.empty:
+                        all_data[key].append(df)
+            except Exception as e:
+                logger.error(f"Failed to process {pdf_path.name}: {e}")
+    else:
+        # Each PDF is parsed independently (its own extractor instance, no shared state), so
+        # parsing is CPU-bound, embarrassingly parallel work -- a ProcessPoolExecutor scales
+        # close to linearly up to os.cpu_count() here, unlike the tiny-tensor torch training
+        # loops elsewhere in this project where process-per-seed overhead can dominate.
+        logger.info(f"Parsing {len(pdf_files)} PDFs across {n_workers} worker processes (log lines below will interleave)")
+        with concurrent.futures.ProcessPoolExecutor(max_workers=n_workers) as executor:
+            futures = {executor.submit(_extract_one, pdf_path): pdf_path for pdf_path in pdf_files}
+            for i, future in enumerate(concurrent.futures.as_completed(futures), start=1):
+                pdf_path = futures[future]
+                try:
+                    name, results = future.result()
+                    logger.info(f"[{i}/{len(pdf_files)}] Parsed: {name}")
+                    for key, df in results.items():
+                        if not df.empty:
+                            all_data[key].append(df)
+                except Exception as e:
+                    logger.error(f"Failed to process {pdf_path.name}: {e}")
 
     for key, dfs in all_data.items():
         if dfs:
@@ -559,6 +588,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max-files", type=int, default=None, help="Limit number of PDFs processed"
     )
+    parser.add_argument(
+        "--workers", type=int, default=None,
+        help="parallel worker processes across PDF files (default: min(n_files, cpu_count)); "
+        "--workers 1 runs sequentially (original behavior, ordered log lines)",
+    )
 
     args = parser.parse_args()
     default_raw_dir = (
@@ -570,7 +604,7 @@ if __name__ == "__main__":
     out_dir = Path(args.output) if args.output else default_out_dir
 
     if args.all:
-        process_all_raw_pdfs(default_raw_dir, out_dir, max_files=args.max_files)
+        process_all_raw_pdfs(default_raw_dir, out_dir, max_files=args.max_files, workers=args.workers)
     else:
         sample_pdf = next(default_raw_dir.glob("*.pdf"), None)
         if sample_pdf:

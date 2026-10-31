@@ -16,8 +16,11 @@ Usage: uv run run_synthetic_experiment.py
 """
 
 import argparse
+import concurrent.futures
 import itertools
 import json
+import multiprocessing
+import os
 from pathlib import Path
 
 import torch
@@ -162,7 +165,7 @@ def _forward_pass_components(
     per-period soft block posterior q (so callers can check block recovery against the
     synthetic ground-truth z independently of W_t accuracy -- Sec 10's open item on whether
     low reconstruction error implies real block recovery or just a good fit via h alone),
-    AND the four loss terms (recon, kl, lambda_smooth*smooth, lambda_reg*reg) SEPARATELY --
+    AND the three loss terms (recon, kl, lambda_smooth*smooth) SEPARATELY --
     train_step only returns their weighted sum (Eq. 9) by design. Reuses train_step's own
     private _categorical_kl/_zero_inflated_lognormal_nll helpers rather than re-deriving
     the formulas here, so this can't silently drift from what's actually trained.
@@ -195,20 +198,22 @@ def _forward_pass_components(
                 total_recon = total_recon + _zero_inflated_lognormal_nll(
                     period.W_true, eta, lam, model.sigma2, mask, train_config
                 )
-            total_kl = total_kl + _categorical_kl(q, prior_probs, train_config.delta)
+            total_kl = total_kl + _categorical_kl(q, prior_probs, train_config.delta, train_config.kl_free_bits)
 
             if W_prev is not None:
                 smooth_terms.append((W_t - W_prev).pow(2).sum())
             W_prev = W_t
 
+    # Meaned over periods on top of _categorical_kl's per-period mean over nodes --
+    # see train.py's train_step for the matching normalization and its rationale
+    # (panel-size invariance: free_bits should mean the same thing regardless of N, T).
+    total_kl = total_kl / len(batch)
     L_smooth = torch.stack(smooth_terms).sum() if smooth_terms else torch.zeros((), device=device, dtype=dtype)
-    L_reg = model.Lambda.pow(2).sum() + model.w.pow(2).sum()
 
     components = {
         "recon": total_recon.item(),
         "kl": total_kl.item(),
         "smooth_weighted": (train_config.lambda_smooth * L_smooth).item(),
-        "reg_weighted": (train_config.lambda_reg * L_reg).item(),
     }
     return W_hats, qs, components
 
@@ -243,7 +248,7 @@ def _baseline_errors(periods: list[Period]) -> tuple[list[float], list[torch.Ten
     Sinkhorn/IPF balancing of a uniform off-diagonal prior onto the SAME observed
     marginals the model gets -- no covariates, no cap, matching what the classical
     method actually is. Returns the per-period matrices too (not just the error
-    scalars) so eda_network_structure.py can run the same structural checks on the
+    scalars) so eda_model_checks.py can run the same structural checks on the
     baseline that it runs on W_hat, instead of only having a single error number.
     """
     sinkhorn_config = SinkhornConfig()
@@ -269,13 +274,14 @@ def _mean_std(xs: list[float]) -> tuple[float, float]:
     return m, var**0.5
 
 
-def _run_once(seed: int, cfg: SyntheticExperimentConfig, results_dir: Path) -> dict:
-    torch.manual_seed(seed)  # governs nn.Module weight init (CPU global RNG, before .to(DEVICE))
+def _run_once(seed: int, cfg: SyntheticExperimentConfig, results_dir: Path, device: torch.device | None = None) -> dict:
+    device = device if device is not None else DEVICE
+    torch.manual_seed(seed)  # governs nn.Module weight init (CPU global RNG, before .to(device))
     print(f"\n--- seed {seed} ---")
-    print(f"device: {DEVICE}")
-    generator = torch.Generator(device=DEVICE).manual_seed(seed)
+    print(f"device: {device}")
+    generator = torch.Generator(device=device).manual_seed(seed)
 
-    periods, zs = _build_panel(generator, DEVICE, cfg.scenario)
+    periods, zs = _build_panel(generator, device, cfg.scenario)
 
     enc_config = EncoderDecoderConfig(
         input_dim=cfg.scenario.covariate_dim,
@@ -283,12 +289,16 @@ def _run_once(seed: int, cfg: SyntheticExperimentConfig, results_dir: Path) -> d
         num_blocks=cfg.model.num_blocks,
         decoder_hidden_dim=cfg.model.decoder_hidden_dim,
     )
-    model = ReconstructionModel(enc_config).to(DEVICE)
+    model = ReconstructionModel(enc_config).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg.training.lr)
-    prior_probs = (torch.ones(cfg.model.num_blocks) / cfg.model.num_blocks).to(DEVICE)
+    prior_probs = (torch.ones(cfg.model.num_blocks) / cfg.model.num_blocks).to(device)
     projection_config = CapacityProjectionConfig()
     reparam_config = ReparamConfig()
-    train_config = TrainStepConfig(lambda_smooth=cfg.training.lambda_smooth, lambda_reg=cfg.training.lambda_reg)
+    train_config = TrainStepConfig(
+        lambda_smooth=cfg.training.lambda_smooth,
+        kl_free_bits=cfg.training.kl_free_bits,
+        lambda_mi=cfg.training.lambda_mi,
+    )
 
     baseline_errors, baseline_matrices = _baseline_errors(periods)
     baseline_mean = sum(baseline_errors) / len(baseline_errors)
@@ -324,7 +334,7 @@ def _run_once(seed: int, cfg: SyntheticExperimentConfig, results_dir: Path) -> d
                 f"model_rel_error={model_mean:.4f}  (baseline={baseline_mean:.4f})  "
                 f"block_acc={block_acc:.4f}  kl_beta={train_config.kl_beta:.3f}  "
                 f"recon={components['recon']:10.3f}  kl={components['kl']:8.3f}  "
-                f"smooth_w={components['smooth_weighted']:8.3f}  reg_w={components['reg_weighted']:7.4f}"
+                f"smooth_w={components['smooth_weighted']:8.3f}"
             )
 
     W_hats, qs, _ = _forward_pass_components(
@@ -382,6 +392,18 @@ def _run_once(seed: int, cfg: SyntheticExperimentConfig, results_dir: Path) -> d
     }
 
 
+def _init_worker() -> None:
+    """ProcessPoolExecutor worker init: cap CPU intra-op threads to 1. Each seed's tensors
+    are tiny (N<=~24 banks, hidden_dim=16), far too small for multi-threaded BLAS/GRU
+    kernels to help -- left at the default (os.cpu_count() threads per process) every
+    worker would fight the others for the same cores instead of the intended ~Nx speedup
+    from running N independent seeds concurrently. No-op effect on CUDA ops (GPU kernels
+    aren't governed by this setting) -- harmless there, just doesn't address the separate
+    single-GPU contention caveat (see main()'s --workers help text).
+    """
+    torch.set_num_threads(1)
+
+
 def main() -> None:
     """Loops _run_once over cfg.seeds (Sec 10 open item): a single seed's block_acc
     margin over the trivial baseline could be a real, repeatable effect of the
@@ -389,20 +411,74 @@ def main() -> None:
     favorably. Report mean +/- std of the margin across seeds so that question
     has an actual answer before investing in more model capacity or a lower
     beta_max to try to widen it further.
+
+    Seeds are fully independent (fresh model, fresh RNG, each writes its own
+    seed_{seed}.pt) -- --workers > 1 runs them across separate processes instead of one
+    after another, using a "spawn" worker pool (required for CUDA -- see main()'s inline
+    comment above the ProcessPoolExecutor call). On CPU this scales close to linearly up to
+    os.cpu_count(). On a single GPU it scales sub-linearly (concurrent processes' CUDA kernels
+    are time-sliced on the one device, and each process's CUDA context alone costs several
+    hundred MB-1GB of VRAM -- fine on an 8GB+ card for this model's tiny tensors, just not
+    free), but still usually beats strict sequential since at this model scale (hidden_dim=16,
+    N<=~24) per-epoch Python/host overhead, not raw device FLOPs, is the actual bottleneck.
     """
     parser = argparse.ArgumentParser()
     # Picks the experiment variant (baseline, an ablation, a sweep) -- the ground-truth SBM
     # scenario, training hyperparameters, and seed list all come from this file now, not
     # module constants.
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
+    parser.add_argument(
+        "--workers", type=int, default=None,
+        help="parallel worker processes across cfg.seeds (default: min(len(seeds), cpu_count)); "
+        "--workers 1 runs sequentially (original behavior, ordered prints)",
+    )
+    parser.add_argument(
+        "--device", choices=["cpu", "cuda"], default=None,
+        help="override auto-detection (cuda if available, else cpu). Prefer --device cpu with "
+        "--workers > 1 on a shared/small GPU: each worker process pays its own CUDA context "
+        "(several hundred MB-1GB of VRAM) on top of whatever else is already resident on that "
+        "device, and this model's tensors are tiny enough (hidden_dim=16, N<=~24) that CPU "
+        "workers parallelize better here than GPU ones contending for one device anyway.",
+    )
     args = parser.parse_args()
     cfg = load_synthetic_experiment_config(args.config)
+    device = torch.device(args.device) if args.device is not None else DEVICE
     # Namespaced by the config file's stem (e.g. results/synthetic_baseline/) -- two configs
     # can share overlapping seeds, and a flat seed_{seed}.pt/multiseed_summary.json would let a
     # second variant's run silently overwrite the first's artifacts.
     config_results_dir = RESULTS_DIR / args.config.stem
 
-    results = [_run_once(seed, cfg, config_results_dir) for seed in cfg.seeds]
+    n_workers = args.workers if args.workers is not None else min(len(cfg.seeds), os.cpu_count() or 1)
+    if n_workers > 1 and device.type == "cuda":
+        free_bytes, total_bytes = torch.cuda.mem_get_info()
+        print(
+            f"NOTE: {n_workers} workers will each open their own CUDA context on {device} "
+            f"({free_bytes / 2**20:.0f} MiB currently free of {total_bytes / 2**20:.0f} MiB total "
+            "-- shared with any other process already using this GPU). If seeds fail with "
+            "CUDA out-of-memory below, rerun with a smaller --workers or --device cpu."
+        )
+    if n_workers <= 1:
+        results_by_seed = {seed: _run_once(seed, cfg, config_results_dir, device) for seed in cfg.seeds}
+    else:
+        print(f"running {len(cfg.seeds)} seeds across {n_workers} worker processes (prints below will interleave)")
+        results_by_seed = {}
+        # "spawn", not the Linux default "fork": a forked child inherits the parent's CUDA
+        # driver state, but CUDA contexts cannot survive fork -- any worker that then calls
+        # torch.cuda.* raises "CUDA error: initialization error". torch.cuda.is_available()
+        # in this same process (DEVICE, at module import time) already touches the driver, so
+        # fork is broken here even though this process itself never ran a CUDA kernel. spawn
+        # starts each worker as a fresh interpreter (re-imports this module, no inherited CUDA
+        # state) at the cost of slower pool startup -- irrelevant next to per-seed training time.
+        mp_context = multiprocessing.get_context("spawn")
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=n_workers, initializer=_init_worker, mp_context=mp_context
+        ) as executor:
+            futures = {executor.submit(_run_once, seed, cfg, config_results_dir, device): seed for seed in cfg.seeds}
+            for future in concurrent.futures.as_completed(futures):
+                results_by_seed[futures[future]] = future.result()
+    # Reordered back to cfg.seeds' original order -- as_completed()/dict insertion order
+    # otherwise reflects whichever seed finished first, not the config's declared order.
+    results = [results_by_seed[seed] for seed in cfg.seeds]
 
     print("\n=== MULTI-SEED SUMMARY (Sec 10: is the block_acc margin real or single-seed noise?) ===")
     for r in results:

@@ -8,8 +8,8 @@
 # ///
 """Diff two config variants' metrics side by side (e.g. `baseline` vs `ablation_no_kl_pressure`)
 instead of making the user eyeball two separate runs/scripts. Reuses the metric functions already
-defined in eda_reviewer_questions.py and eda_network_structure.py directly -- no metric logic is
-reimplemented here, this script only loads artifacts, calls those functions, and tabulates.
+defined in eda_model_checks.py directly -- no metric logic is reimplemented here, this script
+only loads artifacts, calls those functions, and tabulates.
 
 Real-data comparison needs a trained real_run_seed{seed}.pt on each side (single run, so metrics
 are the seed-specific numbers run_section_b would print). Synthetic comparison needs a
@@ -28,27 +28,31 @@ from pathlib import Path
 import torch
 
 try:
-    from .eda_network_structure import (
+    from .eda_model_checks import (
+        _valid_period_mask,
         aggregate_debtrank,
+        cap_binding_fraction,
         centrality_rank_agreement,
         density,
         eigenvector_centrality,
+        lag1_autocorrelation,
         marginal_preservation_error,
         weighted_reciprocity,
     )
-    from .eda_reviewer_questions import _valid_period_mask, cap_binding_fraction, lag1_autocorrelation
     from .report_io import captured_output, save_report
 except ImportError:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from eda_network_structure import (
+    from eda_model_checks import (
+        _valid_period_mask,
         aggregate_debtrank,
+        cap_binding_fraction,
         centrality_rank_agreement,
         density,
         eigenvector_centrality,
+        lag1_autocorrelation,
         marginal_preservation_error,
         weighted_reciprocity,
     )
-    from eda_reviewer_questions import _valid_period_mask, cap_binding_fraction, lag1_autocorrelation
     from report_io import captured_output, save_report
 
 RESULTS_DIR = Path(__file__).resolve().parent.parent / "results"

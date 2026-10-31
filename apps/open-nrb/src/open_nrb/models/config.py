@@ -95,15 +95,14 @@ class ReparamConfig:
 class TrainStepConfig:
     """Hyperparameters for train_step (Eq. 6-9, Sec 11 Algorithm 3).
 
-    lambda_smooth and lambda_reg are deliberately NOT given defaults -- unlike the
-    numerical-stabilizer fields below, these are real modeling choices that vary
+    lambda_smooth is deliberately NOT given a default -- unlike the
+    numerical-stabilizer fields below, it's a real modeling choice that varies
     per experiment (Sec 7's baseline comparisons, Sec 10's open items), so the
-    caller must set them explicitly rather than silently inheriting an arbitrary
+    caller must set it explicitly rather than silently inheriting an arbitrary
     default.
     """
 
     lambda_smooth: float
-    lambda_reg: float
     recon_zero_tol: float = 1e-6  # |W_true_ij| below this counts as a structural zero
     delta: float = 1e-12          # log-stabilizer
     kl_beta: float = 1.0          # Eq. 9's beta_t: KL weight, 1.0 = original unweighted
@@ -113,3 +112,25 @@ class TrainStepConfig:
                                    # before the KL penalty pulls it to the uniform prior
                                    # -- defaults to the pre-annealing behavior so existing
                                    # callers that never set it are unaffected.
+    kl_free_bits: float = 0.0     # per-node KL floor (Kingma et al. "free bits"): each
+                                   # node's KL(q_i || prior) is clamped from below at this
+                                   # value, and the floored term is then MEANED (not
+                                   # summed) over nodes and periods -- see train.py's
+                                   # _categorical_kl -- so this value means the same thing
+                                   # regardless of panel size N or batch length T, and q
+                                   # keeps that much information about block membership
+                                   # without kl_beta's gradient fighting to erase it. 0.0 =
+                                   # no floor, reproduces the original unfloored behavior
+                                   # -- real data has zero competing reconstruction
+                                   # gradient (W_true is always None there), so at any
+                                   # kl_beta > 0 an unfloored KL term drives q all the way
+                                   # to the uniform prior (Sec 10).
+    lambda_mi: float = 0.0        # weight on _mutual_info_regularizer (IIC/IMSAT-style):
+                                   # rewards confident per-bank q (low mean entropy) while
+                                   # penalizing every bank collapsing into the SAME block
+                                   # (low entropy of the mean block distribution). Unlike
+                                   # kl_free_bits, which only stops q from being pushed all
+                                   # the way to uniform, this actively rewards sharp,
+                                   # block-diverse assignments. 0.0 = no-op, reproduces
+                                   # existing behavior. Caution: with K=2 this implicitly
+                                   # biases toward a balanced ~50/50 split (Sec 10).

@@ -78,7 +78,7 @@ def shapes_and_update_case() -> bool:
         prior_probs=torch.ones(k) / k,
         projection_config=CapacityProjectionConfig(),
         reparam_config=ReparamConfig(),
-        train_config=TrainStepConfig(lambda_smooth=0.1, lambda_reg=0.01),
+        train_config=TrainStepConfig(lambda_smooth=0.1),
         generator=gen,
     )
     after = list(model.parameters())
@@ -117,7 +117,7 @@ def real_data_branch_case() -> bool:
         prior_probs=torch.ones(k) / k,
         projection_config=CapacityProjectionConfig(),
         reparam_config=ReparamConfig(),
-        train_config=TrainStepConfig(lambda_smooth=0.1, lambda_reg=0.01),
+        train_config=TrainStepConfig(lambda_smooth=0.1),
         generator=gen,
     )
 
@@ -150,7 +150,7 @@ def loss_decreases_case() -> bool:
             prior_probs=torch.ones(k) / k,
             projection_config=CapacityProjectionConfig(),
             reparam_config=ReparamConfig(),
-            train_config=TrainStepConfig(lambda_smooth=0.1, lambda_reg=0.01),
+            train_config=TrainStepConfig(lambda_smooth=0.1),
             generator=gen,
         )
         losses.append(loss.item())

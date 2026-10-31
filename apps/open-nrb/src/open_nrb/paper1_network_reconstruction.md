@@ -1,0 +1,737 @@
+# Paper 1 — Bayesian Network Reconstruction of Interbank Exposures (Nepal)
+
+**Status:** core algorithms (capacitated projection, synthetic generator, amortized training step)
+implemented and unit-tested; first end-to-end synthetic validation experiment (§6/§12) running and
+under active iteration — not yet a final result. **Target venue:** ICLR / NeurIPS / ICAIF, ≤7 pages.
+
+**One-line description:** Reconstruct the latent bilateral interbank exposure matrix $W_t$ for
+Nepali BFIs from NRB bulletin data, using an SBM-structured, covariate-informed generative model
+with a differentiable regulatory-constraint projection layer, amortized by a GNN/GRU inference
+network.
+
+This supersedes the earlier version of `feature_model_mapping.md`, which had drifted from the
+actual design (it invented a generic "Bayesian-net structural-constraint" layer built from
+accounting identities — that was never part of the real design and is corrected below).
+
+
+## 0. Problem framing and contribution to policy
+
+**Problem framing (what "the network" means here).** We do not pre-specify the edges of the
+interbank network. Instead, following the network reconstruction literature (e.g.,
+@squartini2018reconstruction), we treat the bilateral exposure structure as latent and infer it from publicly
+observable aggregates — balance-sheet marginals and bank-level covariates — within a constrained
+statistical framework. Concretely: a node is a bank; a directed edge $i \to j$ is $W_{ij,t}$, the
+exposure of bank $i$ to bank $j$; an edge "exists" when $W_{ij,t}>0$. Neither the edge set nor the
+weights are observed — only the row/column marginals and covariates are. This is a problem of
+statistical inference under partial observability, not analysis over a topology that is already
+known or self-reported. (Revisit/tighten this paragraph later — current form is a first pass.)
+
+**Contribution to policy.** No central bank in a resource-constrained setting is going to mandate
+new bilateral exposure reporting purely for a research exercise — that is a costly, politically
+slow regulatory change. The contribution here is that this doesn't require that change: a usable,
+continuously-updatable estimate of systemic interconnectedness is produced from data NRB (or any
+similarly-resourced central bank) already publishes every month, with zero new reporting burden.
+Put to a central banker directly: today there is no way to ask "who is exposed to whom" or "which
+banks are structurally systemic" — not because the question doesn't matter, but because answering
+it was assumed to require data that isn't collected. This method shows it doesn't. It converts a
+previously unanswerable supervisory question into an answerable one, cheaply, and produces a
+reusable pipeline that other analyses (stress tests, contagion simulations, Paper 2's spillover
+estimation) can plug into. This also generalizes beyond Nepal: most emerging-market central banks
+publish the same kind of aggregate call-report data and face the identical constraint, so the
+method is a template for resource-constrained regulators broadly, not a Nepal-specific workaround.
+
+**A second, load-bearing contribution: the method is demonstrated under real regulatory data
+friction, not idealized data access.** This is not a complaint specific to NRB — withheld or
+simply-never-collected bilateral exposure data is the *documented norm* across central banks, not
+an idiosyncrasy of one resource-constrained regulator. The empirical interbank-network
+reconstruction literature exists in its current partial-data form precisely because true bilateral
+matrices are almost never available to researchers or supervisors: @upper2011simulation surveys
+exactly this constraint across the contagion-simulation literature; @mistrulli2011assessing is one
+of the few studies with genuine bilateral ground truth (Italy) and uses it mainly to show how far
+reconstruction methods diverge from reality when that ground truth is absent, as it is everywhere
+else; @gandy2013financial builds a full reconstruction methodology around that same absence; and
+the maximum-entropy ensembles synthesized by @squartini2017maximum and
+@squartini2018reconstruction are themselves a direct response to the same structural gap — though
+@anand2018filling shows these entropy-maximizing reconstructions systematically over-disperse
+edges and underestimate systemic risk relative to whatever bilateral structure (on the rare
+occasions it is observable at all) actually exists, exactly the divergence this paper's own
+Gandy-Veraart/RAS baseline comparison (§7/§12) is designed to surface rather than paper over.
+Against that backdrop, NRB's bulletins are an unremarkable, representative case, not a worst
+case: scanned/rendered monthly PDFs, not a clean machine-readable table, carrying inconsistent
+item-numbering across eras (§9.3), lettered sub-items reused across unrelated sections (§9.4), and,
+as of this writing, an unexplained multi-bank blackout in several months (§9.9) still under
+diagnosis. No bilateral exposure field exists in them at all, by construction (§10) — the same
+structural absence @anand2018filling and @gandy2013financial already built their methods around.
+
+Most network-reconstruction papers implicitly start from a clean input table someone else already
+built; this project had to build that table itself from the regulator's actual, unhelpful release
+format, and to commit to an explicit, auditable rule for what happens when a field can't be
+recovered. That rule is not an arbitrary convenience: §9's missingness is traceable to specific,
+named causes (an era's numbering scheme, a bank absent from one page) rather than occurring
+independently of bank/period/label identity — the textbook definition of data that is *not* missing
+completely at random [@littlerubin2019missing]. Under that kind of non-random missingness, naive
+imputation (e.g., filling gaps with 0 or a mean) is the methodologically unsound move: it would
+inject bias correlated with exactly the extraction failure modes in §9, not neutral noise. The
+defensible choice, and the one this pipeline implements, is the classical complete-case
+alternative: discard the cell, never impute it (§9.9), and report the discard rate and cause rather
+than absorbing it silently.
+
+That this kind of data friction is structural rather than Nepal-specific is documented at the
+policy level, not just the research level: the G20 Data Gaps Initiative [@fsbimf2009infogaps] was
+launched specifically because the 2008 crisis revealed that even advanced-economy regulators
+lacked sufficiently granular, timely interconnectedness data, and the Basel Committee's
+risk-data-aggregation principles [@bcbs2013principles] document that granular data aggregation
+remains a known weakness inside systemically important banks themselves, not just at smaller
+emerging-market regulators like NRB. Reporting the resulting panel size honestly (N=16 of 33
+commercial banks, §9.9), with every discard traceable to a named cause, is therefore not a
+weakness to apologize for: it is evidence that the method works *as released*, under the same
+bureaucratic opacity every similarly-resourced regulator imposes, using the missing-data
+convention the statistics literature itself prescribes for non-random missingness rather than a
+convenient but biased shortcut. A method validated only on an already-clean panel would be a
+weaker, less policy-relevant result than this one.
+
+**Citation status**: @upper2011simulation, @gandy2013financial, @squartini2017maximum,
+@squartini2018reconstruction, and @anand2018filling above reuse keys already established in the
+Literature Review below — no new verification needed for those. @mistrulli2011assessing,
+@littlerubin2019missing, @fsbimf2009infogaps, and @bcbs2013principles are NEW keys introduced in
+this pass and are **NOT YET in the bibliography / NOT verified against a live source** — web
+search was unavailable in this session, so treat the following as plausible-from-training-data
+recall only until independently confirmed: Mistrulli, *Assessing financial contagion in the
+interbank market: Maximum entropy versus observed interbank lending patterns*, Journal of Banking
+& Finance, 2011; Little & Rubin, *Statistical Analysis with Missing Data*, 3rd ed., Wiley, 2019;
+FSB & IMF, *The Financial Crisis and Information Gaps*, 2009 (the G20 Data Gaps Initiative's
+founding report); BCBS 239, Basel Committee on Banking Supervision, *Principles for effective
+risk data aggregation and risk reporting*, 2013. Add real bib entries and confirm all four before
+this goes into a draft.
+
+## 1. Why this is its own paper
+
+Separated from the causal/policy question (Paper 2) because the two are methodologically
+unrelated: this paper's contribution is a reconstruction method with no causal-identification
+content; Paper 2's contribution is a causal-identification design that *consumes* this paper's
+output as a fixed input. Bundling them would force a methods paper to carry a policy
+narrative it doesn't need, and vice versa.
+
+## Literature Review
+
+The empirical study of interbank networks faces a fundamental hurdle: while regulatory balance sheets provide aggregate asset and liability totals, exact bilateral counterparty exposures remain unobserved. To address this missing-data problem, researchers have relied on two main approaches—classical maximum-entropy optimization and, more recently, amortized variational inference.
+
+Early network reconstruction relied heavily on matrix-balancing techniques adapted from @deming1940least and @stone1961input. @upper2011simulation and @gandy2013financial applied these methods to model interbank markets from marginal balance-sheet constraints. @squartini2017maximum and @squartini2018reconstruction synthesized these entropy-maximizing ensembles, showing that while they provide reliable uncapacitated baselines, they tend to over-disperse edges and underestimate systemic risk by generating overly dense topologies (@anand2018filling).
+
+To better capture real-world structures like core-periphery hierarchies (@clementi2019tiered), researchers build upon the foundational stochastic blockmodels of @holland1983stochastic and @nowicki2001estimation. Modern frameworks combine these probabilistic structures with deep relational learning to avoid slow Markov Chain Monte Carlo methods. For example, @kipf2018neural introduced Neural Relational Inference to recover interaction graphs via amortized variational inference, while @mena2018learning used Gumbel-Sinkhorn networks to handle discrete matching constraints differentiably.
+
+Combining these ideas allows models to capture temporal dynamics and regulatory constraints—such as exposure caps—while remaining trainable via gradient descent. Because true bilateral exposures are unobserved in central bank panels, models are validated using indirect metrics like temporal stability and divergence from classical maximum-entropy benchmarks (@anand2018filling).
+
+
+## 2. Notation
+
+| Symbol | Meaning |
+|---|---|
+| $i, j \in \{1,...,N\}$ | institutions (BFIs) |
+| $t \in \{1,...,T\}$ | periods (NRB bulletin months) |
+| $X_{i,t} \in \mathbb{R}^d$ | node covariates for bank $i$ at time $t$ |
+| $r_{i,t}, c_{i,t} \ge 0$ | observed interbank lending / borrowing marginals |
+| $K_{i,t}$ | core capital (used to set the regulatory single-obligor cap) |
+| $W_t \in \mathbb{R}_{\ge 0}^{N \times N}$ | **latent** bilateral exposure matrix — never observed, the reconstruction target |
+| $z_i \in \{1,...,K\}$ | latent block/tier membership (e.g. core vs. periphery) |
+
+## 3. Generative model
+
+- Block membership: $z_i \sim \text{Categorical}(\pi)$ — (Eq. 1)
+- Block-pair intensity: $\Lambda \in \mathbb{R}_{\ge0}^{K\times K}$ — the SBM core
+- Fitness/degree-correction from covariates: $\phi_{i,t} = \exp(w^\top X_{i,t})$ — (Eq. 2)
+- Latent edge intensity:
+  $$\lambda_{ij,t} = \Lambda_{z_i z_j} \cdot \phi_{i,t}\phi_{j,t} \cdot \exp(h_{i,t}^\top h_{j,t}) \qquad \text{(Eq. 3)}$$
+- Zero-inflated edge weight (most bank pairs have *no* exposure):
+  $$\Pr(\tilde W_{ij,t}=0) = \sigma(-\eta_{ij,t}), \qquad \tilde W_{ij,t} \mid \tilde W_{ij,t}>0 \sim \text{LogNormal}(\log\lambda_{ij,t}, \sigma^2) \qquad \text{(Eq. 4)}$$
+- Marginals are a **deterministic function** of $W_t$:
+  $$r_{i,t} = \sum_j W_{ij,t}, \qquad c_{j,t} = \sum_i W_{ij,t} \qquad \text{(Eq. 5)}$$
+  This means the marginal constraint belongs in the *architecture* (a hard projection), not the likelihood — see §5.
+
+## 4. Inference network (amortized, PyG GNN + GRU)
+
+The encoder runs on covariates/history only — it cannot message-pass over $W_t$ itself, since
+that would be circular (the whole point is that $W_t$ is unobserved).
+
+- Temporal encoder: $h_{i,t} = \text{GRU}_\theta([X_{i,t}; r_{i,t}; c_{i,t}], h_{i,t-1}) \qquad \text{(Eq. 6)}$,
+  optionally refined by a GNN layer over an auxiliary *observed* graph if one exists (e.g.
+  common-sector exposure — see §8). $r_{i,t}, c_{i,t}$ (observed interbank lending/borrowing
+  marginals — real, measured aggregate fields, not derived from the model's own inference of
+  the latent $W_t$, so this doesn't violate the no-message-passing-over-$W_t$ rule above) were
+  added to the encoder's input after the first synthetic validation run showed block recovery is
+  *impossible* from $X$ alone: $z$ is drawn independently of $X$ (Eq. 1 vs. Eq. 2), so
+  $q_\psi(z)$ conditioned on $X$-history only has no signal to learn from, no matter how the KL
+  term in Eq. 9 is weighted (§10).
+- Amortized block-assignment posterior: $q_\psi(z_i \mid X_{i,1:t}, r_{i,1:t}, c_{i,1:t}) = \text{Categorical}(\text{softmax}(\text{MLP}_\psi(h_{i,t}))) \qquad \text{(Eq. 7)}$
+- Pairwise decoder produces $(\eta_{ij,t}, \lambda_{ij,t})$ from $(h_{i,t}, h_{j,t}, z_i, z_j)$ —
+  full amortized variational posterior $q_\psi(W_t \mid X_{1:t}, r_t, c_t)$. This supersedes the
+  literal Eq. 3-4 computation: the decoder never reads $\Lambda$ or $w$, so those stay
+  generative-model/Algorithm-2-only parameters, never trained (§6, §11 Algorithm 3).
+- Reparameterized sampling: log-normal reparam trick for the continuous weight, Gumbel-softmax
+  for the discrete existence gate.
+
+## 5. Constraint-satisfaction layer (the technical core of the paper)
+
+Differentiable **capacitated marginal projection**, via Dykstra's alternating-projections
+algorithm (an ADMM-family method) onto the intersection of three convex sets:
+
+$$W_t = \text{Proj}_{\mathcal{R}\cap\mathcal{C}\cap\mathcal{B}}(\tilde W_t) \qquad \text{(Eq. 8)}$$
+
+where $\mathcal{R} = \{W : \sum_j W_{ij}=r_{i,t}\}$, $\mathcal{C} = \{W : \sum_i W_{ij}=c_{j,t}\}$,
+$\mathcal{B} = \{W : 0 \le W_{ij} \le \kappa K_{i,t}\ \forall j\}$ — i.e. the nearest-in-Euclidean-
+norm matrix to $\tilde W_t$ that satisfies the observed marginals and the regulatory
+single-obligor cap *exactly*, not approximately.
+
+**Revision note (superseded design):** an earlier draft used a capacitated Sinkhorn/entropic-OT
+iteration with a `min(...)` row-scalar clip to enforce the cap. `test_sinkhorn.py`'s
+`binding_cap_case` showed this doesn't implement $\mathcal{B}$ at all — a single row-scalar $u_i$
+can only rescale an entire row uniformly, so "clip to satisfy the cap" collapsed into capping the
+*row sum* ($\sum_j W_{ij} \le \kappa K_{i,t}$) rather than *each entry*
+($W_{ij} \le \kappa K_{i,t}\ \forall j$) — a materially different, and wrong, constraint (total
+interbank activity vs. concentration to any one counterparty). Plain (uncapped) Sinkhorn/IPF is
+still used, unmodified, as the classical Gandy-Veraart/RAS baseline in §7/§12 — that comparison
+never needed the cap in the first place, so it's unaffected by this fix.
+
+References: Cuturi (2013) entropic OT (for the uncapped baseline); Boyle & Dykstra (1986) for the
+alternating-projection algorithm; Mena et al. (2018) Gumbel-Sinkhorn (unrelated to this layer —
+that's the discrete existence gate, Eq. 4). Flagged explicitly as "the one genuinely nontrivial
+implementation piece" in the design discussion — this is the part most likely to need real
+engineering effort, not the GNN/GRU scaffolding around it.
+
+**Correction vs. the earlier `feature_model_mapping.md`:** there is no "Bayesian-net
+structural-constraint edge" tying `TOTAL Liabilities = TOTAL ASSETS` or `Net Profit` into the
+graph. That was never part of this design. The accounting identities in the raw NRB statements
+are a **data-quality cross-check** on the extractor (do the reported totals reconcile?), not a
+component of the generative model or the constraint layer.
+
+## 6. Training objective
+
+$$\mathcal{L} = -\mathbb{E}_q[\log p(W_t^{\text{true}})]_{\text{synthetic only}} + \beta_t\,\text{KL}(q_\psi(z)\,\|\,p(z)) + \lambda_{\text{smooth}}\sum_t \|W_t - W_{t-1}\|_F^2$$
+
+No $\lambda_{\text{reg}}\|\Lambda, w\|^2$ term: $\Lambda$ (Eq. 3) and $w$ (Eq. 2) are generative-model/
+Algorithm-2-synthetic-sampler parameters only — Algorithm 3's amortized inference replaces the
+literal Eq. 3-4 computation with $\text{Decoder}_\psi(h_i, h_j, z_i, z_j)$ (§4), which never reads
+$\Lambda$ or $w$, so a regularizer on them would have no forward-pass effect to actually regularize
+and was dropped rather than wired in.
+
+- **$\beta_t$ (KL annealing weight)**: added after the first synthetic validation run showed the
+  unweighted ($\beta_t = 1$ always) KL term collapsing $q_\psi(z)$ to the uniform prior almost
+  immediately (§10) — the block-assignment posterior was getting worse than a trivial
+  majority-guess baseline as training proceeded, even while the reconstruction likelihood kept
+  improving via the decoder's direct use of $h$. $\beta_t$ ramps linearly $0 \to \beta_{\max}$ over
+  the first `KL_WARMUP_EPOCHS` epochs (standard $\beta$-VAE warm-up), giving $q_\psi(z)$ room to
+  latch onto block signal before the KL penalty pulls it toward $p(z)$. **$\beta_{\max} < 1$ (not
+  $1$)**: after the Eq. 6-7 encoder fix (feeding $r_t, c_t$ in) made real block recovery possible —
+  block-recovery accuracy peaked at 0.85, well above the trivial baseline, while $\beta_t$ was
+  still small — annealing all the way to $\beta_t = 1$ reproduced the same collapse on a delay:
+  accuracy decayed back toward/below the trivial baseline in lockstep with $\beta_t$'s climb, well
+  before warm-up even finished. So the fix wasn't ramp *speed*, it was the *ceiling*: $\beta_t = 1$
+  always eventually out-competes whatever reconstruction-gradient signal keeps $q_\psi(z)$
+  informative. Current value: $\beta_{\max} = 0.15$ (`KL_BETA_MAX` in the synthetic experiment
+  script) — **partially validated, seed-dependent**: a single 3000-epoch run (seed 0) held
+  block-recovery accuracy at 0.7578–0.7682 throughout (vs. that run's trivial baseline of 0.7344)
+  rather than decaying back down, with $\text{KL}$ stabilizing around 266 instead of collapsing to
+  ~0. A 5-seed replication of that same run (seeds 0–4) showed this does **not** hold up as a
+  general fix: block-recovery margin over the trivial baseline was $+0.0234, -0.1380, +0.1380,
+  -0.1797, -0.0026$ (mean $-0.0318$, std $0.1148$ — std nearly 4× the mean), with only 2/5 seeds
+  beating the trivial baseline at all. Two distinct failure modes recur across seeds: full
+  collapse to the uniform prior ($\text{KL} \approx 0$ throughout, e.g. seed 4), and confident but
+  *wrong* block assignment ($\text{KL}$ climbs normally but accuracy sits below the trivial
+  baseline, e.g. seed 1). Reconstruction accuracy, by contrast, **is** robust across the same 5
+  seeds: model mean relative error beat the classical Sinkhorn/RAS baseline in 5/5 seeds (mean
+  0.4154 vs. 0.5657). See §10 for what this means for the paper's claims.
+
+- **Synthetic data** (known ground-truth $W_t$ from an SBM generator): the first term is a real
+  supervised reconstruction loss — this is the main validation evidence.
+- **Real data** (no $W_t$ is ever observed): the first term drops out entirely. What's left is a
+  regularized/MAP-style constrained fit, *not* likelihood-based estimation. Evaluation on real
+  data has to rely on indirect evidence: temporal stability of the recovered $W_t$ sequence, and
+  comparison against a classical baseline (§8).
+- **Point estimate at inference/evaluation time**: training (Algorithm 3) samples $z, e, W$ via
+  the reparameterized Gumbel-softmax/Gumbel-sigmoid/log-normal draws so gradients can flow, but
+  reporting $\hat W_t$ from a single such draw carries irreducible sampling variance even once
+  $(\eta, \lambda, q)$ are well-calibrated — this showed up empirically as a flat/noisy
+  `model_rel_error` in the first synthetic run while the reconstruction likelihood term improved
+  steadily underneath it. At inference/evaluation time, $\hat W_t$ should instead be built from
+  the posterior-predictive **mean** at each stage: $q_\psi(z)$ itself (no Gumbel-softmax draw),
+  $\sigma(\eta)$ for existence (no Gumbel-sigmoid draw), and $\lambda \cdot e^{\sigma^2/2}$ for
+  magnitude (the log-normal mean, no reparameterized draw) — then project through Algorithm 1 as
+  usual. This is a deliberate design decision, not just an experiment-script detail: it governs
+  how both the synthetic validation (§12) and the real-data baseline comparison (§7) numbers get
+  computed.
+
+## 7. Design rationale
+
+- **SBM over preferential-attachment/fitness models** as the sole structural backbone: core-
+  periphery tiering in interbank markets is literally a latent-block story, so SBM is the natural
+  fit. PA/fitness models (Caldarelli et al.) are cited in related work for contrast but not built.
+- **GRU, not a temporal-GNN** (EvolveGCN, TGN, etc.) for the temporal mechanism: deliberately the
+  simpler choice, given the "big model, small data" risk — roughly 50–80 institutions, at most
+  ~170 periods. A fancier temporal-GNN would be over-parameterized for this panel size.
+- **Mandatory baseline**: head-to-head comparison against Gandy–Veraart / RAS maximum-entropy
+  network reconstruction, on both the synthetic SBM data (known ground truth) and the real panel.
+  Explicit instruction from the design discussion: report honestly if the deep model doesn't beat
+  the classical baseline — don't bury a negative result.
+
+## 8. Variable inventory (what actually feeds the model)
+
+Net statement from the design discussion: **the reconstruction model needs ~5 covariates per
+node per period, plus the two interbank marginals. Everything else in the NRB bulletins is either
+a Paper 2 outcome variable or not usable given current data coverage.**
+
+### 8a. The two marginals (non-negotiable — the reconstruction target)
+
+The names below (`2.b Interbank Borrowing`, `INTERBANK LENDING (Marginal r_i)`) were this doc's
+own shorthand, not literal bulletin text, and the row-marginal name additionally implied a
+standalone top-level item that doesn't exist. Confirmed against the real extracted CSV
+(`nrb_balance_sheet.csv`) on 2026-10-22 — see §9.4:
+
+| Symbol | Real bulletin text | Parent section | Statement / side |
+|---|---|---|---|
+| $c_{i,t}$ (column marginal) | `b. Interbank Borrowing` | `2 BORROWINGS` | Balance Sheet, **Liabilities** |
+| $r_{i,t}$ (row marginal) | `a. Interbank Lending` | `3 SHARE & OTHER INVESTMENT` | Balance Sheet, **Assets** |
+
+Both are lettered sub-items, not top-level rows — `r_{i,t}$` in particular is a breakdown
+component of `3 SHARE & OTHER INVESTMENT`'s own reported total, which matters for the size
+formula below (§9.4). These are the actual payoff variables for the whole method — everything else
+exists to help infer the matrix whose row/column sums these fix.
+
+### 8b. Node covariates $X_{i,t}$ (block-membership / fitness prior)
+
+| # | Covariate | Built from | Role |
+|---|---|---|---|
+| 1 | Size | sum of the **10** real top-level asset rows: `1 LIQUID FUNDS`, `2 INVESTMENT IN SECURITIES`, `3 SHARE & OTHER INVESTMENT`, `4 LOANS & ADVANCES`, `5 BILL PURCHASED`, `6 LOANS AGAINST COLLECTED BILLS`, `7 FIXED ASSETS`, `8 OTHER ASSETS`, `9 EXPENSES NOT WRITTEN OFF`, `10 NON BANKING ASSETS` (**not** the `TOTAL ASSETS` label directly — see §9.1). $r_{i,t}$ is **not** added as an 11th term — per §8a/§9.4 it's a sub-item already folded into `3 SHARE & OTHER INVESTMENT`'s reported total, so adding it separately would double-count it | SBM block/fitness prior, scale control |
+| 2 | Capital ratio | `1 CAPITAL FUND` (Liabilities) ÷ size | solvency/fitness term; also sets the obligor cap $K_{i,t}$ |
+| 3 | Liquidity ratio | `1 LIQUID FUNDS` (Assets) ÷ size | liquidity position |
+| 4 | Loan-to-deposit pressure | `4 LOANS & ADVANCES` (Assets) ÷ `3 DEPOSITS` (Liabilities) | funding-pressure signal |
+| 5 | NRB-dependence | `a. NRB` ÷ `2 BORROWINGS` (both under Liabilities, `a. NRB` nested under `2 BORROWINGS`; if `2 BORROWINGS` is missing for a row — some early-era filings never print the top-level subtotal — the denominator is reconstructed as the sum of its sub-items: `a. NRB`, `b. Interbank Borrowing`, `c. Foreign Banks and Fin. Ins.`, `d. Other Financial Ins.`, `e. Bonds and Securities` — confirmed real text per §9.4; the `f.`/`g.` sub-items this doc previously assumed existed under `2 BORROWINGS` have **not** been confirmed in the real data yet) | central-bank liquidity dependence — useful for the zero-inflation gate (a bank funded mainly by NRB is less likely to have interbank exposure) |
+
+Optional secondary signal, not in the core 5: ownership type (state/private/foreign), if available
+— would add homophily structure to the block prior.
+
+### 8c. Auxiliary observed-graph candidate (optional GNN refinement input, §4)
+
+| Source | Role |
+|---|---|
+| Statement of Credit, sector-wise breakdown (12 sectors + Others) | shared sector-concentration = a correlated-shock signal independent of the interbank marginals. Candidate as the auxiliary *observed* graph the GNN layer can refine over, since it doesn't require $W_t$ itself. |
+
+### 8d. Explicitly excluded from Paper 1
+
+- `6 Bills Payable`, `5 Other Liabilities` (Liabilities, minor residuals) — not used
+- `6/10 Reconciliation A/c` (both sides) — accounting plug, not economically meaningful
+- `8 Expenses not Written off`, `9 Non Banking Assets` (Assets) — legacy/minor, not used
+- Everything in Profit & Loss — these are Paper 2 outcome variables, not reconstruction inputs
+  (see `paper2_causal_spillover.md`)
+- `nrb_statement_of_credit.csv` as a panel source — only 2 years of coverage in current data,
+  can't support a 14-year panel; not worth cleaning further unless more years turn up uncollected
+
+### 8e. One-to-one equation-symbol ↔ raw-variable map
+
+Every symbol that appears in Eq. (1)–(8) is listed below with exactly what real NRB field (if
+any) it is computed from. Symbols with no raw field are latent or learned — they're estimated by
+the model, not read off the bulletin.
+
+| Symbol | Appears in | Raw NRB field | Statement / side | Transformation |
+|---|---|---|---|---|
+| $r_{i,t}$ | Eq. (5), (6), (7), (8) | `a. Interbank Lending` (sub-item of `3 SHARE & OTHER INVESTMENT`) | Balance Sheet, Assets | identity (reported value) |
+| $c_{i,t}$ | Eq. (5), (6), (7), (8) | `b. Interbank Borrowing` (sub-item of `2 BORROWINGS`) | Balance Sheet, Liabilities | identity (reported value) |
+| $K_{i,t}$ | Eq. (8), $\kappa K_{i,t}$ cap | `1 CAPITAL FUND` | Balance Sheet, Liabilities | identity (reported value) — note: raw value here, *not* the ratio used in $X^{(2)}_{i,t}$ below |
+| $X^{(1)}_{i,t}$ | Eq. (2), component of $X_{i,t}$ | sum of the 10 real top-level asset rows (listed in §8b) | Balance Sheet, Assets | sum (not the `TOTAL ASSETS` label — see §9.1; $r_{i,t}$ excluded, see §8b/§9.3) |
+| $X^{(2)}_{i,t}$ | Eq. (2) | `1 CAPITAL FUND` | Balance Sheet, Liabilities | ÷ $X^{(1)}_{i,t}$ (capital ratio) |
+| $X^{(3)}_{i,t}$ | Eq. (2) | `1 LIQUID FUNDS` | Balance Sheet, Assets | ÷ $X^{(1)}_{i,t}$ (liquidity ratio) |
+| $X^{(4)}_{i,t}$ | Eq. (2) | `4 LOANS & ADVANCES` ÷ `3 DEPOSITS` | Balance Sheet, Assets ÷ Liabilities | ratio across statement sides |
+| $X^{(5)}_{i,t}$ | Eq. (2) | `a. NRB` ÷ `2 BORROWINGS` | Balance Sheet, Liabilities (both) | ratio within Liabilities; denominator falls back to the sum of `a.`–`e.` sub-items (§8b) when `2 BORROWINGS` is unreported |
+| $w$ | Eq. (2) | — | — | **generative/scenario param only** (fitness weight vector, $\dim = 5$, no raw field) — Algorithm 2's synthetic sampler, caller-supplied; *not* learned by Algorithm 3's trained model, which uses $\text{Decoder}_\psi$ in place of Eq. 2-3 (§4, §6) |
+| $z_i$ | Eq. (1), (3), (7) | — | — | **latent** (inferred via $q_\psi$, Eq. 7); optionally informed by ownership type if used (§8b) |
+| $\Lambda$ | Eq. (3) | — | — | **generative/scenario param only** ($K\times K$ block-pair intensity matrix) — same caveat as $w$ above: Algorithm 2 input, not learned by Algorithm 3 |
+| $h_{i,t}$ | Eq. (3), (6), (7) | $X^{(1\text{-}5)}_{i,t}$ (all 5 covariates) and the observed marginals $r_{i,t}, c_{i,t}$, concatenated as the GRU input vector | — | **learned embedding**, GRU output — not read directly off any single field |
+| $\theta$ (GRU weights) | Eq. (6) | — | — | **learned** |
+| $\psi$ (posterior-net weights) | Eq. (7) | — | — | **learned** |
+| $\eta_{ij,t}$ | Eq. (4) | — | — | **learned** (zero-inflation logit, decoder output) |
+| $\sigma^2$ | Eq. (4) | — | — | **learned** (log-normal dispersion — global or per-block, §10) |
+| $\kappa$ | Eq. (8) | — | — | **exogenous regulatory constant** (single-obligor exposure limit; not reported in the bulletin itself — a known regulatory parameter) |
+| $A^{\text{obs}}$ (auxiliary GNN graph, §4) | Eq. (6) refinement, optional | sector-wise credit, 12 sectors | Statement of Credit | co-exposure adjacency built from shared-sector lending shares |
+
+**Reading guide**: $X_{i,t} = \big(X^{(1)}_{i,t}, ..., X^{(5)}_{i,t}\big) \in \mathbb{R}^5$ is the
+concrete instantiation of the generic $X_{i,t}\in\mathbb{R}^d$ in §2 — i.e. $d=5$ for this model,
+and the ordering above (size, capital ratio, liquidity ratio, LDR, NRB-dependence) is the fixed
+component order used everywhere $X_{i,t}$ appears in Eq. (2) and (6).
+
+## 9. Known data-pipeline caveats (apply before this goes into the model)
+
+1. **`item_code` collision**: confirmed by re-running `nrb_extractor.py` against a real bulletin —
+   `item_code` is not unique across the Balance Sheet's Liabilities and Assets sides. Both sides
+   independently restart numbering at 1 (e.g. `1 CAPITAL FUND` on Liabilities vs. `1 LIQUID FUNDS`
+   on Assets; same collision pattern for `2`, `3`, and lettered sub-items `a.`–`g.`). The extractor
+   (`nrb_extractor.py:197-269`, `_extract_rows`) currently has no column marking which side a row
+   is on — that currently has to be inferred externally from which `TOTAL` block (`TOTAL
+   Liabilities` vs. `TOTAL ASSETS`) a row falls between on the page. **Fix needed**: add a `side`
+   column to the extractor output before any join on `item_code` alone, or it will silently
+   collide liabilities and assets rows that share a code (e.g. covariates 2 and 3 above, which
+   both use an `item_code == 1` row from different sides).
+2. Rotated bank-name header recovery (`recover_bank_names`, `nrb_extractor.py:130-171`) and the
+   layout-mode row extraction are both working as validated against the real sample PDF — no open
+   bug there as of this pass.
+3. **`item_code` drift across eras**: the top-level code attached to a given labeled row is not
+   stable over the panel's history — e.g. `LOANS & ADVANCES` is coded `4` in some eras and `4.1`
+   in others (with `BILL PURCHASED` shifting from `5` to `4.2` correspondingly). Matching must key
+   off the normalized label text (and, for lettered sub-items, parent section), never off
+   `item_code` alone.
+4. **Lettered sub-items (`a.`–`g.`) are reused across unrelated parent sections** (e.g. `a.` means
+   `Paid-up Capital` under `1 CAPITAL FUND`, `Cash Balance` under `1 LIQUID FUNDS`, `NRB` under
+   `2 BORROWINGS`, and `Interbank Lending` under `3 SHARE & OTHER INVESTMENT` — all in the same
+   bulletin). The letter alone is not a key; a row's identity is (normalized label text, nearest
+   preceding top-level/bare-number row in extraction order). The extractor should carry this parent
+   link explicitly (a `parent_item` or `section` column) rather than requiring every consumer to
+   replay the state machine itself. **Side can differ across the same reused label, too**: `e.
+   Others` appears under both `3 DEPOSITS` (Liabilities) and `8 OTHER ASSETS` (Assets) in the same
+   bulletin (confirmed `Asar-2074.pdf`/NBL, 2026-10-22). Side-consistency checks therefore must only
+   be enforced for the small set of labels the model actually reads (§8b/§8e's 8 fields) — requiring
+   every label in the bulletin to resolve to one consistent side will raise on this kind of
+   legitimate, unrelated collision.
+5. **Truncated-text duplicate rows**: some extractions clip a label mid-word (e.g. `4 LOANS &`
+   alongside the correct `4 LOANS & ADVANCES`, or `1 CAPITAL` alongside `1 CAPITAL FUND`) for the
+   same `item_code`/concept. Confirmed via `cut -d, -f7,8 ... | sort -u` on the real CSV
+   (2026-10-22). Treat these as the same field (prefix match or longest-label-wins), not as
+   missing data for the truncated variant.
+6. **Pre-2075-era bulletins never extract a `TOTAL Liabilities` marker row at all** (confirmed
+   against real `Asar-2074.pdf`, 2026-10-22) — the Liabilities section just ends and the Assets
+   section starts back at `item_code "1"` with no boundary row to key off. Side inference needs a
+   fallback for this era that doesn't depend on the marker existing: a drop back to a lower
+   top-level bare-digit `item_code` while still in the Liabilities state is itself the side
+   boundary (top-level codes strictly increase within one side).
+7. **Real bulletins extract row-major by line item, interleaved across banks** — bank A's row for
+   item N is immediately followed by bank B's row for item N, not bank A's entire sheet followed by
+   bank B's (confirmed 2026-10-22; caused a live "inconsistent side" error before this was known).
+   Side inference must replay its liabilities/assets state machine **per `(source_file, bfi_name)`
+   bank-block**, re-sorted by original extraction order — not as one shared state machine over the
+   raw file order — or one bank's `TOTAL LIABILITIES` marker flips the state for every other bank's
+   very next row too.
+8. **Blank value cells are dropped from extraction entirely, not reported as a zero.** A row with an
+   empty value field (seen on optional/granular categories some banks don't report, e.g. `9 EXPENSES
+   NOT WRITTEN OFF`) is simply absent from that bank/period's record, not present with value 0.
+   Any field built by summing a fixed list of categories (e.g. the `size` covariate, §8b) must treat
+   a missing category as 0 explicitly rather than looking it up strictly — a strict lookup wrongly
+   drops the entire bank/period cell over one legitimately-absent optional row.
+9. **Complete-case discard policy (data integrity over imputation)**: real bulletins will never fully
+   resolve every label/era/row-numbering quirk in §9.1–§9.8 above — some bank/period cells are
+   genuinely unrecoverable from the source PDFs. Confirmed examples: a required top-level field
+   (`capital_fund`, `liquid_funds`, `loans_advances`, `deposits`) that no tolerant label-matching
+   rule can find for that cell; and an entire bank missing from a bulletin page, e.g. BS 2080
+   Asar–Kartik, where the same 13 of 33 commercial banks have **zero** extracted rows at all across
+   5 consecutive months (hypothesized cause: a multi-page Commercial Banks table whose continuation
+   page falls outside the TOC-derived page bound or lacks the `"BFI Name"` marker `pdf_extract.py`'s
+   phase-1 bank-token detection requires — still under diagnosis as of 2026-10-28, not yet fixed).
+   The pipeline's policy, deliberate by design (`data_loader.py`'s `Panel`/`_lookup_field`
+   docstrings): leave the cell `NaN`, never substitute 0 or any imputed value, and let
+   `_filter_complete_banks` (`run_real_experiment.py`) drop any bank that is not NaN-free across the
+   *entire* modeling window before training reaches it. This trades panel size for correctness —
+   e.g. starting the window at BS 2072 Asar (`MIN_PERIOD`, deferring a harder-to-diagnose pre-2072
+   gap) plus the strict complete-case filter together left N=16 of 33 commercial banks over
+   T≈133 months as of the 2026-10-28 session (exact N/T to be re-measured once the BS 2080 gap above
+   is resolved or formally accepted as a second deferred window). **This discard count, and the
+   specific named cause behind every discarded bank/period, must be reported explicitly in the
+   paper (§12 Discussion/limitations)** — not smoothed over or silently interpolated — since it is
+   the direct, auditable consequence of treating data integrity as non-negotiable: nothing is
+   discarded without a diagnosed, citable reason (§9.1–§9.9 above, or an open item logged here until
+   it is one).
+
+## 10. Open items (not yet decided)
+
+- **$K$ (number of SBM blocks)**: start with $K=2$ (core/periphery), treat larger $K$ as a
+  robustness check, not the headline specification.
+- **$\sigma^2$ (log-normal dispersion)**: learned, either globally or per-block — not yet decided
+  which.
+- **Venue/scope hook**: ICAIF fit is comfortable at the current scope (methods + real-data case
+  study). ICLR/NeurIPS main track would need an added theoretical hook — e.g. a provable statement
+  on how reconstruction uncertainty in $\hat W_t$ propagates into coverage guarantees for a
+  downstream interference estimator (which would also strengthen the Paper 1 → Paper 2 link).
+  **Not resolved** — needs a decision before drafting.
+- **Posterior collapse on the block-assignment KL term — root cause identified, architecture fix
+  plus capped KL ceiling fixes reconstruction but NOT block recovery reliably across seeds**:
+  Eq. 9's $\text{KL}(q_\psi(z)\|p(z))$ under the
+  original unweighted ($\beta_t = 1$ always) term collapsed to ~0 almost immediately in the first
+  synthetic validation run. A direct check (`argmax(q)` vs. the synthetic ground-truth $z$, best
+  accuracy over label permutations since block labels are unidentifiable) confirmed this is real
+  collapse, not just a small-but-harmless KL value: block-recovery accuracy *fell below* the
+  trivial "always guess the majority block" baseline (`max(pi)`, not $1/K$, since `pi` is
+  imbalanced) as training proceeded. This persisted even after §11 Algorithm 2's existence-gate fix
+  (giving $\eta$ a block-dependent structure via `eta_block`, mirroring $\Lambda$) and after $\beta_t$
+  KL annealing (linear warm-up, §6, `TrainStepConfig.kl_beta`): annealing stopped block-recovery
+  accuracy from falling *below* the trivial baseline, but it only ever plateaued exactly at that
+  baseline, never above it. Root cause: $q_\psi(z_i)$, prior to the Eq. 6-7 fix, was conditioned on
+  $X_{i,1:t}$ alone — but the generative model draws $z_i$ (Eq. 1) and $X_i$ (Eq. 2) independently,
+  so the encoder had *zero* information from which to ever recover $z$ above the trivial
+  majority-class floor, regardless of how the loss is reweighted. Fix: the encoder's input was
+  widened to $[X_{i,t}; r_{i,t}; c_{i,t}]$ — the observed interbank lending/borrowing marginals,
+  which *are* functions of $z$ through $\Lambda[z_i,z_j]$ — matching §4's own already-stated (but
+  previously unimplemented) intent of $q_\psi(W_t \mid X_{1:t}, r_t, c_t)$. The first re-run with
+  it in place showed block-recovery accuracy *peak at 0.85* — well above the trivial baseline —
+  confirming $r_t, c_t$ do carry real block signal once the encoder can see them, but accuracy
+  then decayed back toward/below the trivial baseline as $\beta_t$ annealed toward $1$: annealing
+  to a full $\beta_t=1$ reproduces the original collapse on a delay, this time by out-competing a
+  signal that *does* exist rather than one that never did. Mitigation: cap $\beta_t$'s
+  asymptote at $\beta_{\max} = 0.15 < 1$ instead of annealing to $1$ (§6). A single 3000-epoch
+  re-run with this cap (seed 0) held block-recovery accuracy at 0.7578–0.7682 for the entire run
+  (epoch 200 through 2999), against that run's trivial baseline of 0.7344 — $\text{KL}$ stabilized
+  around 266 rather than collapsing, and $\hat W_t$'s relative Frobenius error kept improving in
+  parallel (to 0.4297, vs. baseline 0.5965). **A 5-seed replication (seeds 0–4) showed this does
+  NOT generalize**: block-recovery margin over the trivial baseline was $+0.0234, -0.1380,
+  +0.1380, -0.1797, -0.0026$ across seeds 0–4 — mean $-0.0318$, std $0.1148$ (std nearly 4× the
+  mean) — with only 2/5 seeds beating the trivial baseline at all. Seed 0's healthy-looking run was
+  not representative; on average across seeds, block recovery is statistically indistinguishable
+  from (if anything slightly worse than) the trivial majority-guess baseline. Two distinct failure
+  modes recur: full collapse to the uniform prior ($\text{KL} \approx 0$ throughout — seed 4), and
+  confident-but-wrong block assignment ($\text{KL}$ climbs to a healthy magnitude but accuracy sits
+  *below* the trivial baseline anyway — seed 1). Reconstruction accuracy, in contrast, **is**
+  robust across the same 5 seeds: model mean relative Frobenius error beat the classical
+  Sinkhorn/RAS baseline in 5/5 seeds (mean 0.4154 vs. 0.5657, std 0.0416 vs. 0.0257). **Resolved
+  conclusion for now**: the paper's claim that "the model identifies which banks are core" is
+  **not currently supported** by this architecture + hyperparameter combination — it should either
+  (a) be dropped in favor of the already-robust claim ("the model recovers $W_t$ more accurately
+  than the classical baseline," no block-identity claim), or (b) remain an explicit goal pending
+  further work: longer training, more `BlockPosteriorMLP` capacity, a lower $\beta_{\max}$, or a
+  per-seed diagnosis of why seeds 1/4 fail differently from seeds 0/2. Not yet decided which path;
+  revisit once real-data validation (§9/§12) is underway, since that may be a better use of time
+  than chasing a synthetic-only metric further.
+- **Posterior collapse on REAL data is structural (recon ≡ 0), not a symptom of the §9 completeness
+  gaps**: confirmed 2026-10-28 — `train.py`'s `total_recon` term only accumulates when
+  `Period.W_true is not None`, and every real `Period` built by `run_real_experiment.py` sets
+  `W_true=None`, always, for every bank and period. This is NOT an artifact of the discard policy
+  in §9.9 or of how much data gets parsed — NRB's bulletins report only the aggregate marginals
+  $r_{i,t}, c_{i,t}$ (§8a), never bilateral interbank exposures, so $W_{\text{true}}$ does not exist
+  for real data under any amount of additional PDF extraction effort. Consequently the only two loss
+  terms with gradient signal for $q_\psi(z)$ on real data are `kl` and `smooth_weighted` — and the
+  synthetic-data finding directly above already established that `kl`, even capped at
+  $\beta_{\max}=0.15$, eventually out-competes a *genuine* reconstruction signal when one exists. On
+  real data there is no competing signal at all, so $q_\psi(z_i) \to p(z)$ exactly is the expected
+  outcome of this loss design, not a bug: both an N=5 and an independently-run N=16 real-data
+  training run converged to `kl` $\to 0$ and every bank's posterior at exactly uniform $(0.5, 0.5)$,
+  confirming the collapse is independent of panel size — more or cleaner data will not fix it.
+  **Bracketing confirmed, 2026-10-28, via `run_real_experiment.py --kl-beta-max 0.0`**: with KL
+  pressure removed entirely, $q_\psi(z)$ does *not* recover a meaningful split. Loss goes flat
+  (unchanging past epoch ~50) while the diagnostic (unweighted) `kl` term climbs monotonically and
+  without bound (4.86 → 1470.16 over 500 epochs) — i.e. $q_\psi(z)$ moves steadily *away* from
+  uniform, but toward a degenerate deterministic point, not toward any genuine two-cluster split:
+  every one of the 33 banks lands at $\ge 0.999$ posterior probability on the *same* block; the
+  "most block-1-leaning" bank's probability of being in block 1 is $0.0009$. Block 1 is simply
+  unused — this is a one-block collapse, not core/periphery recovery. The mechanism is plausibly
+  that a deterministic (zero-entropy) categorical draw removes the Gumbel-softmax reparameterization
+  noise that otherwise jitters $W_t$ period-to-period, which is a cheap way to shrink
+  `smooth_weighted` and has nothing to do with bank-level signal. **This brackets the failure**:
+  $\beta_{\max}=0.15 \Rightarrow q_\psi(z) \to$ uniform for every bank; $\beta_{\max}=0 \Rightarrow
+  q_\psi(z) \to$ a deterministic, unanimous, single-block assignment for every bank. Both endpoints
+  of the only hyperparameter that touches this term are degenerate and information-free, which is
+  strong evidence the failure is structural to the loss design on real data (no term rewards
+  *correctly* separating banks, because `total_recon` is always 0), not an artifact of one
+  hyperparameter choice — amortized block-identity recovery is not achievable on this data under the
+  current architecture. The real-data claim should be scoped down to $\hat W_t$
+  reconstruction/temporal-stability only (no block-identity claim) — already the planned
+  Discussion/limitations treatment (§12), now for a structural, demonstrated reason rather than a
+  data-volume one. **Keep this distinction explicit in the writeup**: §9.9's discard count explains
+  why N is smaller than the full commercial-bank universe; this item explains why block-identity
+  recovery itself is unreportable on real data, which is a different claim and would be true even
+  with zero missing rows anywhere in the panel. **For §12**: one bracketing sentence in
+  Discussion/limitations is sufficient (see paragraph above) — this does not warrant its own
+  subsection, table, or figure in a ≤7-page paper; the per-epoch numbers above stay in working
+  notes.
+  **Path forward, if block-identity is still wanted as a paper claim**: the only way to make $z$
+  identifiable without real $W_{\text{true}}$ is to give $q_\psi(z)$ a *real, observable* target to
+  be pulled toward instead of an uninformative flat prior — e.g. a bank-specific `prior_probs`
+  (currently flat $1/K$ for every bank, §6) derived from an observable proxy for core/periphery
+  status such as ownership type (state-owned/private/foreign) or a size/systemic-tier classification
+  that NRB or public bank directories already report (§8b lists ownership type as an
+  already-identified, not-yet-wired-in optional secondary signal). This is weak supervision, not
+  ground truth, and would need its own validation — not yet started, pending a decision on whether
+  this is worth the remaining time versus shipping the reconstruction-only claim.
+  **Decided, 2026-10-28**: scope down and write now — block-identity is dropped as a Paper 1 claim;
+  the weak-supervision path above is deferred to future work, not pursued this cycle.
+
+## 10a. Reviewer pre-mortem: skeptical questions and the EDA that answers them
+
+Written from a skeptical flagship-conference reviewer's seat, before the ≤7-page extraction is
+drafted (§12) — what would they doubt, and what descriptive evidence (not a new model) would
+preempt it. `eda_reviewer_questions.py` computes the empirical half of each item below against the
+real panel; items marked "needs a trained run" also require `results/real_run.pt` from
+`run_real_experiment.py`.
+
+**Why Sinkhorn is in this paper at all**: it is not the model's own mechanism. The model's
+constraint layer is Dykstra's alternating projections (§5, Eq. 8) — a capacitated-Sinkhorn draft
+was tried and dropped because its row-scalar clip implements a row-sum cap, not the per-entry cap
+$\mathcal{B}$ the regulation actually specifies (`test_sinkhorn.py`'s `binding_cap_case`). Plain
+*uncapped* Sinkhorn/IPF survives only as the mandatory classical comparator (§7) — Gandy–Veraart/RAS
+maximum-entropy reconstruction is the field's standard baseline for interbank exposure matrices, so
+beating it is the expected sanity check, not a novel contribution of this paper.
+
+**Why GRU, not a temporal-GNN or LSTM**: the "big model, small data" argument in §7 — roughly
+16–80 institutions, ~77–170 periods — where EvolveGCN/TGN-style temporal-GNNs would be
+overparameterized. GRU-over-LSTM specifically is *asserted*, not ablated, in the current doc — a
+reviewer could reasonably ask why GRU rather than an even simpler AR(1)/exponential-smoothing state
+update, since GRU's fewer gates (vs. LSTM) is itself just "slightly less overparameterized," not a
+principled stopping point.
+
+Ranked by how damaging the objection would be if left unaddressed:
+
+1. **Smoothness-penalty circularity (most dangerous).** The training objective includes
+   $\lambda_{\text{smooth}}\sum_t\|W_t - W_{t-1}\|_F^2$ (§6) — the model is explicitly penalized for
+   period-to-period change. The headline real-data claim is then "$\hat W_t$ is more temporally
+   stable than the RAS baseline," but RAS has no smoothness term at all — the model is being
+   scored on the one axis it was told to optimize, against a baseline that wasn't. **EDA**: compare
+   lag-1 autocorrelation of raw edge values between $\hat W_t$ and $W_{\text{baseline}}$ (needs a
+   trained run) — if the baseline's *own* edges are already highly autocorrelated from real
+   persistence in interbank exposures, the model's stability margin is weaker evidence of learned
+   structure than the headline number implies.
+2. **Cap unfairness, same shape of problem.** The model enforces the regulatory cap $\mathcal{B}$;
+   RAS is uncapped. Any part of "model beats baseline" could be "model used information (the cap)
+   the baseline was never given." **EDA**: cap-binding fraction — for every (bank, period), does
+   $\hat W_t$'s projected value actually hit $\kappa K_{i,t}$ (needs a trained run)? If the cap rarely
+   binds, this isn't actually buying the model anything, which undercuts the "regulatory-constraint-
+   informed" framing rather than the stability comparison — but it's worth knowing either way.
+3. **GNN branding overstates the real-data model.** The encoder's optional GNN refinement needs an
+   auxiliary observed graph (§4, §8c) — the only candidate (`Statement of Credit`, sector-wise) has
+   just 2 years of coverage against a ~133-period panel (confirmed in `paper2_causal_spillover.md`
+   §5's data-pipeline caveat). So on real data the GNN half is almost certainly dead weight outside
+   those 2 years. **EDA**: none needed beyond stating this plainly in the writeup — don't call the
+   real-data model "GNN+GRU" without this caveat attached.
+4. **Baseline-strawman.** RAS is the canonical comparator but not the only reasonable one — no
+   comparison against a trivial persistence baseline ($\hat W_t := W_{t-1}$), which is "stable" by
+   construction and would be a nastier opponent than RAS given point 1. **EDA**: add a persistence
+   baseline alongside RAS in the stability/diff comparison (needs a trained run, cheap to add —
+   persistence requires no projection at all).
+5. **Discard-sample bias.** N=16/33 commercial banks pass the complete-case filter — is that 51%
+   discard systematic (bigger/smaller, state vs. private) rather than missing-at-random?
+   `eda_survivorship.py` already buckets this by mean size/activity; **EDA** extends it to full
+   first-through-fourth moments (mean, variance, skew, excess kurtosis), since bank-size
+   distributions are typically heavy-tailed and a mean-only comparison can hide a discard bias
+   concentrated in the tail.
+6. **Parameter count vs. effective data size.** "GRU not temporal-GNN" is justified as *simpler*,
+   but simpler than what — is the GRU+MLP+decoder stack itself still overparameterized relative to
+   N×T ≈ 16×133 ≈ 2100 real observations? **EDA**: report total trainable parameter count next to
+   N×T explicitly; no training run needed, just model construction.
+7. **Entropic-regularization sensitivity.** `SinkhornConfig.eps=1.0` reduces the baseline to plain
+   IPF (§7/config.py comment) rather than true entropic OT, so this one is largely already
+   addressed by the config choice itself — worth one sentence in the writeup, no new EDA.
+
+## 11. Algorithms (pseudocode)
+
+Three algorithms, in dependency order: the capacitated projection (the hard constraint layer, Eq.
+8) is standalone and testable without the rest of the model; the generative forward
+pass (Eq. 1-5, 8) samples a synthetic $W_t$ for validation; training (Eq. 6-9) wraps the amortized
+encoder/decoder of §4 around the same projection layer. All three are written over
+*symbol-level* inputs ($N$, $K$, $d$, $\kappa$, etc.) — nothing below is a fixed dataset size or
+constant; see §12 for how these get threaded through as config, not literals.
+
+### Algorithm 1 — `CapacitatedProjection` (Eq. 8, Dykstra's alternating-projections algorithm)
+
+```
+Input:  W̃ ∈ R^{N×N}_{≥0}      raw/sampled edge weights
+        r, c ∈ R^N_{≥0}        target row/column marginals (observed r_i,t, c_i,t)
+        cap ∈ R^N_{≥0}         per-row obligor cap, cap_i = κ · K_i,t
+        n_iters, tol           stopping criteria (n_iters counts full row→col→box
+                                passes, not single-set applications)
+Output: W ∈ R^{N×N}            satisfies row/col marginals and W_ij ≤ cap_i for all j,
+                                exactly (up to tol), when the intersection is non-empty
+
+ 1:  W ← W̃
+ 2:  I_row, I_col, I_box ← zeros(N,N), zeros(N,N), zeros(N,N)   # Dykstra correction terms
+ 3:  for iter = 1 .. n_iters:
+ 4:      W_prev ← W
+ 5:      Y ← W + I_row
+ 6:      W ← Y + (r − row_sums(Y)) / N          # Proj onto {row sums = r}, broadcast per row
+ 7:      I_row ← Y − W
+ 8:      Y ← W + I_col
+ 9:      W ← Y + (c − col_sums(Y)) / N          # Proj onto {col sums = c}, broadcast per col
+10:      I_col ← Y − W
+11:      Y ← W + I_box
+12:      W ← clip(Y, 0, cap)                     # Proj onto {0 ≤ W_ij ≤ cap_i}, per-row cap,
+                                                   #   applied to EVERY entry in row i
+13:      I_box ← Y − W
+14:      if ‖W − W_prev‖ < tol: break
+15: return W
+```
+
+Note: unlike the superseded Sinkhorn-clip draft (see §5's revision note), this provably converges
+to the *exact* Euclidean projection onto the intersection of all three constraint sets whenever
+that intersection is non-empty (Boyle & Dykstra, 1986) — not a heuristic. All three per-set
+projections (lines 6, 9, 12) are closed-form and differentiable (the clip has the usual
+subgradient at the boundary, same as a ReLU), so gradients flow through to $\tilde W_t$ exactly as
+Eq. 8 requires for Algorithm 3's step 10. If the intersection is empty — e.g. $\kappa K_{i,t}$ set
+so tight that $N \cdot \kappa K_{i,t} < r_{i,t}$ for some $i$, meaning the cap can't physically
+supply the required row total even by maxing out every entry — this converges to a
+least-violation compromise instead, which should be treated as an infeasible-cap data/parameter
+error, not silently accepted (`test_capacity_projection.py`'s `infeasible_case` checks for this —
+the cap itself must still hold even when the row marginal can't be reached).
+
+### Algorithm 2 — `SampleSyntheticNetwork` (Eq. 1-5, 8; ground truth for validation, §6)
+
+```
+Input:  N, K, d                 problem size (num banks, num blocks, covariate dim)
+        π ∈ Δ^K, Λ ∈ R^{K×K}_{≥0}, H ∈ R^{K×K}, w ∈ R^d, σ²        generative params (drawn
+                                                        from a prior or fixed per synthetic
+                                                        scenario); H is the block-pair
+                                                        zero-inflation logit matrix (Eq. 4),
+                                                        block-structured the same way Λ is
+                                                        (Eq. 3) — existence, not just
+                                                        magnitude, needs a block-dependent
+                                                        pattern for q_psi(z) to have any
+                                                        recon-loss signal to recover it from
+        X_{1:N} ∈ R^{N×d}        covariates for this period (synthetic or real)
+        κ, K_cap ∈ R^N           regulatory cap inputs
+Output: W_true ∈ R^{N×N}_{≥0}, r, c ∈ R^N      ground-truth network + its implied marginals
+
+1:  for i = 1 .. N: z_i ~ Categorical(π)                      # Eq. 1
+2:  for i = 1 .. N: φ_i ← exp(w^T X_i)                        # Eq. 2
+3:  for i, j = 1 .. N (i ≠ j):
+4:      λ_ij ← Λ[z_i, z_j] · φ_i · φ_j                        # Eq. 3 (no h_i·h_j term — no
+                                                               #   history yet for a one-shot sample)
+5:      η_ij ← H[z_i, z_j]; e_ij ~ Bernoulli(σ(η_ij))          # Eq. 4, block-structured same as step 4
+6:      W̃_ij ← e_ij · LogNormal_sample(log λ_ij, σ²)
+7:  r ← row_sums(W̃); c ← col_sums(W̃)                         # pre-projection marginals
+8:  W_true ← CapacitatedProjection(W̃, r, c, κ·K_cap)           # Eq. 8 — ground truth MUST
+                                                               #   also satisfy the cap, or the
+                                                               #   model is validated against an
+                                                               #   infeasible target
+9:  return W_true, row_sums(W_true), col_sums(W_true)
+```
+
+### Algorithm 3 — `TrainStep` (Eq. 6-9; amortized inference + one optimizer step)
+
+```
+Input:  batch of periods {X_{1:N,t}, r_t, c_t, K_t}_{t ∈ batch}, optional W_true_t (synthetic only)
+        model params θ (GRU), ψ (block/decoder nets), σ²
+        hyperparams λ_smooth, κ
+State:  h_{i,t-1} carried across periods (GRU hidden state)
+Output: loss value; updated θ, ψ after one gradient step
+
+1:  for t in batch (in temporal order):
+2:      for i = 1 .. N: h_{i,t} ← GRU_θ([X_{i,t}; r_{i,t}; c_{i,t}], h_{i,t-1})  # Eq. 6
+3:      [optional] h_{i,t} ← GNN_refine(h_{i,t}, A_obs_t)                 # §4, §8c
+4:      for i = 1 .. N: q_i ← softmax(MLP_ψ(h_{i,t}))                    # Eq. 7
+5:      for i = 1 .. N: z_i ← GumbelSoftmaxSample(q_i)                    # reparameterized
+6:      for i, j = 1 .. N (i ≠ j):
+7:          (η_ij,t, λ_ij,t) ← Decoder_ψ(h_i,t, h_j,t, z_i, z_j)          # supersedes literal
+                                                               #   Eq. 3-4's Λ/w computation
+                                                               #   (§4) -- Λ, w never enter here
+8:          e_ij,t ← GumbelSigmoidSample(η_ij,t)                          # reparameterized gate
+9:          W̃_ij,t ← e_ij,t · LogNormalSample(log λ_ij,t, σ²)            # reparameterized weight
+10:     W_t ← CapacitatedProjection(W̃_t, r_t, c_t, κ·K_t)         # Eq. 8, Algorithm 1
+11:     if W_true_t is given (synthetic branch):
+12:         L_recon,t ← -log p(W_true_t | λ_t, η_t, σ²)                   # Eq. 9, first term
+13:     else:
+14:         L_recon,t ← 0                                                 # real data: no ground truth
+15:     L_KL,t ← KL(q_ψ(z_t) ‖ p(z))
+16: L_smooth ← Σ_t ‖W_t - W_{t-1}‖_F²            over consecutive periods in the batch
+17: L ← Σ_t (L_recon,t + L_KL,t) + λ_smooth · L_smooth
+18: backprop L; update θ, ψ via optimizer step
+19: return L
+```
+
+## 12. Paper structure (≤7 pages)
+
+| Section | Length | Content |
+|---|---|---|
+| Intro + related work | ~1.5p | position against Aronow-Samii/Leung (network assumed *known*), Elliott-Golub-Jackson (network assumed known, no reconstruction), Gandy-Veraart (reconstruction without covariate-informed priors or regulatory constraints) |
+| Method | ~2.5p | §3–6 above |
+| Synthetic validation | ~1.5p | SBM-generated ground truth, baseline comparison |
+| Real-data case study | ~1p | Nepal panel, temporal-stability evidence — $\hat W_t$ reconstruction claim only; no block-identity claim (see Discussion row) |
+| Discussion/limitations | ~0.5p | frame as evidence for §0's data-friction contribution, not an apology: (1) the complete-case discard policy and resulting N (§9.9) — data integrity preserved by discarding unresolvable bank/period cells rather than imputing them, every discard tied to a named, diagnosed cause, reported as the honest cost of working against real bureaucratic release formats (§0); (2) block-identity recovery is dropped as a claim, not merely under-evidenced (§10) — bracketed empirically: $\beta_{\max}=0.15$ collapses $q_\psi(z)$ to the uniform prior for every bank, $\beta_{\max}=0$ collapses it to a deterministic single-block assignment for every bank, and no value in between has a loss term that rewards *correct* separation, since real NRB panels never report bilateral exposures (`total_recon ≡ 0`) — true regardless of panel completeness, and itself a direct illustration of the regulatory-opacity point: the one field that would resolve it is exactly the field no resource-constrained regulator publishes |

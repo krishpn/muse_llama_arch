@@ -1,0 +1,28 @@
+{
+  "model_mean_vs_baseline_mean": {
+    "n_seeds": 5,
+    "mean_paired_difference": -0.14611765730807796,
+    "ttest_rel": {
+      "statistic": -5.113148869507365,
+      "p_value": 0.006918994930561389
+    },
+    "wilcoxon": {
+      "statistic": 0.0,
+      "p_value": 0.0625
+    },
+    "wilcoxon_min_achievable_p": 0.0625
+  },
+  "block_acc_vs_trivial_baseline": {
+    "n_seeds": 5,
+    "mean_paired_difference": -0.026041650772094728,
+    "ttest_rel": {
+      "statistic": -0.3750026889691628,
+      "p_value": 0.7266947755474216
+    },
+    "wilcoxon": {
+      "statistic": 5.0,
+      "p_value": 0.625
+    },
+    "wilcoxon_min_achievable_p": 0.0625
+  }
+}

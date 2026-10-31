@@ -1,0 +1,38 @@
+
+########## SYNTHETIC (config=synthetic_baseline, seed=0) ##########
+
+=== Marginal preservation & density: model (W_hat) ===
+  row-sum rel. error           n= 384  mean=      0.0089  std=      0.0239  skew= 4.9446  excess_kurt= 32.8797
+  col-sum rel. error           n= 384  mean=      0.0108  std=      0.0288  skew= 4.5357  excess_kurt= 27.2323
+  density (frac. off-diag >= tol) n=  16  mean=      0.4630  std=      0.1505  skew= 0.4292  excess_kurt= -0.9766
+  weighted reciprocity         n=  16  mean=      0.6682  std=      0.0636  skew= 0.6364  excess_kurt=  0.0930
+
+=== Marginal preservation & density: classical baseline ===
+  row-sum rel. error           n= 384  mean=      0.0000  std=      0.0000  skew= 0.8119  excess_kurt=  0.3353
+  col-sum rel. error           n= 384  mean=      0.0000  std=      0.0000  skew= 0.6941  excess_kurt= -0.6106
+  density (frac. off-diag >= tol) n=  16  mean=      0.9974  std=      0.0047  skew=-1.4917  excess_kurt=  0.4147
+  weighted reciprocity         n=  16  mean=      0.7511  std=      0.0602  skew= 0.0432  excess_kurt= -1.1278
+
+=== Marginal preservation & density: ground truth (W_true) ===
+  row-sum rel. error           n= 384  mean=      0.0000  std=      0.0000  skew=    nan  excess_kurt=     nan
+  col-sum rel. error           n= 384  mean=      0.0000  std=      0.0000  skew=    nan  excess_kurt=     nan
+  density (frac. off-diag >= tol) n=  16  mean=      0.3272  std=      0.0865  skew= 1.1845  excess_kurt=  0.2422
+  weighted reciprocity         n=  16  mean=      0.5650  std=      0.1064  skew= 0.3398  excess_kurt=  0.2229
+
+=== Eigenvector-centrality rank agreement: model vs ground truth ===
+  Spearman rank correlation    n=  16  mean=      0.9893  std=      0.0087  skew=-1.1044  excess_kurt=  0.3550
+
+=== Eigenvector-centrality rank agreement: baseline vs ground truth ===
+  Spearman rank correlation    n=  16  mean=      0.9895  std=      0.0096  skew=-1.4017  excess_kurt=  0.8651
+
+=== DebtRank systemic impact: model (W_hat) ===
+  mean single-bank-shock impact n=  16  mean=     23.9881  std=      0.0294  skew=-2.6283  excess_kurt=  5.6955
+  worst single-bank-shock impact n=  16  mean=     24.0000  std=      0.0000  skew=-2.5529  excess_kurt=  4.7595
+
+=== DebtRank systemic impact: classical baseline ===
+  mean single-bank-shock impact n=  16  mean=     23.9846  std=      0.0414  skew=-3.0202  excess_kurt=  7.9513
+  worst single-bank-shock impact n=  16  mean=     24.0000  std=      0.0000  skew=-2.7149  excess_kurt=  5.4040
+
+=== DebtRank systemic impact: ground truth (W_true) ===
+  mean single-bank-shock impact n=  16  mean=     23.9846  std=      0.0413  skew=-3.0206  excess_kurt=  7.9578
+  worst single-bank-shock impact n=  16  mean=     24.0000  std=      0.0000  skew=-2.6188  excess_kurt=  5.1083

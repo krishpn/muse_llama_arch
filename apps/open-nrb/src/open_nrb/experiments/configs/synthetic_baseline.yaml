@@ -6,8 +6,9 @@ training:
   lr: 0.01
   kl_beta_max: 0.15
   kl_warmup_epochs: 300
+  kl_free_bits: 0.05
+  lambda_mi: 0.05
   lambda_smooth: 0.05
-  lambda_reg: 0.001
 model:
   hidden_dim: 16
   decoder_hidden_dim: 16

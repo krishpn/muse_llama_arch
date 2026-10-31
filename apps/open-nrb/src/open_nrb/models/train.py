@@ -26,12 +26,22 @@ except ImportError:
 
 class ReconstructionModel(nn.Module):
     """Bundles every learnable piece Algorithm 3 updates: theta (GRU), psi (block
-    posterior + pairwise decoder), Lambda (block-pair intensities, Eq. 3), w
-    (fitness weights, Eq. 2), and sigma^2 (log-normal dispersion, Sec 10 -- a
+    posterior + pairwise decoder), and sigma^2 (log-normal dispersion, Sec 10 -- a
     single global scalar here, not per-block, since that choice isn't settled
     yet and global is the simpler default). model.parameters() goes straight
     into the caller's optimizer -- train_step never touches an optimizer's
     internals directly.
+
+    No Lambda (Eq. 3's block-pair intensities) or w (Eq. 2's fitness weights) here:
+    Algorithm 3 (Sec 11) explicitly replaces the literal Eq. 3-4 computation with
+    Decoder_psi(h_i, h_j, z_i, z_j), so the trained model never consumes them --
+    they're generative-scenario parameters for Algorithm 2's synthetic sampler
+    (SyntheticConfig.lambda_matrix/.w, caller-supplied), not something this class
+    learns. Lambda/w fields and the matching lambda_reg term used to exist on this
+    class/in train_step's loss with nothing feeding them a gradient signal besides
+    the regularizer itself, so they just decayed to ~0 -- removed instead of wired
+    in, since wiring them into the decoder would mean re-adding the literal Eq. 3-4
+    formula Algorithm 3 deliberately supersedes.
     """
 
     def __init__(self, config: EncoderDecoderConfig):
@@ -39,8 +49,6 @@ class ReconstructionModel(nn.Module):
         self.encoder = TemporalEncoder(config)
         self.posterior = BlockPosteriorMLP(config)
         self.decoder = PairwiseDecoder(config)
-        self.Lambda = nn.Parameter(torch.rand(config.num_blocks, config.num_blocks) * 0.5 + 0.1)
-        self.w = nn.Parameter(torch.zeros(config.input_dim))
         self._raw_sigma2 = nn.Parameter(torch.tensor(0.0))
 
     @property
@@ -64,14 +72,49 @@ class Period:
     W_true: torch.Tensor | None = None  # (N, N), synthetic branch only (Eq. 9)
 
 
-def _categorical_kl(q: torch.Tensor, prior_probs: torch.Tensor, delta: float) -> torch.Tensor:
-    """KL(q_psi(z_i) || p(z)) per node, summed over nodes. q: (N, K); prior_probs:
-    (K,), broadcast across nodes -- same prior for every node (mean-field, i.i.d.
-    across i, matching Eq. 1's generative assumption).
+def _categorical_kl(q: torch.Tensor, prior_probs: torch.Tensor, delta: float, free_bits: float = 0.0) -> torch.Tensor:
+    """KL(q_psi(z_i) || p(z)) per node, MEANED over nodes (not summed). q: (N, K);
+    prior_probs: (K,), broadcast across nodes -- same prior for every node (mean-field,
+    i.i.d. across i, matching Eq. 1's generative assumption).
+
+    free_bits clamps each node's own KL from below before the mean (Kingma et al.'s
+    "free bits"): once a node's KL is at or below free_bits, it stops contributing
+    gradient, so q is free to retain that much block-membership information without
+    kl_beta pulling it all the way to the uniform prior. free_bits=0.0 reproduces the
+    original unfloored term.
+
+    Mean, not sum: train_step/_forward_pass_components also mean this over periods
+    (see total_kl's final division by len(batch)), so the aggregate total_kl is the
+    MEAN per-(node, period) KL, not a quantity that scales with N*T. Confirmed live:
+    with the old sum-based version, the SAME free_bits=0.05 produced a floor of 19.2
+    on a synthetic panel (N=24, T=16) vs. 106.4 on a real panel (N=16, T=133) -- a
+    ~5.5x spread purely from panel shape, not a modeling choice, that silently
+    changed kl_beta_max's effective relative weight against lambda_smooth/
+    lambda_mi every time the complete-case filter produced a different N or T. Mean
+    aggregation makes free_bits (and therefore kl_beta_max) comparable across
+    experiments with different panel shapes -- it does NOT, by itself, change
+    whether any individual node's KL is floored (that's still the same per-node
+    free_bits threshold either way).
     """
     log_q = torch.log(q + delta)
     log_p = torch.log(prior_probs + delta)
-    return (q * (log_q - log_p)).sum(dim=-1).sum()
+    per_node_kl = (q * (log_q - log_p)).sum(dim=-1)
+    return per_node_kl.clamp_min(free_bits).mean()
+
+
+def _mutual_info_regularizer(q: torch.Tensor, delta: float) -> torch.Tensor:
+    """-I(bank; block) for one period's q (N, K): mean per-bank entropy minus the
+    entropy of the banks' mean block distribution. Minimizing this maximizes I,
+    rewarding confident (low mean-entropy) assignments that still use more than one
+    block across banks (high marginal entropy) -- IIC/IMSAT-style clustering loss,
+    not derivable from kl_free_bits alone since that only floors KL, never rewards
+    confidence (Sec 10).
+    """
+    log_q = torch.log(q + delta)
+    cond_entropy = -(q * log_q).sum(dim=-1).mean()
+    q_bar = q.mean(dim=0)
+    marg_entropy = -(q_bar * torch.log(q_bar + delta)).sum()
+    return cond_entropy - marg_entropy
 
 
 def _zero_inflated_lognormal_nll(
@@ -132,7 +175,7 @@ def train_step(
             intended prior is uniform or the generative pi (Sec 10 open item).
         projection_config, reparam_config, train_config: hyperparameters for
             Algorithm 1, the reparameterized samplers, and
-            lambda_smooth/lambda_reg/recon_zero_tol/delta/kl_beta respectively.
+            lambda_smooth/recon_zero_tol/delta/kl_beta respectively.
             train_config.kl_beta (Eq. 9's beta_t) is read fresh on every call, so
             a caller implementing KL annealing (Sec 10) just mutates
             train_config.kl_beta between calls rather than passing a schedule in.
@@ -151,6 +194,7 @@ def train_step(
 
     total_recon = torch.zeros((), device=device, dtype=dtype)
     total_kl = torch.zeros((), device=device, dtype=dtype)
+    total_mi_reg = torch.zeros((), device=device, dtype=dtype)
     smooth_terms = []
     W_prev = None
 
@@ -185,7 +229,11 @@ def train_step(
             )
 
         # Step 15: KL to the block-assignment prior
-        total_kl = total_kl + _categorical_kl(q, prior_probs, train_config.delta)
+        total_kl = total_kl + _categorical_kl(q, prior_probs, train_config.delta, train_config.kl_free_bits)
+
+        # IIC/IMSAT-style clustering regularizer: rewards confident, block-diverse q
+        # beyond what kl_free_bits alone incentivizes (Sec 10 follow-up)
+        total_mi_reg = total_mi_reg + _mutual_info_regularizer(q, train_config.delta)
 
         if W_prev is not None:
             smooth_terms.append((W_t - W_prev).pow(2).sum())
@@ -194,13 +242,16 @@ def train_step(
     # Steps 16-18: smoothness, weight regularization, total loss (Eq. 9's beta_t
     # anneals the KL term's weight -- see TrainStepConfig.kl_beta; defaults to 1.0,
     # the original unweighted term, so callers that never set it are unaffected)
+    # total_kl is also meaned over periods here (on top of _categorical_kl's per-period
+    # mean over nodes), so it's the mean per-(node, period) KL -- invariant to batch
+    # length T, matching _categorical_kl's panel-size-invariance rationale above.
+    total_kl = total_kl / len(batch)
     L_smooth = torch.stack(smooth_terms).sum() if smooth_terms else torch.zeros((), device=device, dtype=dtype)
-    L_reg = model.Lambda.pow(2).sum() + model.w.pow(2).sum()
     loss = (
         total_recon
         + train_config.kl_beta * total_kl
+        + train_config.lambda_mi * total_mi_reg
         + train_config.lambda_smooth * L_smooth
-        + train_config.lambda_reg * L_reg
     )
 
     # Step 19: backprop and optimizer step

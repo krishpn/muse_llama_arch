@@ -12,7 +12,7 @@ from pathlib import Path
 import torch
 
 try:
-    from open_nrb.evaluation.eda_network_structure import (
+    from open_nrb.evaluation.eda_model_checks import (
         debtrank,
         density,
         eigenvector_centrality,
@@ -22,7 +22,7 @@ try:
     )
 except ImportError:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "evaluation"))
-    from eda_network_structure import (
+    from eda_model_checks import (
         debtrank,
         density,
         eigenvector_centrality,
@@ -147,7 +147,7 @@ if __name__ == "__main__":
         "debtrank_isolated_bank_case": debtrank_isolated_bank_case(),
         "debtrank_full_wipeout_case": debtrank_full_wipeout_case(),
     }
-    print("\n=== SUMMARY (eda_network_structure.py metrics) ===")
+    print("\n=== SUMMARY (eda_model_checks.py network-structure metrics) ===")
     for name, passed in results.items():
         print(f"{name}: {'PASS' if passed else 'FAIL'}")
     print(f"\nOVERALL: {'PASS' if all(results.values()) else 'FAIL'}")
