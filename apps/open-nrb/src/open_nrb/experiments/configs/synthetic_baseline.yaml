@@ -1,5 +1,8 @@
 # Baseline synthetic validation experiment (design doc Sec 6/12): core/periphery SBM scenario.
 # Loaded by run_synthetic_experiment.py via --config (defaults here if --config is omitted).
+# lambda_mi=0.05 here is one cell of the retuning sweep (README.md's "Retuning kl_free_bits /
+# lambda_mi" section) -- see sweep_lambda_mi_{0,015,03}.yaml for the other grid points, all
+# otherwise identical to this file.
 training:
   epochs: 3000
   eval_every: 200

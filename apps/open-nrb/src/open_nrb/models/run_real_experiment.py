@@ -343,12 +343,16 @@ def main() -> None:
     generator = torch.Generator(device=DEVICE).manual_seed(seed)
 
     losses = []
-    # (epoch, kl, smooth_weighted) -- recon is omitted, it's always exactly 0 here
-    # (W_true=None every real Period, Sec 8). Needed to tell a benign converged fixed point apart
-    # from e.g. KL already collapsed to the uniform prior well before loss itself visibly
-    # flattens -- the only two terms with ANY gradient signal for q_psi(z)/the decoder on real
-    # data are this kl term and smooth_weighted, so if both are themselves flat here, the loss
-    # plateau really is the whole story, not something hidden by the single scalar loss.
+    # (epoch, kl, mi_reg_weighted, smooth_weighted) -- recon is omitted, it's always exactly 0
+    # here (W_true=None every real Period, Sec 8). Needed to tell a benign converged fixed point
+    # apart from e.g. KL already collapsed to the uniform prior well before loss itself visibly
+    # flattens -- these are the only three terms with ANY gradient signal for q_psi(z)/the
+    # decoder on real data (mi_reg added here after finding it was invisible to this diagnostic
+    # entirely, Sec 10: a confident, non-uniform real-data posterior can come from mi_reg doing
+    # its designed job of rewarding confidence+diversity regardless of correctness, not from kl
+    # alone, so dropping it from this trend would hide the term most directly responsible), so
+    # if all three are themselves flat here, the loss plateau really is the whole story, not
+    # something hidden by the single scalar loss.
     components_trend = []
     for epoch in range(cfg.training.epochs):
         train_config.kl_beta = _kl_beta_schedule(epoch, cfg.training.kl_warmup_epochs, cfg.training.kl_beta_max)
@@ -360,11 +364,12 @@ def main() -> None:
         if epoch % cfg.training.eval_every == 0 or epoch == cfg.training.epochs - 1:
             _, _, components = _forward_pass_components(model, periods, prior_probs, projection_config, train_config)
             components_trend.append(
-                (epoch, components["kl"], components["smooth_weighted"])
+                (epoch, components["kl"], components["mi_reg_weighted"], components["smooth_weighted"])
             )
             print(
                 f"epoch {epoch:5d}  loss={loss.item():10.3f}  kl_beta={train_config.kl_beta:.3f}  "
-                f"kl={components['kl']:8.3f}  smooth_w={components['smooth_weighted']:8.3f}"
+                f"kl={components['kl']:8.3f}  mi_reg_w={components['mi_reg_weighted']:8.3f}  "
+                f"smooth_w={components['smooth_weighted']:8.3f}"
             )
 
     W_hats, qs, _ = _forward_pass_components(model, periods, prior_probs, projection_config, train_config)

@@ -1,0 +1,75 @@
+{
+  "config": "src/open_nrb/experiments/configs/sweep_lambda_mi_015.yaml",
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "epochs": 3000,
+  "kl_beta_max": 0.15,
+  "kl_warmup_epochs": 300,
+  "per_seed": [
+    {
+      "seed": 0,
+      "baseline_mean": 0.5964964003132791,
+      "model_mean": 0.4237931192523739,
+      "block_acc": 0.7734375,
+      "trivial_baseline": 0.734375
+    },
+    {
+      "seed": 1,
+      "baseline_mean": 0.5914611217502417,
+      "model_mean": 0.3491889569432292,
+      "block_acc": 0.7786458730697632,
+      "trivial_baseline": 0.6614583134651184
+    },
+    {
+      "seed": 2,
+      "baseline_mean": 0.5666206314855875,
+      "model_mean": 0.4412662092829053,
+      "block_acc": 0.8776041865348816,
+      "trivial_baseline": 0.6796875
+    },
+    {
+      "seed": 3,
+      "baseline_mean": 0.5327266080026211,
+      "model_mean": 0.4590044573429616,
+      "block_acc": 0.6901041865348816,
+      "trivial_baseline": 0.6953125
+    },
+    {
+      "seed": 4,
+      "baseline_mean": 0.5412773966540941,
+      "model_mean": 0.4182086494145013,
+      "block_acc": 0.6796875,
+      "trivial_baseline": 0.6875
+    }
+  ],
+  "aggregates": {
+    "model_rel_error": {
+      "mean": 0.4182922784471943,
+      "std": 0.03739202667613616
+    },
+    "baseline_rel_error": {
+      "mean": 0.5657164316411647,
+      "std": 0.025677258469037838
+    },
+    "block_acc": {
+      "mean": 0.7598958492279053,
+      "std": 0.07168604862677107
+    },
+    "trivial_baseline": {
+      "mean": 0.6916666626930237,
+      "std": 0.02412757752072867
+    },
+    "gap": {
+      "mean": 0.0682291865348816,
+      "std": 0.07904665717237049
+    },
+    "n_beats_baseline": 5,
+    "n_beats_trivial": 3,
+    "n_seeds": 5
+  }
+}

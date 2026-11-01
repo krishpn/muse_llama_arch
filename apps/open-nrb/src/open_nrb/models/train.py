@@ -246,6 +246,13 @@ def train_step(
     # mean over nodes), so it's the mean per-(node, period) KL -- invariant to batch
     # length T, matching _categorical_kl's panel-size-invariance rationale above.
     total_kl = total_kl / len(batch)
+    # total_mi_reg meaned the same way, same reason -- found live while wiring mi_reg into the
+    # diagnostics (Sec 10): without this, total_mi_reg summed across len(batch) periods while
+    # total_kl was meaned, so the SAME lambda_mi had a ~8x larger effective weight on the real
+    # panel (T=133) than on the synthetic one (T=16) -- the exact panel-shape artifact
+    # _categorical_kl's free_bits mean-fix already exists to prevent, just hadn't been applied
+    # here yet.
+    total_mi_reg = total_mi_reg / len(batch)
     L_smooth = torch.stack(smooth_terms).sum() if smooth_terms else torch.zeros((), device=device, dtype=dtype)
     loss = (
         total_recon

@@ -1,4 +1,4 @@
-# Bayesian Network Reconstruction of Interbank Exposures (Nepal)
+# Reconstructing Interbank Exposure Networks from Public Disclosures: A Regulatory-Constrained Approach (Nepal)
 
 ## Project Overview
 
@@ -6,7 +6,7 @@
 
 ## Target Audience & Applied Venues
 
-* **Primary Target Audience:** NRB Spring Conference 2027 April 2-3, 2027
+TBD
 
 * **Intended Impact:**
 
@@ -204,6 +204,85 @@ To download all monthly statistical reports from the Nepal Rastra Bank (NRB) web
     Results are saved in `src/open_nrb/results/eda/`, or under whichever `--out-dir` was
     passed (not namespaced by CSV stem, unlike `eda_survivorship.py`).
 
+## Retuning kl_free_bits / lambda_mi
+
+Only judge `lambda_mi`/`kl_free_bits`/`kl_beta_max` against synthetic `block_acc` (there's no
+ground truth on real data to judge them against).
+
+**Step 1: Run the lambda_mi sweep on synthetic data, multi-seed each config.**
+
+```bash
+for cfg in synthetic_baseline sweep_lambda_mi_0 sweep_lambda_mi_015 sweep_lambda_mi_03; do
+  uv run src/open_nrb/models/run_synthetic_experiment.py \
+    --config "src/open_nrb/experiments/configs/${cfg}.yaml" --workers 5
+done
+```
+
+Each writes `results/{cfg}/multiseed_summary.json`, with an `aggregates` block shaped like:
+
+```json
+{
+  "aggregates": {
+    "model_rel_error":    {"mean": 0.4219, "std": 0.0357},
+    "baseline_rel_error": {"mean": 0.5657, "std": 0.0257},
+    "block_acc":          {"mean": 0.7646, "std": 0.0646},
+    "trivial_baseline":   {"mean": 0.7000, "std": 0.0000},
+    "gap":                {"mean": 0.0646, "std": 0.0791},
+    "n_beats_baseline": 5,
+    "n_beats_trivial": 3,
+    "n_seeds": 5
+  }
+}
+```
+
+**Step 2: Collect each config's `gap` mean/std and `n_beats_trivial` into one table.**
+
+| `lambda_mi` | gap mean | gap std | `n_beats_trivial`/5 |
+|---|---|---|---|
+| 0.00 | 0.0781 | 0.0774 | 3/5 |
+| 0.05 | 0.0688 | 0.0823 | 3/5 |
+| 0.15 | 0.0682 | 0.0790 | 3/5 |
+| 0.30 | 0.0656 | 0.0814 | 3/5 |
+
+Result: `lambda_mi=0.00` has the highest gap mean, `n_beats_trivial` is tied 3/5 across every
+value, and gap mean is smaller than gap std in all four rows -- no nonzero value clearly beats
+the control. Per Step 4, use `lambda_mi=0`.
+
+**Step 3 (optional): Check pairwise significance against the `lambda_mi=0` control.**
+`compare_configs.py` only diffs point estimates (no hypothesis test) -- use
+`seed_significance.py` with `--compare-config` for an actual paired test across shared seeds,
+once per nonzero candidate:
+
+```bash
+for cfg in synthetic_baseline sweep_lambda_mi_015 sweep_lambda_mi_03; do
+  uv run src/open_nrb/evaluation/seed_significance.py \
+    --synthetic-config src/open_nrb/experiments/configs/sweep_lambda_mi_0.yaml \
+    --compare-config "src/open_nrb/experiments/configs/${cfg}.yaml"
+done
+```
+
+(`synthetic_baseline.yaml` is the `lambda_mi=0.05` cell -- see Step 1's table. Add
+`--synthetic-config sweep_lambda_mi_0.yaml` with no `--compare-config` first to also get the
+*within*-config check, i.e. whether the control itself beats the RAS/Sinkhorn and trivial
+baselines.)
+
+**Step 4: Pick a value.** Choose the smallest `lambda_mi` with the highest, most consistent gap
+(mean clearly bigger than std, most seeds beating trivial). If no nonzero value clearly beats the
+`lambda_mi=0` control, use `lambda_mi=0`.
+
+**Step 5 (if needed): Sweep `kl_free_bits`/`kl_beta_max` the same way.** Copy a
+`sweep_lambda_mi_*.yaml` file, change `kl_free_bits`/`kl_beta_max` instead, multi-seed, repeat
+Steps 1-4.
+
+**Step 6: Write the chosen values into `baseline.yaml` and `ablation_no_kl_pressure.yaml`.**
+
+**Step 7: Re-run the real-data experiments with the updated configs.**
+
+```bash
+uv run src/open_nrb/models/run_real_experiment.py --config src/open_nrb/experiments/configs/baseline.yaml
+uv run src/open_nrb/models/run_real_experiment.py --config src/open_nrb/experiments/configs/ablation_no_kl_pressure.yaml
+```
+
 ## Parallel Processing
 
 Audited every script in the project for independent-work loops worth parallelizing. Three
@@ -237,4 +316,5 @@ kernels time-slice across them, and each process's CUDA context alone costs seve
 MB-1GB of VRAM) -- still usually a net win at this model's tiny scale (`hidden_dim=16`), since
 per-epoch Python/host overhead, not device FLOPs, is the actual bottleneck, but don't expect
 linear scaling there the way the CPU-only case gets.
+
 

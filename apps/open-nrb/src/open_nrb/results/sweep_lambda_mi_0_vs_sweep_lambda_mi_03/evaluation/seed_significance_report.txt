@@ -1,0 +1,14 @@
+
+########## Seed significance: sweep_lambda_mi_0 vs. sweep_lambda_mi_03 (n=5 shared seeds) ##########
+
+=== model_mean: a vs. b ===
+  n_seeds=5  mean paired difference (a - b): 0.006457
+  paired t-test:      statistic=1.1209  p=0.3251
+  Wilcoxon signed-rank: statistic=3.0000  p=0.3125
+  NOTE: at n=5 seeds, Wilcoxon's minimum achievable two-sided p-value is 1/2^(n-1) = 0.0625 -- it structurally cannot reject at alpha=0.05 here. Judge the mean paired difference (effect size) above, not this p-value; running more seeds is the only way to get a p-value that can actually move.
+
+=== block_acc: a vs. b ===
+  n_seeds=5  mean paired difference (a - b): 0.012500
+  paired t-test:      statistic=2.8998  p=0.0441
+  Wilcoxon signed-rank: statistic=0.0000  p=0.1250
+  NOTE: at n=5 seeds, Wilcoxon's minimum achievable two-sided p-value is 1/2^(n-1) = 0.0625 -- it structurally cannot reject at alpha=0.05 here. Judge the mean paired difference (effect size) above, not this p-value; running more seeds is the only way to get a p-value that can actually move.

@@ -39,7 +39,14 @@ try:
     from .experiment_config import SyntheticExperimentConfig, SyntheticScenarioConfig, load_synthetic_experiment_config
     from .sinkhorn import sinkhorn_projection
     from .synthetic import sample_synthetic_network
-    from .train import Period, ReconstructionModel, _categorical_kl, _zero_inflated_lognormal_nll, train_step
+    from .train import (
+        Period,
+        ReconstructionModel,
+        _categorical_kl,
+        _mutual_info_regularizer,
+        _zero_inflated_lognormal_nll,
+        train_step,
+    )
 except ImportError:
     from capacity_projection import capacitated_projection
     from config import (
@@ -53,7 +60,7 @@ except ImportError:
     from experiment_config import SyntheticExperimentConfig, SyntheticScenarioConfig, load_synthetic_experiment_config
     from sinkhorn import sinkhorn_projection
     from synthetic import sample_synthetic_network
-    from train import Period, ReconstructionModel, _categorical_kl, _zero_inflated_lognormal_nll, train_step
+    from train import Period, ReconstructionModel, _categorical_kl, _mutual_info_regularizer, _zero_inflated_lognormal_nll, train_step
 
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -165,10 +172,11 @@ def _forward_pass_components(
     per-period soft block posterior q (so callers can check block recovery against the
     synthetic ground-truth z independently of W_t accuracy -- Sec 10's open item on whether
     low reconstruction error implies real block recovery or just a good fit via h alone),
-    AND the three loss terms (recon, kl, lambda_smooth*smooth) SEPARATELY --
+    AND the four loss terms (recon, kl, lambda_mi*mi_reg, lambda_smooth*smooth) SEPARATELY --
     train_step only returns their weighted sum (Eq. 9) by design. Reuses train_step's own
-    private _categorical_kl/_zero_inflated_lognormal_nll helpers rather than re-deriving
-    the formulas here, so this can't silently drift from what's actually trained.
+    private _categorical_kl/_mutual_info_regularizer/_zero_inflated_lognormal_nll helpers
+    rather than re-deriving the formulas here, so this can't silently drift from what's
+    actually trained.
     """
     device, dtype = batch[0].X.device, batch[0].X.dtype
     n = batch[0].X.shape[0]
@@ -177,6 +185,7 @@ def _forward_pass_components(
 
     total_recon = torch.zeros((), device=device, dtype=dtype)
     total_kl = torch.zeros((), device=device, dtype=dtype)
+    total_mi_reg = torch.zeros((), device=device, dtype=dtype)
     smooth_terms = []
     W_prev = None
     W_hats = []
@@ -199,6 +208,7 @@ def _forward_pass_components(
                     period.W_true, eta, lam, model.sigma2, mask, train_config
                 )
             total_kl = total_kl + _categorical_kl(q, prior_probs, train_config.delta, train_config.kl_free_bits)
+            total_mi_reg = total_mi_reg + _mutual_info_regularizer(q, train_config.delta)
 
             if W_prev is not None:
                 smooth_terms.append((W_t - W_prev).pow(2).sum())
@@ -207,12 +217,18 @@ def _forward_pass_components(
     # Meaned over periods on top of _categorical_kl's per-period mean over nodes --
     # see train.py's train_step for the matching normalization and its rationale
     # (panel-size invariance: free_bits should mean the same thing regardless of N, T).
+    # total_mi_reg is meaned the same way, same rationale (train.py's train_step) -- without
+    # it, mi_reg's effective weight would silently differ between this synthetic panel (T=16)
+    # and the real one (T=133), the exact artifact the kl mean-fix already exists to prevent.
     total_kl = total_kl / len(batch)
+    total_mi_reg = total_mi_reg / len(batch)
     L_smooth = torch.stack(smooth_terms).sum() if smooth_terms else torch.zeros((), device=device, dtype=dtype)
 
     components = {
         "recon": total_recon.item(),
         "kl": total_kl.item(),
+        "mi_reg": total_mi_reg.item(),
+        "mi_reg_weighted": (train_config.lambda_mi * total_mi_reg).item(),
         "smooth_weighted": (train_config.lambda_smooth * L_smooth).item(),
     }
     return W_hats, qs, components
@@ -307,6 +323,9 @@ def _run_once(seed: int, cfg: SyntheticExperimentConfig, results_dir: Path, devi
     losses = []
     error_trend = []  # (epoch, model_mean_rel_error) -- is the gap to baseline closing, not just loss?
     block_acc_trend = []  # (epoch, block_acc) -- same cadence as error_trend, for later plotting
+    components_trend = []  # (epoch, recon, kl, mi_reg_weighted, smooth_weighted) -- lets a
+                            # retuning pass (Sec 10) see mi_reg's own contribution instead of
+                            # only the printed loss/error/block_acc summary
     for epoch in range(cfg.training.epochs):
         train_config.kl_beta = _kl_beta_schedule(epoch, cfg.training.kl_warmup_epochs, cfg.training.kl_beta_max)
         loss = train_step(
@@ -329,11 +348,15 @@ def _run_once(seed: int, cfg: SyntheticExperimentConfig, results_dir: Path, devi
             block_acc = _block_recovery_accuracy(qs, zs, cfg.model.num_blocks)
             error_trend.append((epoch, model_mean))
             block_acc_trend.append((epoch, block_acc))
+            components_trend.append(
+                (epoch, components["recon"], components["kl"], components["mi_reg_weighted"], components["smooth_weighted"])
+            )
             print(
                 f"epoch {epoch:5d}  loss={loss.item():10.3f}  "
                 f"model_rel_error={model_mean:.4f}  (baseline={baseline_mean:.4f})  "
                 f"block_acc={block_acc:.4f}  kl_beta={train_config.kl_beta:.3f}  "
                 f"recon={components['recon']:10.3f}  kl={components['kl']:8.3f}  "
+                f"mi_reg_w={components['mi_reg_weighted']:8.3f}  "
                 f"smooth_w={components['smooth_weighted']:8.3f}"
             )
 
@@ -374,6 +397,7 @@ def _run_once(seed: int, cfg: SyntheticExperimentConfig, results_dir: Path, devi
             "losses": losses,
             "error_trend": error_trend,
             "block_acc_trend": block_acc_trend,
+            "components_trend": components_trend,
             "baseline_mean": baseline_mean,
             "model_mean": model_mean,
             "block_acc": block_acc,
