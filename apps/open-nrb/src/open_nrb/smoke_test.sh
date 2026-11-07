@@ -11,6 +11,11 @@
 # Stops at the first failing step. Each step's console output goes to results/logs_smoke/<step>.log.
 set -euo pipefail
 
+# Stream child stdout live through the `tee` pipes below. Python block-buffers stdout when it is a
+# pipe (not a TTY), so without this a step prints nothing until its buffer fills or the process
+# exits -- making a healthy run look hung.
+export PYTHONUNBUFFERED=1
+
 PKG=src/open_nrb
 CFG=$PKG/experiments/configs/synthetic_smoke.yaml
 LOG=$PKG/results/logs_smoke

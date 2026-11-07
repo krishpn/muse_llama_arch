@@ -19,6 +19,7 @@ dependencies = [
     "pypdf>=5.0.0",
     "torch>=2.14.1",
     "matplotlib>=3.11.2",
+    "py-spy>=0.4.3",
 ]
 
 [project.optional-dependencies]

@@ -9,4 +9,4 @@ src/open_nrb/tests/test_data_loader.py::test_zero_deposits_left_nan
     panel = load_panel(path)
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-44 passed, 2 warnings in 3.84s
+44 passed, 2 warnings in 3.82s

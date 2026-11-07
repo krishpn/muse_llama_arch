@@ -32,6 +32,11 @@
 # and figure to the output file it comes from.
 set -euo pipefail
 
+# Stream child stdout live through the `tee` pipes below. Python block-buffers stdout when it is a
+# pipe (not a TTY), so without this a long step (e.g. synthetic training) prints nothing until its
+# buffer fills or the process exits -- making a healthy GPU-bound run look hung.
+export PYTHONUNBUFFERED=1
+
 PKG=src/open_nrb
 CFG=$PKG/experiments/configs
 LOG=$PKG/results/logs_reproduce
