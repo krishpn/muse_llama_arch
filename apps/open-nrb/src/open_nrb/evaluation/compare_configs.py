@@ -6,7 +6,9 @@
 #     "pyyaml",
 # ]
 # ///
-"""Diff two config variants' metrics side by side (e.g. `baseline` vs `ablation_no_kl_pressure`)
+"""Diff two config variants' evaluation metrics side by side.
+
+Diff two config variants' metrics side by side (e.g. `baseline` vs `ablation_no_kl_pressure`)
 instead of making the user eyeball two separate runs/scripts. Reuses the metric functions already
 defined in eda_model_checks.py directly -- no metric logic is reimplemented here, this script
 only loads artifacts, calls those functions, and tabulates.
@@ -59,6 +61,13 @@ RESULTS_DIR = Path(__file__).resolve().parent.parent / "results"
 
 
 def compute_real_metrics(config_path: Path, seed: int) -> dict[str, float]:
+    """Compute the real-panel model metrics for one config's trained artifact.
+
+    Loads real_run_seed{seed}.pt and reuses eda_model_checks' metric functions on the
+    valid-period mask to return the seed-specific numbers run_section_b would print
+    (lag-1 autocorrelation, cap-binding fraction, density, weighted reciprocity,
+    DebtRank impact, marginal-preservation error, and centrality rank agreement).
+    """
     artifact_path = RESULTS_DIR / config_path.stem / f"real_run_seed{seed}.pt"
     if not artifact_path.exists():
         raise FileNotFoundError(f"{artifact_path} not found -- run run_real_experiment.py --config {config_path} first.")
@@ -85,6 +94,11 @@ def compute_real_metrics(config_path: Path, seed: int) -> dict[str, float]:
 
 
 def compute_synthetic_metrics(config_path: Path) -> dict[str, float]:
+    """Average a synthetic config's headline metrics across its seeds.
+
+    Reads multiseed_summary.json and returns the mean over seeds of model_mean,
+    baseline_mean, block_acc, and trivial_baseline.
+    """
     summary_path = RESULTS_DIR / config_path.stem / "multiseed_summary.json"
     if not summary_path.exists():
         raise FileNotFoundError(f"{summary_path} not found -- run run_synthetic_experiment.py --config {config_path} first.")
@@ -100,6 +114,11 @@ def compute_synthetic_metrics(config_path: Path) -> dict[str, float]:
 
 
 def print_comparison(label_a: str, metrics_a: dict[str, float], label_b: str, metrics_b: dict[str, float]) -> dict:
+    """Tabulate two metric dicts side by side with per-metric delta and percent change.
+
+    For each metric present in metrics_a, prints value a, value b, delta = a - b, and
+    percent change = delta / abs(b) * 100, and returns the same values as a dict.
+    """
     print(f"\n{'metric':42s} {label_a:>16s} {label_b:>16s} {'delta':>12s} {'% change':>12s}")
     print("-" * 102)
     result = {}
@@ -113,6 +132,12 @@ def print_comparison(label_a: str, metrics_a: dict[str, float], label_b: str, me
 
 
 def main() -> None:
+    """Parse CLI args and run the real and/or synthetic config comparison, saving reports.
+
+    Runs the real comparison when --config-a/--config-b are given and the synthetic
+    comparison when --synthetic-config-a/--synthetic-config-b are given; errors if
+    neither pair is supplied.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--config-a", type=Path, default=None)
     parser.add_argument("--config-b", type=Path, default=None)

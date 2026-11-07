@@ -1,4 +1,4 @@
-# Reconstructing Interbank Exposure Networks from Public Disclosures: A Regulatory-Constrained Approach (Nepal)
+# Who Lends to Whom? Reconstructing Interbank Exposures from Public Balance Sheets
 
 ## Project Overview
 
@@ -7,7 +7,6 @@
 ## Target Audience & Applied Venues
 
 TBD
-
 * **Intended Impact:**
 
 ## Key Applied Audit & Replicability Criteria
@@ -20,6 +19,46 @@ TBD
 * **Data Class:** Public Empirical Networks (e.g., trade/mobility graphs) + Synthetic Benchmark Generators.
 * **License:** MIT License.
 
+
+## Reviewer quick test run
+
+A referee who wants to confirm the code runs end to end -- without the full multi-hour synthetic
+sweep or the PDF pipeline -- can run the four steps below. They need **no downloaded data** (the
+synthetic path generates its own) and finish in **~1-2 min on CPU**. They prove the pipeline
+works; they do **not** reproduce any paper number (that is the full `## STEPS` below, at the real
+epoch budget and seed count).
+
+All four at once (stops at the first failure; logs to `results/logs_smoke/`):
+
+```bash
+bash src/open_nrb/smoke_test.sh
+```
+
+Or step by step:
+
+```bash
+# A. Unit tests (seconds). Each is a standalone PEP723 script; run all at once with pytest:
+uv run python -m pytest src/open_nrb/tests -q
+
+# B. Parameter count (instant, no data, no GPU) -- the Section 7 over/under-parameterization
+#    check. Prints TOTAL PARAMETERS: 2133 for the baseline config.
+uv run python -m open_nrb.evaluation.param_count
+
+# C. One short synthetic run on the smoke config (epochs 150, 1 seed, N=16, T=8; CPU).
+#    Writes results/synthetic_smoke/seed_0.pt. Reconstruction quality here is meaningless.
+uv run python -m open_nrb.models.run_synthetic_experiment --config src/open_nrb/experiments/configs/synthetic_smoke.yaml --workers 1 --device cpu
+
+# D. Post-hoc evaluation on the artifact C just wrote -- confirms the referee-check scripts load
+#    and run (none of these retrain):
+uv run python -m open_nrb.evaluation.seed_significance --synthetic-config src/open_nrb/experiments/configs/synthetic_smoke.yaml
+uv run python -m open_nrb.evaluation.capped_ras_baseline --synthetic-config src/open_nrb/experiments/configs/synthetic_smoke.yaml
+uv run python -m open_nrb.evaluation.plot_synthetic_network --config src/open_nrb/experiments/configs/synthetic_smoke.yaml --seed 0 --period -1
+```
+
+The real-data referee checks (`persistence_baseline.py`, the real-data `eda_*`/`make_plots`
+steps) read `results/baseline/real_run_seed0.pt`, so they need the processed CSVs and one
+real-data run (full `## STEPS` 3 and 5) first -- they are part of the full reproduction, not this
+data-free smoke test.
 
 ## STEPS
 
@@ -204,6 +243,61 @@ To download all monthly statistical reports from the Nepal Rastra Bank (NRB) web
     Results are saved in `src/open_nrb/results/eda/`, or under whichever `--out-dir` was
     passed (not namespaced by CSV stem, unlike `eda_survivorship.py`).
 
+### Referee checks (paper revision)
+
+These five artifacts were added for the paper revision and back the claims in draft §5.2, §5.4,
+§6.5 and §7. The two configs are one-variable clones of `sweep_lambda_mi_0.yaml` (the `lambda_mi=0`
+control), so `seed_significance.py --compare-config` against that config is a clean ablation.
+
+14. **Single-block (K=1) and non-SBM ablations** -- train the two variant configs, then compare
+    each against the `lambda_mi=0` control with a paired test across shared seeds:
+
+    ```bash
+    uv run python -m open_nrb.models.run_synthetic_experiment --config src/open_nrb/experiments/configs/synthetic_single_block.yaml --workers 5
+    uv run python -m open_nrb.evaluation.seed_significance --synthetic-config src/open_nrb/experiments/configs/sweep_lambda_mi_0.yaml --compare-config src/open_nrb/experiments/configs/synthetic_single_block.yaml
+
+    uv run python -m open_nrb.models.run_synthetic_experiment --config src/open_nrb/experiments/configs/synthetic_non_sbm.yaml --workers 5
+    uv run python -m open_nrb.evaluation.seed_significance --synthetic-config src/open_nrb/experiments/configs/sweep_lambda_mi_0.yaml --compare-config src/open_nrb/experiments/configs/synthetic_non_sbm.yaml
+    ```
+
+    `synthetic_single_block.yaml` sets `model.num_blocks: 1` (the generator stays K=2), isolating
+    what the block channel adds. `synthetic_non_sbm.yaml` makes the generator's blocks homogeneous
+    (a degree-corrected fitness model, no communities), testing robustness to misspecification.
+    On an 8 GB card run them one after another at `--workers 5` (5 CUDA contexts ≈ 3 GB); the two
+    `seed_significance` calls write the same `results/sweep_lambda_mi_0/evaluation/` files, so never
+    launch them at the same instant. Results: `results/{synthetic_single_block,synthetic_non_sbm}/`
+    and the comparison under `results/sweep_lambda_mi_0_vs_{stem}/evaluation/`.
+
+15. **Capped-RAS decomposition** (draft §5.2) -- post-hoc, reads the saved synthetic `seed_*.pt`
+    and never retrains. Splits the synthetic win over RAS into the cap contribution vs the
+    learned-prior contribution (uncapped RAS → capped RAS → model), with paired t-tests:
+
+    ```bash
+    uv run python -m open_nrb.evaluation.capped_ras_baseline --synthetic-config src/open_nrb/experiments/configs/sweep_lambda_mi_0.yaml
+    ```
+
+    Results: `results/sweep_lambda_mi_0/evaluation/`.
+
+16. **Persistence baseline** (draft §6.5) -- post-hoc on the real-data artifact; reprojects the
+    previous period's $\hat W_{t-1}$ through the capped projection onto period $t$'s margins to get
+    a temporal-stability floor, and reports the model's stability against it:
+
+    ```bash
+    uv run python -m open_nrb.evaluation.persistence_baseline --config src/open_nrb/experiments/configs/baseline.yaml
+    ```
+
+    Needs `results/baseline/real_run_seed0.pt` from step 5. Results: `results/baseline/evaluation/`.
+
+17. **Parameter count** (draft §7) -- instant, no data, no GPU. Reports
+    `sum(p.numel() ...)` for `ReconstructionModel` (2,133 for the baseline config) against N×T,
+    the marginal observations 2NT, and the latent entries N(N−1)T:
+
+    ```bash
+    uv run python -m open_nrb.evaluation.param_count
+    ```
+
+    Prints to stdout only (reads nothing, writes nothing); safe to run alongside any training job.
+
 ## Retuning kl_free_bits / lambda_mi
 
 Only judge `lambda_mi`/`kl_free_bits`/`kl_beta_max` against synthetic `block_acc` (there's no
@@ -300,7 +394,8 @@ one config on one seed -- but the baseline and ablation runs are independent of 
 they can be launched as two concurrent background jobs instead of back-to-back (see step 6).
 
 Everything else (`compare_configs.py`, `eda_model_checks.py`, `eda_survivorship.py`,
-`make_plots.py`, `seed_significance.py`, `eda_real_panel.py`, `plot_synthetic_network.py`) only
+`make_plots.py`, `seed_significance.py`, `eda_real_panel.py`, `plot_synthetic_network.py`,
+`capped_ras_baseline.py`, `persistence_baseline.py`, `param_count.py`) only
 reads small already-saved artifacts (JSON summaries, a handful of `(T, N, N)` tensors at this
 project's scale: `N<=~24` banks, a few hundred periods) and does one fast pass of vectorized
 torch/numpy math or plotting -- there's no loop in them long enough for process/thread overhead
@@ -316,5 +411,4 @@ kernels time-slice across them, and each process's CUDA context alone costs seve
 MB-1GB of VRAM) -- still usually a net win at this model's tiny scale (`hidden_dim=16`), since
 per-epoch Python/host overhead, not device FLOPs, is the actual bottleneck, but don't expect
 linear scaling there the way the CPU-only case gets.
-
 

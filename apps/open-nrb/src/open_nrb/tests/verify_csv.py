@@ -5,12 +5,14 @@
 #     "torch",
 # ]
 # ///
-"""Smoke-test load_panel against the real NRB balance-sheet CSV, using ground-truth values
-confirmed by hand via grep on the raw CSV on 2026-10-22 (design doc Sec 9.4): for bank NBL,
-period 2076 Asar (source_file Asar_2076-Mid-Jul-2019.pdf), 'a. Interbank Lending' = 6100.0
-and 'b. Interbank Borrowing' = 950.0.
+"""Smoke-test load_panel against the real NRB balance-sheet CSV.
 
-Usage: uv run verify_real_csv.py [path/to/nrb_balance_sheet.csv]
+Uses ground-truth values confirmed by hand via grep on the raw CSV on 2026-10-22
+(design doc Sec 9.4): for bank NBL, period 2076 Asar (source_file
+Asar_2076-Mid-Jul-2019.pdf), 'a. Interbank Lending' = 6100.0 and
+'b. Interbank Borrowing' = 950.0.
+
+Usage: uv run verify_csv.py [path/to/nrb_balance_sheet.csv]
 """
 
 import sys
@@ -24,6 +26,7 @@ except ImportError:
 
 
 def main() -> None:
+    """Load the real CSV and assert NBL 2076 Asar has r == 6100.0 and c == 950.0."""
     default_path = "src/open_nrb/data/processed/monthly_statistical_bfis/nrb_balance_sheet.csv"
     csv_path = Path(sys.argv[1] if len(sys.argv) > 1 else default_path)
 

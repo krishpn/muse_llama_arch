@@ -5,6 +5,7 @@
 #     "torch",
 # ]
 # ///
+"""Test the capacitated (per-entry capped) Dykstra marginal-projection layer."""
 
 import sys
 from pathlib import Path
@@ -21,6 +22,7 @@ except ImportError:
 
 
 def feasible_case() -> bool:
+    """Assert W matches row/column marginals (W.sum(1)==r, W.sum(0)==c) when the cap never binds."""
     torch.manual_seed(0)
     n = 8
     W_tilde = torch.rand(n, n) + 0.1
@@ -38,7 +40,9 @@ def feasible_case() -> bool:
 
 
 def binding_cap_case() -> bool:
-    """Unlike test_sinkhorn.py's old (retired) binding_cap_case, this checks a true
+    """Assert the per-entry cap (W_ij <= cap_i) holds while row/column marginals are still met.
+
+    Unlike test_sinkhorn.py's old (retired) binding_cap_case, this checks a true
     PER-ENTRY cap: cap is set below several individual raw entries in rows 0/1, but
     comfortably above r_i/n, so hitting the row marginal by spreading mass across
     multiple entries is still feasible -- the thing the old row-scalar Sinkhorn clip
@@ -80,7 +84,9 @@ def binding_cap_case() -> bool:
 
 
 def infeasible_case() -> bool:
-    """Informational: cap set so tight (cap_i * N < r_i) that no feasible W exists for
+    """Assert the per-entry cap holds on row 0 when set infeasibly tight (cap_i * N < r_i).
+
+    Informational: cap set so tight (cap_i * N < r_i) that no feasible W exists for
     row 0. Not expected to hit that row's marginal exactly -- only checks the cap
     itself is still respected (Dykstra converges to a least-violation compromise, not
     a silent cap breach).
@@ -111,6 +117,7 @@ def infeasible_case() -> bool:
 
 
 def gradient_flow_case() -> bool:
+    """Assert gradients flow back to W_tilde (present and finite) through the projection."""
     torch.manual_seed(2)
     n = 6
     W_tilde = (torch.rand(n, n) + 0.1).requires_grad_(True)
@@ -127,6 +134,26 @@ def gradient_flow_case() -> bool:
     passed = bool(has_grad and finite)
     print(f"[gradient_flow_case] grad_exists={has_grad} grad_finite={finite} -> {'PASS' if passed else 'FAIL'}")
     return passed
+
+
+def test_feasible():
+    """Assert feasible_case passes."""
+    assert feasible_case()
+
+
+def test_binding_cap():
+    """Assert binding_cap_case passes."""
+    assert binding_cap_case()
+
+
+def test_infeasible():
+    """Assert infeasible_case passes."""
+    assert infeasible_case()
+
+
+def test_gradient_flow():
+    """Assert gradient_flow_case passes."""
+    assert gradient_flow_case()
 
 
 if __name__ == "__main__":

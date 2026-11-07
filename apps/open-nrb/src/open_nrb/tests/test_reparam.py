@@ -5,6 +5,7 @@
 #     "torch",
 # ]
 # ///
+"""Test the Gumbel-softmax, Gumbel-sigmoid, and log-normal reparameterized samplers."""
 
 import sys
 from pathlib import Path
@@ -22,6 +23,7 @@ except ImportError:
 
 
 def gumbel_softmax_case() -> bool:
+    """Assert Gumbel-softmax samples are (n, k), sum to 1 per row, and near one-hot at low tau."""
     torch.manual_seed(0)
     n, k = 20, 4
     logits = torch.randn(n, k, requires_grad=True)
@@ -44,6 +46,7 @@ def gumbel_softmax_case() -> bool:
 
 
 def gumbel_sigmoid_case() -> bool:
+    """Assert Gumbel-sigmoid samples lie in [0, 1] and track the sign of eta."""
     torch.manual_seed(1)
     n = 50
     eta = torch.randn(n, n, requires_grad=True)
@@ -70,6 +73,7 @@ def gumbel_sigmoid_case() -> bool:
 
 
 def lognormal_rsample_case() -> bool:
+    """Assert log-normal rsamples are correctly shaped, strictly positive, and finite."""
     torch.manual_seed(2)
     n = 20
     loc = torch.randn(n, n, requires_grad=True)
@@ -89,7 +93,9 @@ def lognormal_rsample_case() -> bool:
 
 
 def gradient_flow_case() -> bool:
-    """Chains all three samplers the way Algorithm 3 does (steps 5, 8, 9) and
+    """Assert gradients flow (present and finite) through all three samplers chained together.
+
+    Chains all three samplers the way Algorithm 3 does (steps 5, 8, 9) and
     backprops a scalar loss through the whole thing.
     """
     torch.manual_seed(3)
@@ -127,6 +133,26 @@ def gradient_flow_case() -> bool:
 
     print(f"[gradient_flow_case] overall -> {'PASS' if all_ok else 'FAIL'}")
     return all_ok
+
+
+def test_gumbel_softmax():
+    """Assert gumbel_softmax_case passes."""
+    assert gumbel_softmax_case()
+
+
+def test_gumbel_sigmoid():
+    """Assert gumbel_sigmoid_case passes."""
+    assert gumbel_sigmoid_case()
+
+
+def test_lognormal_rsample():
+    """Assert lognormal_rsample_case passes."""
+    assert lognormal_rsample_case()
+
+
+def test_gradient_flow():
+    """Assert gradient_flow_case passes."""
+    assert gradient_flow_case()
 
 
 if __name__ == "__main__":

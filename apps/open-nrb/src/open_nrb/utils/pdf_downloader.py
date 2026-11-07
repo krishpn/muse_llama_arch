@@ -6,6 +6,12 @@
 #     "beautifulsoup4",
 # ]
 # ///
+"""Download NRB monthly statistical bulletin PDFs from the NRB website.
+
+Scrapes the monthly-statistics category pages, resolves each report's PDF link (handling
+direct PDF redirects and HTML fallback links), and downloads any PDFs not already on disk,
+optionally across a thread pool. Run directly as a uv script.
+"""
 
 import argparse
 import concurrent.futures
@@ -17,7 +23,7 @@ from urllib.parse import urljoin
 from pathlib import Path
 
 def robust_get(url, headers, max_retries=3, timeout=30):
-    """Helper function to fetch URLs with retries and higher timeout."""
+    """Fetch a URL with retries and a higher timeout, returning the response or None."""
     for attempt in range(1, max_retries + 1):
         try:
             response = requests.get(url, headers=headers, timeout=timeout, allow_redirects=True)
@@ -98,7 +104,8 @@ def _process_detail_url(detail_url, idx, total, output_dir, headers):
 
 
 def download_nrb_monthly_pdfs(output_dir: Path = None, max_pages: int = 19, workers: int = 4):
-    """
+    """Download missing NRB monthly-statistics PDFs across the category pages.
+
     Processes category pages in sequence (pagination is inherently ordered), handles direct
     PDF redirects, extracts fallback links, and downloads missing PDFs.
 

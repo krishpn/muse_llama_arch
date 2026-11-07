@@ -6,7 +6,9 @@
 #     "matplotlib",
 # ]
 # ///
-"""Figures for the paper (Sec 6/8/12) from the artifacts run_synthetic_experiment.py and
+"""Build the paper's figures from the saved experiment artifacts.
+
+Figures for the paper (Sec 6/8/12) from the artifacts run_synthetic_experiment.py and
 run_real_experiment.py already save under results/ -- never re-runs training itself.
 
 Synthetic figures (multiseed_summary.json + seed_*.pt) are built unconditionally; they don't
@@ -52,6 +54,12 @@ def _savefig(fig: plt.Figure, config_stem: str, name: str) -> None:
 
 
 def plot_synthetic(config_path: Path) -> None:
+    """Build the three synthetic figures for one config from its saved seed artifacts.
+
+    Reads multiseed_summary.json and the per-seed artifacts (skipping with a message if
+    the summary is absent) to produce the model-vs-baseline error bars, the block-acc
+    vs trivial-floor bars, and the across-seed training-trajectory panels.
+    """
     # Namespaced by the config file's stem, matching the directory run_synthetic_experiment.py
     # actually wrote results under for this variant.
     results_dir = RESULTS_DIR / config_path.stem
@@ -121,6 +129,12 @@ def plot_synthetic(config_path: Path) -> None:
 
 
 def plot_real(seed: int, config_path: Path) -> None:
+    """Build the real-data figures for one config and seed, if the artifacts exist.
+
+    Reads real_run_seed{seed}.pt and its summary (a no-op printed message if either is
+    missing) to produce the temporal-stability-over-time plot, the descriptive
+    baseline-difference plot, and the top-banks-by-block panels.
+    """
     # Namespaced by the config file's stem, matching the directory run_real_experiment.py
     # actually wrote results under for this variant.
     results_dir = RESULTS_DIR / config_path.stem
@@ -188,6 +202,7 @@ def plot_real(seed: int, config_path: Path) -> None:
 
 
 def main() -> None:
+    """Parse CLI args and build the synthetic figures and (if present) the real-data figures."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)

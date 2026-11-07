@@ -5,6 +5,7 @@
 #     "torch",
 # ]
 # ///
+"""Test the Algorithm 2 synthetic network sampler (sample_synthetic_network)."""
 
 import sys
 from pathlib import Path
@@ -33,6 +34,7 @@ def _toy_inputs(n: int, k: int, d: int, eta_value: float, cap_multiplier: float)
 
 
 def feasible_shapes_case() -> bool:
+    """Assert the sampler returns shaped, finite, zero-diagonal, non-negative W with z in [0, k)."""
     torch.manual_seed(0)
     n, k, d = 10, 2, 3
     X, pi, Lambda, w, sigma2, eta_block, cap = _toy_inputs(n, k, d, eta_value=5.0, cap_multiplier=50.0)
@@ -56,7 +58,9 @@ def feasible_shapes_case() -> bool:
 
 
 def zero_inflation_rate_case() -> bool:
-    """Statistical check on Eq. 4: with eta strongly negative, most entries should be
+    """Assert the empirical zero rate tracks sigmoid(eta) per Eq. 4.
+
+    Statistical check on Eq. 4: with eta strongly negative, most entries should be
     exactly zero; with eta strongly positive, almost none should be. Uses a large N so
     the empirical rate concentrates near the true sigmoid(eta) probability.
     """
@@ -86,6 +90,7 @@ def zero_inflation_rate_case() -> bool:
 
 
 def reproducibility_case() -> bool:
+    """Assert the same generator seed reproduces identical W and z."""
     n, k, d = 8, 2, 3
     X, pi, Lambda, w, sigma2, eta_block, cap = _toy_inputs(n, k, d, eta_value=2.0, cap_multiplier=50.0)
 
@@ -106,6 +111,7 @@ def reproducibility_case() -> bool:
 
 
 def cap_respected_case() -> bool:
+    """Assert every sampled entry respects the per-entry capacity cap (W_ij <= cap_i)."""
     torch.manual_seed(2)
     n, k, d = 10, 2, 3
     X, pi, Lambda, w, sigma2, eta_block, cap = _toy_inputs(n, k, d, eta_value=5.0, cap_multiplier=1.3)
@@ -124,10 +130,13 @@ def cap_respected_case() -> bool:
 
 
 def block_dependent_existence_case() -> bool:
-    """eta_block must actually gate existence per BLOCK PAIR, not just globally: same-
+    """Assert eta_block gates edge existence per block pair (same-block exists, cross-block does not).
+
+    eta_block must actually gate existence per BLOCK PAIR, not just globally: same-
     block pairs set strongly positive should almost always exist, cross-block pairs set
     strongly negative should almost never exist. Guards against eta_block[z_i, z_j]
-    being wired to the wrong index pair or collapsed to a single scalar internally."""
+    being wired to the wrong index pair or collapsed to a single scalar internally.
+    """
     torch.manual_seed(3)
     n, k, d = 80, 2, 3
     X = torch.rand(n, d) * 0.5
@@ -154,6 +163,31 @@ def block_dependent_existence_case() -> bool:
         f"zero_rate_cross_block={zero_rate_cross:.3f} -> {'PASS' if ok else 'FAIL'}"
     )
     return ok
+
+
+def test_feasible_shapes():
+    """Assert feasible_shapes_case passes."""
+    assert feasible_shapes_case()
+
+
+def test_zero_inflation_rate():
+    """Assert zero_inflation_rate_case passes."""
+    assert zero_inflation_rate_case()
+
+
+def test_reproducibility():
+    """Assert reproducibility_case passes."""
+    assert reproducibility_case()
+
+
+def test_cap_respected():
+    """Assert cap_respected_case passes."""
+    assert cap_respected_case()
+
+
+def test_block_dependent_existence():
+    """Assert block_dependent_existence_case passes."""
+    assert block_dependent_existence_case()
 
 
 if __name__ == "__main__":

@@ -5,6 +5,12 @@
 #     "torch",
 # ]
 # ///
+"""Project a weight matrix onto its row/column marginals via Sinkhorn-Knopp/IPF (Sec 5/7).
+
+The classical Gandy-Veraart/RAS maximum-entropy baseline this paper compares its own
+capacitated projection against. Exposes one public function, sinkhorn_projection; all
+ops are differentiable torch ops so gradients flow through to the input.
+"""
 
 import torch
 
@@ -20,9 +26,10 @@ def sinkhorn_projection(
     c: torch.Tensor,
     config: SinkhornConfig,
 ) -> torch.Tensor:
-    """Uncapped Sinkhorn-Knopp/IPF marginal projection (Sec 5/7) -- the classical
-    Gandy-Veraart/RAS maximum-entropy baseline this paper compares against, NOT the
-    model's own constraint layer (that's capacitated_projection in
+    """Project W_tilde onto its row/column marginals via uncapped Sinkhorn-Knopp/IPF (Sec 5/7).
+
+    The classical Gandy-Veraart/RAS maximum-entropy baseline this paper compares
+    against, NOT the model's own constraint layer (that's capacitated_projection in
     capacity_projection.py, Sec 11 Algorithm 1). This function takes no cap: an
     earlier draft tried to fold a per-row obligor cap into this via a row-scalar
     `min(...)` clip, but a single row-scalar u_i can only rescale an entire row

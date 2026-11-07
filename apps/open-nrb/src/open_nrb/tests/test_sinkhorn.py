@@ -5,6 +5,7 @@
 #     "torch",
 # ]
 # ///
+"""Test the uncapped Sinkhorn/IPF (RAS) marginal-projection baseline."""
 
 import sys
 from pathlib import Path
@@ -21,6 +22,7 @@ except ImportError:
 
 
 def feasible_case() -> bool:
+    """Assert W matches the target row/column marginals (W.sum(1)==r, W.sum(0)==c)."""
     torch.manual_seed(0)
     n = 8
     W_tilde = torch.rand(n, n) + 0.1
@@ -37,6 +39,7 @@ def feasible_case() -> bool:
 
 
 def gradient_flow_case() -> bool:
+    """Assert gradients flow back to W_tilde (present and finite) through the projection."""
     torch.manual_seed(2)
     n = 6
     W_tilde = (torch.rand(n, n) + 0.1).requires_grad_(True)
@@ -52,6 +55,16 @@ def gradient_flow_case() -> bool:
     passed = bool(has_grad and finite)
     print(f"[gradient_flow_case] grad_exists={has_grad} grad_finite={finite} -> {'PASS' if passed else 'FAIL'}")
     return passed
+
+
+def test_feasible():
+    """Assert feasible_case passes."""
+    assert feasible_case()
+
+
+def test_gradient_flow():
+    """Assert gradient_flow_case passes."""
+    assert gradient_flow_case()
 
 
 if __name__ == "__main__":

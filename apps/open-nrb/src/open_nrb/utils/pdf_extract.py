@@ -9,7 +9,8 @@
 # ]
 # ///
 
-"""
+"""Extract financial statements and BFI name lists from NRB PDFs.
+
 NRB Financial Statement Extractor (open-nrb)
 Extracts Balance Sheets, P&L, Statement of Credit, and BFI Name Lists
 from Nepal Rastra Bank monthly statistical bulletin PDFs.
@@ -43,6 +44,7 @@ EXCLUDED_RAW_PDFS = {"Kartik2078_NFRS_PublishV1-1.pdf"}
 
 def clean_number(val: Any) -> Optional[float]:
     """Parse raw string from NRB table into a float.
+
     Handles negative values enclosed in parentheses e.g. '( 2,816.02)' and dashes '-' as 0.0.
     """
     if val is None:
@@ -224,7 +226,7 @@ def extract_metadata_from_filename(filename: str) -> Dict[str, Any]:
 
 
 class NRBFinancialExtractor:
-    """Extracts BFI-level financial panel datasets from NRB PDFs."""
+    """Extract BFI-level financial panel datasets from NRB PDFs."""
 
     # Canonical BFI short-name set -- merged from data_loader.py's COMMERCIAL_BANK_PREFIXES
     # (the modeling package's own, independently-verified list) plus the non-commercial
@@ -353,7 +355,7 @@ class NRBFinancialExtractor:
         return section_pages[1], development_start_physical_1idx - 1
 
     def extract_statement_generic(self, keyword: str, statement_name: str) -> pd.DataFrame:
-        """Generic extractor for tabular statement types (Balance Sheet, P&L, Credit)."""
+        """Extract a tabular statement type (Balance Sheet, P&L, Credit) into a DataFrame."""
         section_pages = self.find_section_pages(keyword)
         bounds = self._find_commercial_bank_section_bounds(keyword, section_pages)
         if bounds is not None:
@@ -522,6 +524,12 @@ def _extract_one(pdf_path: Path) -> Tuple[str, Dict[str, pd.DataFrame]]:
 
 
 def process_all_raw_pdfs(raw_dir: Path, output_dir: Path, max_files: Optional[int] = None, workers: Optional[int] = None):
+    """Extract every raw PDF in `raw_dir` and write the combined per-statement CSVs.
+
+    Globs the raw PDFs (skipping EXCLUDED_RAW_PDFS, honoring `max_files`), runs the
+    per-PDF extraction sequentially or across a process pool, and concatenates each
+    statement type into nrb_<key>.csv under `output_dir`.
+    """
     raw_dir = Path(raw_dir)
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)

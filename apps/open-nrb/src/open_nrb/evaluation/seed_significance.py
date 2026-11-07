@@ -5,7 +5,9 @@
 #     "scipy",
 # ]
 # ///
-"""Paired significance tests on the model-vs-baseline gap across seeds (Sec 7/10's "is the margin
+"""Run paired significance tests on the model-vs-baseline gap across seeds.
+
+Paired significance tests on the model-vs-baseline gap across seeds (Sec 7/10's "is the margin
 real or single-seed noise?" question) -- this is the only script in the codebase that needs scipy;
 hand-rolling a paired t-test/Wilcoxon signed-rank test isn't worth it for one self-contained
 script, everything else here is hand-rolled torch/math on purpose.
@@ -46,6 +48,16 @@ def _load_per_seed(config_path: Path) -> list[dict]:
 
 
 def _paired_report(label: str, a: list[float], b: list[float]) -> dict:
+    """Run a paired t-test and Wilcoxon signed-rank test on the per-seed gap a - b.
+
+    For paired per-seed vectors a, b:
+        d_i       = a_i - b_i
+        mean_diff = (1/n) * sum_i d_i
+        (t_stat, t_p) = scipy.stats.ttest_rel(a, b)
+        (w_stat, w_p) = scipy.stats.wilcoxon(d)      (reported as not computable if degenerate)
+    and for n <= 6 also notes Wilcoxon's minimum achievable two-sided p-value
+    1 / 2^(n-1), below which it structurally cannot reject at alpha=0.05.
+    """
     diffs = [x - y for x, y in zip(a, b)]
     mean_diff = sum(diffs) / len(diffs)
     print(f"\n=== {label} ===")
@@ -81,6 +93,12 @@ def _paired_report(label: str, a: list[float], b: list[float]) -> dict:
 
 
 def run_within_config(config_path: Path) -> None:
+    """Report model-vs-baseline and block-acc-vs-trivial paired gaps within one config.
+
+    Loads the config's per-seed summary and runs two paired reports: model_mean vs
+    baseline_mean (reconstruction error) and block_acc vs trivial_baseline (block
+    recovery), then saves the report and metrics.
+    """
     with captured_output() as buf:
         per_seed = _load_per_seed(config_path)
         print(f"\n########## Seed significance: {config_path.stem} (n={len(per_seed)} seeds) ##########")
@@ -99,6 +117,12 @@ def run_within_config(config_path: Path) -> None:
 
 
 def run_between_configs(config_a: Path, config_b: Path) -> None:
+    """Report paired model_mean and block_acc gaps between two configs on shared seeds.
+
+    Pairs the two configs on their common seeds (skipping with a message if fewer than
+    two are shared) and runs a paired report for model_mean and for block_acc, then
+    saves the report and metrics.
+    """
     per_seed_a = {r["seed"]: r for r in _load_per_seed(config_a)}
     per_seed_b = {r["seed"]: r for r in _load_per_seed(config_b)}
     shared_seeds = sorted(set(per_seed_a) & set(per_seed_b))
@@ -128,6 +152,11 @@ def run_between_configs(config_a: Path, config_b: Path) -> None:
 
 
 def main() -> None:
+    """Run the within-config significance tests, and the between-config test if requested.
+
+    Always runs run_within_config on --synthetic-config; also runs run_between_configs
+    against --compare-config when that argument is supplied.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--synthetic-config", type=Path, default=DEFAULT_SYNTHETIC_CONFIG)
     parser.add_argument("--compare-config", type=Path, default=None)

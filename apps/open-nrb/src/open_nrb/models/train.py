@@ -5,6 +5,13 @@
 #     "torch",
 # ]
 # ///
+"""Train the reconstruction model via amortized variational inference (Sec 11, Algorithm 3).
+
+Defines the ReconstructionModel (the learnable theta/psi/sigma^2 bundle), the Period
+input container, the loss terms (categorical KL, mutual-information regularizer,
+zero-inflated log-normal reconstruction NLL), and train_step, which runs one temporal
+forward pass over a batch of periods plus one optimizer step.
+"""
 
 from dataclasses import dataclass
 
@@ -25,12 +32,13 @@ except ImportError:
 
 
 class ReconstructionModel(nn.Module):
-    """Bundles every learnable piece Algorithm 3 updates: theta (GRU), psi (block
-    posterior + pairwise decoder), and sigma^2 (log-normal dispersion, Sec 10 -- a
-    single global scalar here, not per-block, since that choice isn't settled
-    yet and global is the simpler default). model.parameters() goes straight
-    into the caller's optimizer -- train_step never touches an optimizer's
-    internals directly.
+    """Bundle every learnable piece Algorithm 3 updates: theta (GRU), psi, and sigma^2.
+
+    theta is the GRU; psi the block posterior + pairwise decoder; sigma^2 the
+    log-normal dispersion (Sec 10 -- a single global scalar here, not per-block, since
+    that choice isn't settled yet and global is the simpler default).
+    model.parameters() goes straight into the caller's optimizer -- train_step never
+    touches an optimizer's internals directly.
 
     No Lambda (Eq. 3's block-pair intensities) or w (Eq. 2's fitness weights) here:
     Algorithm 3 (Sec 11) explicitly replaces the literal Eq. 3-4 computation with
@@ -53,16 +61,20 @@ class ReconstructionModel(nn.Module):
 
     @property
     def sigma2(self) -> torch.Tensor:
+        """Return the log-normal dispersion sigma^2 = softplus(raw) + 1e-6 (kept > 0)."""
         return F.softplus(self._raw_sigma2) + 1e-6
 
     def init_hidden(self, n: int, device=None, dtype=None) -> torch.Tensor:
+        """Return a zeroed initial GRU hidden state of shape (n, hidden_dim)."""
         return self.encoder.init_hidden(n, device=device, dtype=dtype)
 
 
 @dataclass
 class Period:
-    """One time period's worth of inputs to train_step -- a data container, not a
-    tunable hyperparameter set, so it lives here rather than in config.py.
+    """Hold one time period's inputs to train_step.
+
+    A data container, not a tunable hyperparameter set, so it lives here rather than
+    in config.py.
     """
 
     X: torch.Tensor  # (N, d) covariates
@@ -73,9 +85,14 @@ class Period:
 
 
 def _categorical_kl(q: torch.Tensor, prior_probs: torch.Tensor, delta: float, free_bits: float = 0.0) -> torch.Tensor:
-    """KL(q_psi(z_i) || p(z)) per node, MEANED over nodes (not summed). q: (N, K);
-    prior_probs: (K,), broadcast across nodes -- same prior for every node (mean-field,
-    i.i.d. across i, matching Eq. 1's generative assumption).
+    """Compute the per-node categorical KL to the block prior, meaned over nodes.
+
+    For node i, with q: (N, K) and prior_probs p: (K,) broadcast across nodes (same
+    prior for every node -- mean-field, i.i.d. across i, matching Eq. 1's generative
+    assumption):
+        KL(q_i || p) = sum_k q_ik * (log(q_ik) - log(p_k))
+        return mean_i max( KL(q_i || p), free_bits )
+    (delta stabilizes each log.)
 
     free_bits clamps each node's own KL from below before the mean (Kingma et al.'s
     "free bits"): once a node's KL is at or below free_bits, it stops contributing
@@ -103,12 +120,16 @@ def _categorical_kl(q: torch.Tensor, prior_probs: torch.Tensor, delta: float, fr
 
 
 def _mutual_info_regularizer(q: torch.Tensor, delta: float) -> torch.Tensor:
-    """-I(bank; block) for one period's q (N, K): mean per-bank entropy minus the
-    entropy of the banks' mean block distribution. Minimizing this maximizes I,
-    rewarding confident (low mean-entropy) assignments that still use more than one
-    block across banks (high marginal entropy) -- IIC/IMSAT-style clustering loss,
-    not derivable from kl_free_bits alone since that only floors KL, never rewards
-    confidence (Sec 10).
+    """Compute -I(bank; block) for one period's q (N, K), an IIC/IMSAT clustering loss.
+
+    With H(p) = -sum_k p_k log(p_k) the entropy and q_bar = mean_i q_i the banks' mean
+    block distribution:
+        -I = (1/N) sum_i H(q_i)  -  H(q_bar)
+           = cond_entropy - marg_entropy
+    (delta stabilizes each log.) Minimizing this maximizes I, rewarding confident (low
+    mean-entropy) assignments that still use more than one block across banks (high
+    marginal entropy) -- not derivable from kl_free_bits alone since that only floors
+    KL, never rewards confidence (Sec 10).
     """
     log_q = torch.log(q + delta)
     cond_entropy = -(q * log_q).sum(dim=-1).mean()
@@ -125,9 +146,16 @@ def _zero_inflated_lognormal_nll(
     mask: torch.Tensor,
     config: TrainStepConfig,
 ) -> torch.Tensor:
-    """-log p(W_true | lambda, eta, sigma^2), Eq. 9's first term: a zero-inflated
-    log-normal likelihood (Eq. 4's gate, Eq. 3's intensity). `mask` excludes
-    i == j (no self-exposure, same convention as synthetic.py). Uses
+    """Compute the zero-inflated log-normal reconstruction NLL (Eq. 9's first term).
+
+    -log p(W_true | lambda, eta, sigma^2), the zero-inflated log-normal likelihood
+    (Eq. 4's gate, Eq. 3's intensity). For each ordered pair i != j (selected by
+    `mask`), with existence probability p_ij = sigmoid(eta_ij):
+        log p(W_ij) = log(1 - p_ij)                                   if W_ij ~= 0
+                    = log p_ij + log LogNormal(W_ij; log lambda_ij, sigma^2)  otherwise
+        NLL = - sum_{i != j} log p(W_ij)
+
+    `mask` excludes i == j (no self-exposure, same convention as synthetic.py). Uses
     config.recon_zero_tol rather than exact equality to decide which entries
     count as "zero", since W_true is the output of capacitated_projection
     (Algorithm 1), whose row/column projection steps generally do not preserve
@@ -156,9 +184,19 @@ def train_step(
     train_config: TrainStepConfig,
     generator: torch.Generator | None = None,
 ) -> torch.Tensor:
-    """Algorithm 3 (paper1_network_reconstruction.md Sec 11, Eq. 6-9): one
-    amortized-inference pass over `batch` (in temporal order) plus one optimizer
-    step.
+    """Run one amortized-inference pass over `batch` plus one optimizer step (Algorithm 3).
+
+    Algorithm 3 (paper1_network_reconstruction.md Sec 11, Eq. 6-9): one pass over
+    `batch` in temporal order, then one optimizer step.
+
+    Total loss (Eq. 9), aggregated over the T periods in `batch`:
+        L = sum_t recon_t
+            + beta * mean_t KL_t
+            + lambda_mi * mean_t (-I_t)
+            + lambda_smooth * sum_t ||W_t - W_{t-1}||_F^2
+    where recon_t is _zero_inflated_lognormal_nll (synthetic branch only, else 0),
+    KL_t is _categorical_kl, -I_t is _mutual_info_regularizer, beta =
+    train_config.kl_beta, and the smoothness term runs over consecutive period pairs.
 
     N must be the same across every period in `batch` (same bank panel) since
     the GRU hidden state carries across periods and GRUCell requires a fixed
@@ -166,7 +204,7 @@ def train_step(
     EncoderDecoderConfig, not here.
 
     Args:
-        model: ReconstructionModel bundling theta, psi, Lambda, w, sigma^2.
+        model: ReconstructionModel bundling theta, psi, sigma^2.
         optimizer: Caller-constructed optimizer over model.parameters() -- this
             function doesn't choose the optimizer type or learning rate.
         batch: Periods in temporal order; GRU hidden state carries across them.

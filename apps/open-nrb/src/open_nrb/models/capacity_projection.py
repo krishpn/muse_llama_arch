@@ -5,6 +5,13 @@
 #     "torch",
 # ]
 # ///
+"""Project a weight matrix onto row/column marginals and a per-row cap (Sec 5/11, Algorithm 1).
+
+The model's own constraint layer: Dykstra's alternating-projections algorithm onto
+the intersection of the row-marginal, column-marginal, and per-entry box (obligor
+cap) sets. All projections are closed-form and differentiable, so gradients flow back
+to the input. Contrast sinkhorn.py, the uncapped classical baseline.
+"""
 
 import torch
 
@@ -21,7 +28,7 @@ def capacitated_projection(
     cap: torch.Tensor,
     config: CapacityProjectionConfig,
 ) -> torch.Tensor:
-    """Algorithm 1 (paper1_network_reconstruction.md Sec 5/11, Eq. 8).
+    """Project edge weights onto the marginal-and-cap feasible set (Algorithm 1, Sec 5/11, Eq. 8).
 
     Projects raw/sampled edge weights onto the intersection of three convex sets via
     Dykstra's alternating-projections algorithm (Boyle & Dykstra, 1986), an ADMM-family

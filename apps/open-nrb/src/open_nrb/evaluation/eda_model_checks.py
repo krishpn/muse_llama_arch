@@ -7,7 +7,9 @@
 #     "pyyaml",
 # ]
 # ///
-"""Reviewer pre-mortem EDA (design doc Sec 10a) plus standard network-reconstruction/
+"""Run the reviewer pre-mortem and network-structure checks on saved artifacts.
+
+Reviewer pre-mortem EDA (design doc Sec 10a) plus standard network-reconstruction/
 systemic-risk literature checks (Squartini & Garlaschelli 2011; Garlaschelli & Loffredo 2004;
 Cimini et al. 2015; Battiston et al. 2012) -- descriptive-only, no new training. Reads only
 from artifacts run_real_experiment.py/run_synthetic_experiment.py already save -- never
@@ -84,10 +86,17 @@ D = len(COVARIATE_ORDER)
 
 
 def moments(x: torch.Tensor) -> dict[str, float]:
-    """Population (not sample) first-through-fourth moments -- mean, variance, std, skewness,
+    """Compute population first-through-fourth moments over x's finite entries.
+
+    Population (not sample) first-through-fourth moments -- mean, variance, std, skewness,
     excess kurtosis -- over x's finite entries. Population (divide by n, not n-1) because the
     goal here is describing the actual observed set (e.g. "the 17 excluded banks"), not
-    estimating a population parameter from a sample of a larger one.
+    estimating a population parameter from a sample of a larger one. For finite entries with
+    population mean mu and population std sigma:
+        var             = mean((x - mu)^2)
+        std             = sqrt(var)
+        skew            = mean((x - mu)^3) / sigma^3
+        kurtosis_excess = mean((x - mu)^4) / sigma^4 - 3
     """
     finite = x[~x.isnan()] if x.dtype.is_floating_point else x.float()
     n = finite.numel()
@@ -136,6 +145,12 @@ def _own_window_covariate_mean(panel: Panel, covariate_idx: int) -> torch.Tensor
 
 
 def discard_bias_moments(panel: Panel) -> dict:
+    """Compare included vs excluded banks' covariate moments on an own-active-window basis.
+
+    Reviewer pre-mortem item 5: splits banks into complete-case (included) and dropped
+    (excluded) by the complete-case mask, then reports the first-through-fourth moments of
+    each covariate's own-window per-bank mean for both groups.
+    """
     print("\n=== Item 5: discard-sample bias (included vs. excluded, own-active-window basis) ===")
     included = _complete_case_mask(panel)
     excluded = ~included
@@ -156,7 +171,9 @@ COVARIATE_NAME_INDEX = {"size": 0, "capital_ratio": 1}
 
 
 def coverage_time_series(panel: Panel) -> list[int]:
-    """Per-period count of banks with >=1 non-NaN covariate that period -- a covariate-presence
+    """Count banks with at least one non-NaN covariate per period.
+
+    Per-period count of banks with >=1 non-NaN covariate that period -- a covariate-presence
     proxy, not the literal raw-row presence eda_survivorship.py's has_rows computes; good enough
     for a coverage-over-time description, not a substitute for that script's entry/exit detail.
     """
@@ -169,8 +186,11 @@ def coverage_time_series(panel: Panel) -> list[int]:
 
 
 def marginal_time_series(panel: Panel) -> tuple[list[float], list[float]]:
-    """Aggregate (sum over included banks) interbank lending/borrowing per period, complete-case
-    subset only -- same subset run_real_experiment.py actually trains on."""
+    """Sum interbank lending and borrowing over included banks for each period.
+
+    Aggregate (sum over included banks) interbank lending/borrowing per period, complete-case
+    subset only -- same subset run_real_experiment.py actually trains on.
+    """
     included = _complete_case_mask(panel)
     r_t = panel.r[included].sum(dim=0)
     c_t = panel.c[included].sum(dim=0)
@@ -181,6 +201,14 @@ def marginal_time_series(panel: Panel) -> tuple[list[float], list[float]]:
 
 
 def param_count_vs_data_size(n_banks: int, n_periods: int, model_config: ModelConfig) -> dict:
+    """Report the model's trainable parameter count against the effective real-data size.
+
+    Reviewer pre-mortem item 6: builds the model from `model_config` and compares its
+    trainable parameter total P to the panel's effective size:
+        n_obs          = n_banks * n_periods
+        params_per_obs = P / n_obs
+    (the parameter count is set only by the architecture, not by N or T).
+    """
     enc_config = EncoderDecoderConfig(
         input_dim=D,
         hidden_dim=model_config.hidden_dim,
@@ -229,6 +257,11 @@ def _off_diagonal(w: torch.Tensor) -> torch.Tensor:
 
 
 def edge_moments_over_time(W_seq: torch.Tensor, label: str) -> dict:
+    """Summarize per-period off-diagonal edge-weight moments across time for one sequence.
+
+    Computes moments() of the off-diagonal edges for each period, then reports the
+    across-period moments of the per-period means (drift), stds, skews, and excess kurtoses.
+    """
     print(f"\n=== Edge-weight moments over time: {label} ===")
     per_period = [moments(_off_diagonal(W_seq[t])) for t in range(W_seq.shape[0])]
     means = [m["mean"] for m in per_period]
@@ -259,10 +292,16 @@ def _valid_period_mask(W_hat: torch.Tensor, W_baseline: torch.Tensor) -> torch.T
 
 
 def lag1_autocorrelation(W_seq: torch.Tensor, valid: torch.Tensor) -> float:
-    """Mean per-edge lag-1 autocorrelation across the valid (finite, non-degenerate) periods
+    """Compute the mean per-edge lag-1 autocorrelation across valid periods.
+
+    Mean per-edge lag-1 autocorrelation across the valid (finite, non-degenerate) periods
     only -- answers Sec 10a item 1: is the classical baseline already autocorrelated "for free",
     which would make the model's smoothness-penalized stability margin weaker evidence of
-    learned structure than it looks.
+    learned structure than it looks. Per off-diagonal edge, with x0 = edge[:-1], x1 = edge[1:]
+    mean-centered over time:
+        rho_edge = sum_t (x0 - mean x0) * (x1 - mean x1)
+                   / ( ||x0 - mean x0|| * ||x1 - mean x1|| )
+    and the return value is the mean of rho_edge over edges with finite rho_edge.
     """
     seq = W_seq[valid]
     if seq.shape[0] < 3:
@@ -279,9 +318,14 @@ def lag1_autocorrelation(W_seq: torch.Tensor, valid: torch.Tensor) -> float:
 
 
 def cap_binding_fraction(W_hat: torch.Tensor, cap: torch.Tensor, valid: torch.Tensor, tol: float = 1e-3) -> float:
-    """Fraction of off-diagonal (bank, counterparty, period) cells where W_hat actually sits
+    """Compute the fraction of off-diagonal cells sitting at or near the regulatory cap.
+
+    Fraction of off-diagonal (bank, counterparty, period) cells where W_hat actually sits
     within `tol` (relative) of its row's regulatory cap -- Sec 10a item 2. cap is (N, T) (one
-    bound per bank per period, broadcast across that bank's row); W_hat is (T, N, N).
+    bound per bank per period, broadcast across that bank's row); W_hat is (T, N, N). Counting
+    only valid periods and off-diagonal cells:
+        binding  = # cells with W_hat[t, i, j] >= cap[i, t] * (1 - tol)
+        fraction = binding / (# off-diagonal cells over valid periods)
     """
     n = W_hat.shape[-1]
     mask = ~torch.eye(n, dtype=torch.bool)
@@ -298,6 +342,12 @@ def cap_binding_fraction(W_hat: torch.Tensor, cap: torch.Tensor, valid: torch.Te
 
 
 def run_section_b(seed: int, config_path: Path) -> dict | None:
+    """Run the trained-run checks (edge moments, lag-1 autocorrelation, cap binding) for a seed.
+
+    Loads the real artifact for `config_path`/`seed` (returning None with a message if it is
+    absent), then reports per-period edge-weight moments for model and baseline, their lag-1
+    autocorrelations (Sec 10a item 1), and the cap-binding fraction (item 2).
+    """
     # Namespaced by the config file's stem, same convention run_real_experiment.py writes
     # under -- must match the --config that script was actually run with.
     artifact_path = RESULTS_DIR / config_path.stem / f"real_run_seed{seed}.pt"
@@ -359,11 +409,16 @@ def run_section_b(seed: int, config_path: Path) -> dict | None:
 def marginal_preservation_error(
     W: torch.Tensor, r_target: torch.Tensor, c_target: torch.Tensor, valid: torch.Tensor
 ) -> dict[str, dict[str, float]]:
-    """Relative error between W's achieved row/col sums and the empirical target marginals the
+    """Compute the relative error between W's row/col sums and the target marginals.
+
+    Relative error between W's achieved row/col sums and the empirical target marginals the
     projection was supposed to hit -- the standard maxent/RAS sanity check this codebase never
     reported: row sum should equal the real measured interbank lending, column sum the measured
     borrowing, not just an aggregate Frobenius accuracy number. r_target/c_target are (T, N),
-    same period-major convention as W (T, N, N).
+    same period-major convention as W (T, N, N). Per cell:
+        row_err[t, i] = |sum_j W[t, i, j] - r_target[t, i]| / max(|r_target[t, i]|, 1e-8)
+        col_err[t, j] = |sum_i W[t, i, j] - c_target[t, j]| / max(|c_target[t, j]|, 1e-8)
+    reported as moments over valid periods.
     """
     row_err = (W.sum(dim=2) - r_target).abs() / r_target.abs().clamp_min(1e-8)
     col_err = (W.sum(dim=1) - c_target).abs() / c_target.abs().clamp_min(1e-8)
@@ -371,10 +426,14 @@ def marginal_preservation_error(
 
 
 def density(W: torch.Tensor, valid: torch.Tensor, tol: float = 1e-3) -> dict[str, float]:
-    """Fraction of off-diagonal cells >= tol per period -- same tolerance convention
+    """Compute the fraction of off-diagonal cells above tol per period.
+
+    Fraction of off-diagonal cells >= tol per period -- same tolerance convention
     cap_binding_fraction already uses. A classical RAS/maxent baseline is well known (Cimini et
     al. 2015) to over-densify relative to the sparse true network; comparing this across
-    W_hat/W_baseline/W_true is the standard check for that.
+    W_hat/W_baseline/W_true is the standard check for that. Per valid period:
+        density_t = (# off-diagonal cells with |W[t, i, j]| >= tol) / (# off-diagonal cells)
+    reported as moments over periods.
     """
     n = W.shape[-1]
     mask = ~torch.eye(n, dtype=torch.bool, device=W.device)
@@ -388,7 +447,9 @@ def density(W: torch.Tensor, valid: torch.Tensor, tol: float = 1e-3) -> dict[str
 
 
 def weighted_reciprocity(W: torch.Tensor, valid: torch.Tensor) -> dict[str, float]:
-    """Garlaschelli-Loffredo (2004) weighted reciprocity per period:
+    """Compute the Garlaschelli-Loffredo (2004) weighted reciprocity per period.
+
+    Garlaschelli-Loffredo (2004) weighted reciprocity per period:
     sum(min(w_ij, w_ji)) / sum(w_ij) over off-diagonal cells. A pure maxent/RAS reconstruction
     from marginals alone has no mechanism to prefer reciprocated exposures, so this is the
     standard check for whether a model is (or isn't) recovering real reciprocity structure
@@ -408,17 +469,31 @@ def weighted_reciprocity(W: torch.Tensor, valid: torch.Tensor) -> dict[str, floa
 
 
 def eigenvector_centrality(W: torch.Tensor, n_iters: int = 200, tol: float = 1e-8) -> torch.Tensor:
-    """Power iteration on (W + W^T)/2 per period -- symmetrizing avoids picking an arbitrary
+    """Compute per-period eigenvector centrality by power iteration on the symmetrized W.
+
+    Power iteration on (W + W^T)/2 per period -- symmetrizing avoids picking an arbitrary
     convention between in-/out-centrality for a directed weighted network, and is the usual
     simplification when all that's actually needed is a single systemic-importance ranking to
-    compare across W_hat/W_baseline/W_true (not a claim about directionality itself). Returns
-    (T, N) centrality scores, L2-normalized per period. Invalid (NaN-containing) periods produce
-    a NaN row here -- harmless, since every caller filters by a `valid` mask before aggregating.
+    compare across W_hat/W_baseline/W_true (not a claim about directionality itself). With
+    A = (W_t + W_t^T) / 2, first add a diagonal shift c*I (c = the max absolute row sum, an upper
+    bound on the spectral radius): this leaves the eigenvectors unchanged (A and A + c*I share
+    them) but makes A + c*I primitive, so by Perron-Frobenius it has a single dominant eigenvalue.
+    Without the shift, a bipartite period -- a star, or a pure core-periphery network -- has a
+    spectrum symmetric about 0 (+rho and -rho are both dominant), and power iteration from a
+    symmetric start oscillates with period 2 instead of converging, landing on the uniform vector
+    (every node equal) at even iteration counts. Then iterate v <- A v / ||A v||_2 from
+    v = 1 / sqrt(N) until convergence. Returns (T, N) centrality scores, L2-normalized per period.
+    Invalid (NaN-containing) periods produce a NaN row here -- harmless, since every caller filters
+    by a `valid` mask before aggregating.
     """
     t_len, n, _ = W.shape
     scores = torch.zeros(t_len, n, device=W.device)
     for t in range(t_len):
         A = (W[t] + W[t].T) / 2
+        # Diagonal shift so the dominant eigenvalue is unique (see docstring): bipartite
+        # (star / pure core-periphery) networks otherwise make power iteration oscillate.
+        shift = A.abs().sum(dim=1).max()
+        A = A + shift * torch.eye(n, device=W.device, dtype=A.dtype)
         v = torch.ones(n, device=W.device) / n**0.5
         for _ in range(n_iters):
             v_new = A @ v
@@ -435,9 +510,13 @@ def eigenvector_centrality(W: torch.Tensor, n_iters: int = 200, tol: float = 1e-
 
 
 def rank_correlation(a: torch.Tensor, b: torch.Tensor) -> float:
-    """Spearman rank correlation, hand-rolled as Pearson-on-ranks (double argsort) to avoid
+    """Compute the Spearman rank correlation between two score vectors.
+
+    Spearman rank correlation, hand-rolled as Pearson-on-ranks (double argsort) to avoid
     adding scipy to this script -- used to compare two centrality rankings (model vs baseline,
-    or vs ground truth) without caring about the two scores' absolute scale.
+    or vs ground truth) without caring about the two scores' absolute scale. With rank vectors
+    ra, rb (each from a double argsort) mean-centered:
+        rho = (ra . rb) / (||ra|| * ||rb||)
     """
     def _rank(x: torch.Tensor) -> torch.Tensor:
         return x.argsort().argsort().float()
@@ -449,7 +528,9 @@ def rank_correlation(a: torch.Tensor, b: torch.Tensor) -> float:
 
 
 def centrality_rank_agreement(scores_a: torch.Tensor, scores_b: torch.Tensor, valid: torch.Tensor) -> dict[str, float]:
-    """Per-period Spearman agreement between two centrality rankings, summarized across periods
+    """Summarize per-period Spearman agreement between two centrality rankings.
+
+    Per-period Spearman agreement between two centrality rankings, summarized across periods
     -- answers "does the reconstruction preserve WHO the systemically important banks are", the
     standard practical bar in this literature when exact edge recovery is hard but identifying
     key players still matters (Cimini et al. 2015; Battiston et al. 2012).
@@ -459,7 +540,9 @@ def centrality_rank_agreement(scores_a: torch.Tensor, scores_b: torch.Tensor, va
 
 
 def debtrank(W: torch.Tensor, equity: torch.Tensor, shocked: int, h_cap: float = 1.0, n_iters: int = 100, tol: float = 1e-6) -> float:
-    """Battiston et al. (2012) DebtRank for a single period: shocking bank `shocked` to full
+    """Compute single-period DebtRank total systemic impact from shocking one bank.
+
+    Battiston et al. (2012) DebtRank for a single period: shocking bank `shocked` to full
     distress (h=1) and propagating via exposure-weighted impact A[i, j] = min(1, W[i, j] /
     equity_i) -- how much of creditor i's equity a full default by debtor j would wipe out
     (W[i, j] is i's lending exposure to j, per data_loader.Panel's row=lending/col=borrowing
@@ -482,7 +565,9 @@ def debtrank(W: torch.Tensor, equity: torch.Tensor, shocked: int, h_cap: float =
 
 
 def aggregate_debtrank(W: torch.Tensor, equity: torch.Tensor, valid: torch.Tensor) -> dict[str, dict[str, float]]:
-    """Mean and worst-case (over which single bank is shocked) total DebtRank impact, averaged
+    """Average mean and worst-case single-bank-shock DebtRank impact over valid periods.
+
+    Mean and worst-case (over which single bank is shocked) total DebtRank impact, averaged
     across valid periods -- the standard way this literature reports systemic risk from a
     reconstructed network: not one global number, but the distribution of impact under each
     possible single-bank shock. `equity` is (N, T) (real data's per-period cap) or (N,)
@@ -512,6 +597,11 @@ def run_marginal_and_density_checks(
     c_target: torch.Tensor | None,
     tol: float,
 ) -> dict:
+    """Print and collect marginal-preservation, density, and reciprocity metrics for one matrix.
+
+    When row/col targets are given, reports marginal-preservation error; always reports density
+    and weighted reciprocity, returning them in a metrics dict.
+    """
     print(f"\n=== Marginal preservation & density: {label} ===")
     result: dict = {}
     if r_target is not None and c_target is not None:
@@ -529,6 +619,11 @@ def run_marginal_and_density_checks(
 
 
 def run_centrality_check(label_a: str, scores_a: torch.Tensor, label_b: str, scores_b: torch.Tensor, valid: torch.Tensor) -> dict:
+    """Report the per-period centrality rank agreement between two score sequences.
+
+    Prints the Spearman rank-correlation moments and flags when the two rankings disagree
+    substantially (mean < 0.5) on which banks are most systemically central.
+    """
     print(f"\n=== Eigenvector-centrality rank agreement: {label_a} vs {label_b} ===")
     agreement = centrality_rank_agreement(scores_a, scores_b, valid)
     _print_moments("Spearman rank correlation", agreement)
@@ -542,6 +637,11 @@ def run_centrality_check(label_a: str, scores_a: torch.Tensor, label_b: str, sco
 
 
 def run_debtrank_check(label: str, W: torch.Tensor, equity: torch.Tensor, valid: torch.Tensor) -> dict:
+    """Report the mean and worst-case single-bank-shock DebtRank impact for one matrix.
+
+    Prints and returns the aggregate_debtrank moments (mean and worst single-bank-shock
+    impact) for the given exposure matrix and equity.
+    """
     print(f"\n=== DebtRank systemic impact: {label} ===")
     result = aggregate_debtrank(W, equity, valid)
     _print_moments("mean single-bank-shock impact", result["mean_shock_impact"])
@@ -550,6 +650,12 @@ def run_debtrank_check(label: str, W: torch.Tensor, equity: torch.Tensor, valid:
 
 
 def run_section_c_real(seed: int, config_path: Path, tol: float) -> dict | None:
+    """Run the real-data network-structure checks (marginals, density, centrality, DebtRank).
+
+    Loads the real artifact for `config_path`/`seed` (returning None with a message if absent)
+    and runs the marginal-preservation/density/reciprocity, eigenvector-centrality rank
+    agreement, and DebtRank checks for the model and the classical baseline.
+    """
     real_path = RESULTS_DIR / config_path.stem / f"real_run_seed{seed}.pt"
     if not real_path.exists():
         print(
@@ -585,6 +691,13 @@ def run_section_c_real(seed: int, config_path: Path, tol: float) -> dict | None:
 
 
 def run_section_c_synthetic(seed: int, synthetic_config_path: Path, tol: float) -> dict | None:
+    """Run the synthetic network-structure checks against the synthetic ground truth.
+
+    Loads the synthetic artifact for `synthetic_config_path`/`seed` (returning None with a
+    message if absent) and runs the marginal-preservation/density/reciprocity, centrality
+    rank agreement, and DebtRank checks for the model, baseline, and ground-truth W_true,
+    using the scalar scenario cap as the DebtRank equity.
+    """
     synth_path = RESULTS_DIR / synthetic_config_path.stem / f"seed_{seed}.pt"
     if not synth_path.exists():
         print(
@@ -627,6 +740,13 @@ def run_section_c_synthetic(seed: int, synthetic_config_path: Path, tol: float) 
 
 
 def main() -> None:
+    """Run Sections A-C on the real panel/artifacts and (if present) the synthetic artifact.
+
+    Loads and filters the real panel, runs the raw-panel checks (Section A: discard-bias
+    moments, coverage and marginal time series, parameter count), the trained-run checks
+    (Section B) and real network-structure checks (Section C), saves the reports, then runs
+    the synthetic Section C if that artifact exists.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", type=Path, default=DEFAULT_CSV)
     parser.add_argument("--seed", type=int, default=0)

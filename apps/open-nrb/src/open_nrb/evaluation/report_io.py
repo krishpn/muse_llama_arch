@@ -3,7 +3,9 @@
 # requires-python = ">=3.12"
 # dependencies = []
 # ///
-"""Shared output-persistence helper for every evaluation/*.py script -- avoids duplicating the
+"""Persist evaluation-script output to disk without per-script boilerplate.
+
+Shared output-persistence helper for every evaluation/*.py script -- avoids duplicating the
 same tee-stdout-and-json-dump boilerplate six times. Every script keeps its existing
 "compute + print + flag-if-notable" shape; this only adds a `captured_output()` wrapper around
 main()'s body and a single `save_report()` call at the end, so what's on disk is exactly what was
@@ -36,16 +38,21 @@ class _Tee:
 
 @contextlib.contextmanager
 def captured_output() -> Iterator[io.StringIO]:
-    """Tees everything printed inside the `with` block to both the real stdout (interactive runs
+    """Tee stdout inside the `with` block to both the console and a buffer.
+
+    Tees everything printed inside the `with` block to both the real stdout (interactive runs
     behave exactly as before) and a buffer, so callers can persist what was printed without
-    restructuring every print call into a return value."""
+    restructuring every print call into a return value.
+    """
     buf = io.StringIO()
     with contextlib.redirect_stdout(_Tee(sys.stdout, buf)):
         yield buf
 
 
 def save_report(out_dir: Path, name: str, text: str, metrics: dict | None) -> None:
-    """Writes {name}_report.txt always, and {name}_metrics.json when metrics is not None -- the
+    """Write {name}_report.txt always, and {name}_metrics.json when metrics is given.
+
+    Writes {name}_report.txt always, and {name}_metrics.json when metrics is not None -- the
     one place that creates the directory and names the two output files, so every script's
     main() ends with an identical call instead of six slightly-different ones.
     """

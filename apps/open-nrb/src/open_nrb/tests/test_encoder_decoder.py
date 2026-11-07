@@ -5,6 +5,7 @@
 #     "torch",
 # ]
 # ///
+"""Test the temporal encoder, block posterior, and pairwise decoder modules."""
 
 import sys
 from pathlib import Path
@@ -22,6 +23,7 @@ except ImportError:
 
 
 def temporal_encoder_case() -> bool:
+    """Assert the temporal encoder returns a finite hidden state of shape (n, hidden)."""
     torch.manual_seed(0)
     n, d, hidden = 10, 3, 8
     config = EncoderDecoderConfig(input_dim=d, hidden_dim=hidden, num_blocks=2, decoder_hidden_dim=16)
@@ -40,6 +42,7 @@ def temporal_encoder_case() -> bool:
 
 
 def block_posterior_case() -> bool:
+    """Assert the block posterior yields (n, k) logits whose softmax sums to 1 per row."""
     torch.manual_seed(1)
     n, hidden, k = 10, 8, 3
     config = EncoderDecoderConfig(input_dim=4, hidden_dim=hidden, num_blocks=k, decoder_hidden_dim=16)
@@ -57,6 +60,7 @@ def block_posterior_case() -> bool:
 
 
 def pairwise_decoder_case() -> bool:
+    """Assert the pairwise decoder returns finite (n, n) eta and non-negative lambda."""
     torch.manual_seed(2)
     n, hidden, k = 10, 8, 3
     config = EncoderDecoderConfig(input_dim=4, hidden_dim=hidden, num_blocks=k, decoder_hidden_dim=16)
@@ -78,7 +82,9 @@ def pairwise_decoder_case() -> bool:
 
 
 def gradient_flow_case() -> bool:
-    """End-to-end chain: encoder -> block posterior -> decoder, backprop a scalar
+    """Assert every module receives finite gradients through the full chain.
+
+    End-to-end chain: encoder -> block posterior -> decoder, backprop a scalar
     loss, confirm every module's parameters get finite gradients. This has to hold
     before Algorithm 3's train_step can be built on top of these three modules.
     """
@@ -112,6 +118,26 @@ def gradient_flow_case() -> bool:
 
     print(f"[gradient_flow_case] overall -> {'PASS' if all_ok else 'FAIL'}")
     return all_ok
+
+
+def test_temporal_encoder():
+    """Assert temporal_encoder_case passes."""
+    assert temporal_encoder_case()
+
+
+def test_block_posterior():
+    """Assert block_posterior_case passes."""
+    assert block_posterior_case()
+
+
+def test_pairwise_decoder():
+    """Assert pairwise_decoder_case passes."""
+    assert pairwise_decoder_case()
+
+
+def test_gradient_flow():
+    """Assert gradient_flow_case passes."""
+    assert gradient_flow_case()
 
 
 if __name__ == "__main__":

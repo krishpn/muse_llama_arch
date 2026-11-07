@@ -6,7 +6,9 @@
 #     "matplotlib",
 # ]
 # ///
-"""Qualitative core/periphery network plot for the synthetic validation (design doc Sec 6/12)
+"""Plot the synthetic core/periphery network: ground truth vs reconstruction.
+
+Qualitative core/periphery network plot for the synthetic validation (design doc Sec 6/12)
 -- the visual companion eda_model_checks.py explicitly scopes out ("formal core-periphery
 block-fitting" is out of scope there; eigenvector centrality + DebtRank answer the quantitative
 "does reconstruction preserve who's systemically important" question without it). Plots ground
@@ -180,6 +182,12 @@ def _draw_network(
 
 
 def main() -> None:
+    """Load one seed's synthetic artifact and render the truth/model/difference figure.
+
+    Resolves the requested period, aligns the model's block labels to the truth via the
+    best-of-K! permutation, lays nodes on core/periphery rings, and draws the ground-truth
+    and reconstructed networks side by side with a reordered W_hat - W_true heatmap.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--seed", type=int, default=0)

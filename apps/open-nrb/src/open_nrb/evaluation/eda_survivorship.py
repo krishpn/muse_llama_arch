@@ -6,7 +6,9 @@
 #     "matplotlib",
 # ]
 # ///
-"""Exploratory data analysis for survivorship bias in the complete-case bank filter
+"""Analyze survivorship bias in the complete-case bank filter.
+
+Exploratory data analysis for survivorship bias in the complete-case bank filter
 (run_real_experiment.py's _filter_complete_banks) -- read-only, no training, no changes
 to data_loader.py/train.py/run_real_experiment.py. Answers, with descriptive stats
 only, directly from the raw panel:
@@ -63,7 +65,9 @@ def _has_rows_matrix(csv_path: Path, panel: Panel) -> torch.Tensor:
 
 
 def classify_banks(panel: Panel, has_rows: torch.Tensor) -> dict[str, list[int]]:
-    """Buckets every bank index by why run_real_experiment.py's complete-case filter would
+    """Bucket every bank index by why the complete-case filter would drop or keep it.
+
+    Buckets every bank index by why run_real_experiment.py's complete-case filter would
     drop it (or confirm it's kept), over the FULL period range (no START_PERIOD/END_PERIOD
     narrowing -- that's a separate per-run knob; this is the underlying panel-wide picture).
     """
@@ -146,6 +150,13 @@ def _plot(stats_by_bucket: dict[str, list[dict]], out_dir: Path) -> None:
 
 
 def main() -> None:
+    """Load the raw panel, classify banks into filter buckets, and report survivorship stats.
+
+    Reads the raw CSV only (no model, no config), classifies banks by complete-case
+    bucket, tabulates mean size and interbank activity per bucket during each bank's
+    own active window, lists the dropped banks, writes the box-plot figure, and saves
+    the report and metrics.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", type=Path, default=DEFAULT_CSV)
     args = parser.parse_args()

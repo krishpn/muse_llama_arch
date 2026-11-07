@@ -1,0 +1,2 @@
+NOTE: 4 workers will each open their own CUDA context on cuda (7642 MiB currently free of 7839 MiB total -- shared with any other process already using this GPU). If seeds fail with CUDA out-of-memory below, rerun with a smaller --workers or --device cpu.
+running 5 seeds across 4 worker processes (prints below will interleave)

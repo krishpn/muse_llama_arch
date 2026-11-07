@@ -1,0 +1,12 @@
+............................................                             [100%]
+=============================== warnings summary ===============================
+src/open_nrb/tests/test_data_loader.py::test_missing_field_left_nan
+  /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/tests/test_data_loader.py:363: UserWarning: 1 (bfi, period) cells missing a required field were left as NaN, e.g.: NBL @ (2080, 'Asar'): missing '3 DEPOSITS'
+    panel = load_panel(path)
+
+src/open_nrb/tests/test_data_loader.py::test_zero_deposits_left_nan
+  /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/tests/test_data_loader.py:450: UserWarning: 1 (bfi, period) cells have a zero size/deposits denominator and were left as NaN
+    panel = load_panel(path)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+44 passed, 2 warnings in 3.84s

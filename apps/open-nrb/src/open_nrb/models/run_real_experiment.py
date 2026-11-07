@@ -6,14 +6,15 @@
 #     "pyyaml",
 # ]
 # ///
-"""Real-data validation experiment (design doc Sec 8/12): train the full
-reconstruction model (Algorithm 3) against the real NRB balance-sheet panel
-(data_loader.load_panel) and report the indirect evidence Sec 6/12 commit to
--- temporal stability of W_hat_t and a descriptive comparison against the
-classical uncapped Sinkhorn/RAS baseline. There is no W_true here, so unlike
-run_synthetic_experiment.py this script can never report a reconstruction- or
-block-recovery-ACCURACY number; it reports what the real data actually
-supports and nothing more.
+"""Run the real-data validation experiment (design doc Sec 8/12).
+
+Trains the full reconstruction model (Algorithm 3) against the real NRB
+balance-sheet panel (data_loader.load_panel) and reports the indirect evidence
+Sec 6/12 commit to -- temporal stability of W_hat_t and a descriptive comparison
+against the classical uncapped Sinkhorn/RAS baseline. There is no W_true here, so
+unlike run_synthetic_experiment.py this script can never report a reconstruction- or
+block-recovery-ACCURACY number; it reports what the real data actually supports and
+nothing more.
 
 Usage: uv run run_real_experiment.py [--csv PATH] [--config PATH]
 """
@@ -133,11 +134,13 @@ def _temporal_stability(W_seq: list[torch.Tensor]) -> list[float]:
 
 
 def _baseline_sequence(periods: list[Period]) -> tuple[list[torch.Tensor], list[int]]:
-    """Classical uncapped Sinkhorn/RAS baseline (Sec 7) applied per period against the same
-    observed marginals the model gets -- no covariates, no cap, matching what the classical
-    method actually is.
+    """Build the classical uncapped Sinkhorn/RAS baseline per period (Sec 7).
 
-    Also returns the list of degenerate-marginal period indices (not just a count): a period
+    Applied against the same observed marginals the model gets -- no covariates, no
+    cap, matching what the classical method actually is.
+
+    Also returns the list of degenerate-marginal period indices (not just a count): a
+    period
     with ~zero total interbank lending/borrowing has no real network to speak of, so "relative
     change in network structure" around that period is meaningless for the MODEL too, not just
     the baseline -- the caller excludes W_hat at these same indices from temporal-stability/
@@ -205,6 +208,7 @@ def _baseline_sequence(periods: list[Period]) -> tuple[list[torch.Tensor], list[
 
 
 def _relative_diff(a: list[torch.Tensor], b: list[torch.Tensor]) -> list[float]:
+    """Return ||a_t - b_t||_F / ||a_t||_F per period (NaN where ||a_t||_F == 0)."""
     diffs = []
     for x, y in zip(a, b):
         denom = x.norm().item()
@@ -275,6 +279,7 @@ def _check_finite(W_hats: list[torch.Tensor], qs: list[torch.Tensor], period_lab
 
 
 def main() -> None:
+    """Load the panel, train the model, compute stability/baseline diagnostics, and save artifacts."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", type=Path, default=DEFAULT_CSV)
     # Picks the experiment variant (baseline, an ablation, ...) -- training hyperparameters,

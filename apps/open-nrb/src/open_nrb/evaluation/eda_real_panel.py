@@ -9,17 +9,21 @@
 #     "numpy",
 # ]
 # ///
-"""EDA on the real NRB balance-sheet panel (design doc Sec 8/9/10a), in two groups:
+"""Run exploratory data analysis on the real NRB balance-sheet panel.
+
+EDA on the real NRB balance-sheet panel (design doc Sec 8/9/10a), in two groups:
 
 1. Asset scale & coverage -- bank size, reporting coverage over time, and size ranking.
    Answers reviewer pre-mortem item 5 (discard-sample bias) and a sanity check on which banks
    are plausibly "core" before any model is trained.
 2. Interbank marginals -- "a. Interbank Lending" (r, row marginal) and "b. Interbank
    Borrowing" (c, column marginal), the literal r_target/c_target fields run_real_experiment.py
-   fits W's row/column sums to (data_loader.py:_compute_fields), not just a covariate like
-   loans_advances/deposits. Checks how zero-inflated r/c are in real data (does the model's
-   zero-inflated DGP assumption, see synthetic.py, match reality), how skewed they are, and
-   whether a lender/borrower split lines up with bank size (the core/periphery story).
+   fits W's row/column sums to (data_loader.py:_compute_fields) -- design doc Eq. 5's
+   r_{i,t} = sum_j W_{ij,t}, c_{j,t} = sum_i W_{ij,t}, computed here directly from the panel
+   rather than from a trained W_hat, not just a covariate like loans_advances/deposits. Checks
+   how zero-inflated r/c are in real data (does the model's zero-inflated DGP assumption, see
+   synthetic.py, match reality), how skewed they are, and whether a lender/borrower split lines
+   up with bank size (the core/periphery story).
 
 Both groups read the same long-format CSV run_real_experiment.py reads
 (source_file, year_bs, month_bs, bfi_name, item_code, line_item, value_mn_npr), and both scope
@@ -93,7 +97,9 @@ def _load_total_assets(csv_path: Path) -> pl.DataFrame:
 
 
 def plot_scale_coverage_heatmap(df: pl.DataFrame, out_path: Path) -> None:
-    """Annual mean TOTAL ASSETS per bank, log10-scaled. Columns sorted by mean size
+    """Plot a log10 heatmap of annual mean TOTAL ASSETS per bank.
+
+    Annual mean TOTAL ASSETS per bank, log10-scaled. Columns sorted by mean size
     (largest first) rather than left alphabetical -- that ordering is what actually lets a
     reader see "big banks vs. small banks" as a visual block instead of alphabetical soup.
     """
@@ -141,7 +147,9 @@ def plot_scale_coverage_heatmap(df: pl.DataFrame, out_path: Path) -> None:
 
 
 def plot_reporting_coverage_over_time(df: pl.DataFrame, out_path: Path) -> None:
-    """Count of banks reporting TOTAL ASSETS per period, in actual chronological (year, month)
+    """Plot the count of banks reporting TOTAL ASSETS per period over time.
+
+    Count of banks reporting TOTAL ASSETS per period, in actual chronological (year, month)
     order -- the heatmap only shows this implicitly via blank cells at *annual* resolution;
     this makes the coverage trend an explicit, directly-readable line instead of something a
     reader has to infer by eyeballing gray cell density.
@@ -175,7 +183,9 @@ def plot_reporting_coverage_over_time(df: pl.DataFrame, out_path: Path) -> None:
 
 
 def plot_size_rank_bump_chart(df: pl.DataFrame, out_path: Path, top_n: int = 12) -> None:
-    """Bump chart: each bank's size RANK (1 = biggest) by year, lines for the `top_n` banks
+    """Plot a bump chart of each bank's asset-size rank by year.
+
+    Bump chart: each bank's size RANK (1 = biggest) by year, lines for the `top_n` banks
     that are ever in the top `top_n`. This is the EDA most directly tied to the paper's
     core/periphery story -- size rank stability over time is a cheap, model-free proxy for
     "is there a persistent core," worth checking before trusting a trained block assignment.
@@ -208,7 +218,9 @@ def plot_size_rank_bump_chart(df: pl.DataFrame, out_path: Path, top_n: int = 12)
 
 
 def plot_size_distribution_by_year(df: pl.DataFrame, out_path: Path) -> None:
-    """Two stacked panels sharing a year axis (not a dual-axis chart on one panel -- two
+    """Plot per-year bank-size distribution: log boxplot plus raw skew and kurtosis.
+
+    Two stacked panels sharing a year axis (not a dual-axis chart on one panel -- two
     different units don't belong on one y-scale): top is a per-year boxplot of bank size on
     log10 scale (standard for heavy-tailed financial data -- a linear-scale boxplot would be
     unreadable, dominated by the largest 2-3 banks); bottom is skew and excess kurtosis of
@@ -304,7 +316,9 @@ def _annual_interbank(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def plot_zero_activity_rate(df: pl.DataFrame, out_path: Path) -> None:
-    """Share of bank-periods reporting zero interbank lending / zero interbank borrowing, per
+    """Plot the yearly share of bank-periods with zero interbank lending or borrowing.
+
+    Share of bank-periods reporting zero interbank lending / zero interbank borrowing, per
     year. Directly checks whether real data is as zero-inflated as synthetic.py's log-normal x
     Bernoulli-existence DGP assumes -- if real zero-rates are much lower (or near-zero
     themselves), that DGP assumption is worth revisiting; if not, this is a confirmation, not
@@ -338,7 +352,9 @@ def plot_zero_activity_rate(df: pl.DataFrame, out_path: Path) -> None:
 
 
 def plot_log_distribution_by_year(df: pl.DataFrame, out_path: Path) -> None:
-    """Two stacked panels sharing a year axis (not dual-axis -- r and c get their own panel
+    """Plot per-year log10 boxplots of nonzero interbank lending and borrowing.
+
+    Two stacked panels sharing a year axis (not dual-axis -- r and c get their own panel
     rather than sharing one y-scale): log10 boxplot of NONZERO r per year on top, same for c on
     bottom. Zeros excluded here deliberately (log undefined at 0, and plot_zero_activity_rate
     already covers the zero-rate itself) so the box/whisker shape reflects the conditional size
@@ -377,7 +393,9 @@ def plot_log_distribution_by_year(df: pl.DataFrame, out_path: Path) -> None:
 
 
 def plot_r_vs_c_scatter(df: pl.DataFrame, out_path: Path) -> None:
-    """Bank-year scatter of lending vs. borrowing (log1p scale, since both are zero-inflated),
+    """Plot a bank-year scatter of interbank lending vs borrowing, colored by net position.
+
+    Bank-year scatter of lending vs. borrowing (log1p scale, since both are zero-inflated),
     colored by net position sign -- directly answers "is a bank a net lender or net borrower,"
     the simplest possible lender/borrower split and a cheap proxy for core-ness before any
     model is trained. Points on the y=x reference line lend and borrow in equal measure.
@@ -407,7 +425,9 @@ def plot_r_vs_c_scatter(df: pl.DataFrame, out_path: Path) -> None:
 
 
 def plot_net_position_by_year(df: pl.DataFrame, out_path: Path) -> None:
-    """Bank x year heatmap of net interbank position (mean r - mean c that year), diverging
+    """Plot a bank-by-year heatmap of net interbank position (mean r - mean c).
+
+    Bank x year heatmap of net interbank position (mean r - mean c that year), diverging
     RdBu_r centered at 0 -- a single full-panel-average bar per bank hides whether a bank's
     lender/borrower status is stable or flips year to year, which matters for the paper's
     temporal-stability claim (design doc's real-data claim after block-identity was dropped,
@@ -456,7 +476,9 @@ def plot_net_position_by_year(df: pl.DataFrame, out_path: Path) -> None:
 
 
 def plot_activity_vs_size(df: pl.DataFrame, assets_csv: Path, out_path: Path) -> None:
-    """Bank-year total interbank activity (r + c) vs. TOTAL ASSETS -- the core/periphery
+    """Plot bank-year interbank activity (r + c) against total assets.
+
+    Bank-year total interbank activity (r + c) vs. TOTAL ASSETS -- the core/periphery
     sanity check: if size and interbank activity are strongly positively correlated, "big banks
     are core" is a reasonable prior going into model training; if not, size alone is a poor
     proxy for core-ness and the model's block assignment is doing real work, not just
@@ -483,6 +505,7 @@ def plot_activity_vs_size(df: pl.DataFrame, assets_csv: Path, out_path: Path) ->
 
 
 def main() -> None:
+    """Parse CLI args, load the panel, and write the asset-scale and interbank-marginal figures."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", type=Path, default=DEFAULT_CSV)
     parser.add_argument("--out-dir", type=Path, default=Path(__file__).resolve().parent.parent / "results" / "eda")

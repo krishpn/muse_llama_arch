@@ -6,11 +6,12 @@
 #     "pyyaml",
 # ]
 # ///
-"""Synthetic validation experiment (design doc Sec 6/12): train the full
-reconstruction model (Algorithm 3) against a known-ground-truth SBM panel
-(Algorithm 2) and compare its recovered W_t to the classical uncapped
-Sinkhorn/RAS baseline -- Sec 7's mandatory comparison, reported honestly
-either way, not just when the model wins.
+"""Run the synthetic validation experiment (design doc Sec 6/12).
+
+Trains the full reconstruction model (Algorithm 3) against a known-ground-truth SBM
+panel (Algorithm 2) and compares its recovered W_t to the classical uncapped
+Sinkhorn/RAS baseline -- Sec 7's mandatory comparison, reported honestly either way,
+not just when the model wins.
 
 Usage: uv run run_synthetic_experiment.py
 """
@@ -75,8 +76,13 @@ DEFAULT_CONFIG = Path(__file__).resolve().parent.parent / "experiments" / "confi
 
 
 def _kl_beta_schedule(epoch: int, warmup_epochs: int, beta_max: float) -> float:
-    """Linear KL annealing (beta-VAE warm-up), ramping 0 -> beta_max rather than
-    0 -> 1. Motivated by two successive findings (Sec 10): (1) under the
+    """Compute the linearly-annealed KL weight beta_t (beta-VAE warm-up).
+
+        beta_t = beta_max                                        if warmup_epochs <= 0
+               = min(beta_max, beta_max * epoch / warmup_epochs)   otherwise
+
+    ramping 0 -> beta_max over warmup_epochs rather than 0 -> 1. Motivated by two
+    successive findings (Sec 10): (1) under the
     original unweighted (beta=1 always) KL, kl collapsed to ~0 by epoch 100 and
     block_acc fell BELOW the trivial majority-guess baseline -- training was
     actively destroying whatever block signal existed at initialization. (2)
@@ -251,6 +257,7 @@ def _block_recovery_accuracy(qs: list[torch.Tensor], zs: list[torch.Tensor], k: 
 
 
 def _relative_frobenius_errors(W_hats: list[torch.Tensor], periods: list[Period]) -> list[float]:
+    """Return ||W_hat_t - W_true_t||_F / ||W_true_t||_F per period (NaN where ||W_true_t||_F == 0)."""
     errors = []
     for W_hat, period in zip(W_hats, periods):
         denom = period.W_true.norm().item()
@@ -429,12 +436,13 @@ def _init_worker() -> None:
 
 
 def main() -> None:
-    """Loops _run_once over cfg.seeds (Sec 10 open item): a single seed's block_acc
-    margin over the trivial baseline could be a real, repeatable effect of the
-    r_t/c_t encoder fix, or just that one seed's draw of z/X/noise landing
-    favorably. Report mean +/- std of the margin across seeds so that question
-    has an actual answer before investing in more model capacity or a lower
-    beta_max to try to widen it further.
+    """Loop _run_once over cfg.seeds and report the across-seed summary (Sec 10 open item).
+
+    A single seed's block_acc margin over the trivial baseline could be a real,
+    repeatable effect of the r_t/c_t encoder fix, or just that one seed's draw of
+    z/X/noise landing favorably. Report mean +/- std of the margin across seeds so
+    that question has an actual answer before investing in more model capacity or a
+    lower beta_max to try to widen it further.
 
     Seeds are fully independent (fresh model, fresh RNG, each writes its own
     seed_{seed}.pt) -- --workers > 1 runs them across separate processes instead of one

@@ -1,0 +1,35 @@
+# Single-block (K=1) ablation (design doc Sec 10 follow-up, reviewer check 3, 2026-11-06):
+# does the covariate-informed SBM block structure help reconstruction AT ALL, or is the win
+# over RAS coming entirely from the cap + smoothness + learned log-normal decoder? Set the
+# MODEL to num_blocks=1 (no block structure to infer: q collapses to the single block, the
+# categorical KL and the mutual-info regularizer both degenerate to 0 by construction) while
+# the GROUND-TRUTH GENERATOR is left at the K=2 core/periphery scenario unchanged -- so this
+# isolates the model's block channel, nothing else. Everything else is identical to
+# sweep_lambda_mi_0.yaml (the lambda_mi=0 cell that produces the headline 0.43 synthetic number),
+# so a seed_significance.py --compare-config against it is a clean one-variable ablation.
+# lambda_mi stays 0.0: with K=1 _mutual_info_regularizer is identically 0, so any nonzero weight
+# would be a no-op anyway -- kept explicit to match the comparison config exactly.
+training:
+  epochs: 3000
+  eval_every: 200
+  lr: 0.01
+  kl_beta_max: 0.15
+  kl_warmup_epochs: 300
+  kl_free_bits: 0.05
+  lambda_mi: 0.0
+  lambda_smooth: 0.05
+model:
+  hidden_dim: 16
+  decoder_hidden_dim: 16
+  num_blocks: 1
+scenario:
+  n_banks: 24
+  n_periods: 16
+  covariate_dim: 5
+  pi: [0.3, 0.7]
+  lambda_matrix: [[2.5, 0.6], [0.6, 0.2]]
+  eta_block: [[2.0, 0.0], [0.0, -2.0]]
+  w: [0.05, 0.8, 0.5, -0.3, 0.4]
+  sigma2: 0.15
+  cap: 6.0
+seeds: [0, 1, 2, 3, 4]

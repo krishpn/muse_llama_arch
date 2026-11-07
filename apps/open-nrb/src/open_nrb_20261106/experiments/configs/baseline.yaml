@@ -1,0 +1,35 @@
+# Baseline real-data validation experiment (design doc Sec 8/12).
+# Loaded by run_real_experiment.py via --config (defaults here if --config is omitted).
+training:
+  # kl_free_bits is now the MEAN per-(node, period) KL floor (train.py's _categorical_kl
+  # means over nodes, train_step/_forward_pass_components mean again over periods), so
+  # 0.05 means the same thing regardless of this panel's N/T -- it no longer scales with
+  # panel size the way the pre-fix summed version did. The epoch-300ish collapse/plateau
+  # numbers previously noted here were measured under that old sum-based aggregation and
+  # no longer apply at the new (much smaller) absolute KL scale.
+  #
+  # lambda_mi (2026-10-31 follow-up) had the SAME bug until just now: total_mi_reg was summed
+  # over periods but never meaned, so this 0.05 had a ~8x larger effective weight here
+  # (T=133) than in synthetic_baseline.yaml (T=16) -- now fixed in train.py/
+  # run_synthetic_experiment.py's _forward_pass_components to mean over periods like total_kl
+  # already does. components_trend (saved per run) now also reports mi_reg_weighted
+  # per-epoch, not just kl/smooth_weighted, since mi_reg (not kl_free_bits alone) is the more
+  # direct explanation for confident, non-uniform real-data posteriors -- see the design doc's
+  # Sec 10 2026-10-31 update. Re-run and re-check components_trend (all three terms) before
+  # assuming epochs/kl_beta_max/kl_warmup_epochs/kl_free_bits/lambda_mi below are still
+  # well-tuned; see README.md's "Retuning kl_free_bits / lambda_mi" section for the
+  # synthetic-only sweep this should go through first.
+  epochs: 500
+  eval_every: 25
+  lr: 0.01
+  kl_beta_max: 0.15
+  kl_warmup_epochs: 300
+  kl_free_bits: 0.05
+  lambda_mi: 0.00
+  lambda_smooth: 0.05
+model:
+  hidden_dim: 16
+  decoder_hidden_dim: 16
+  num_blocks: 2
+kappa: 0.05
+seed: 0

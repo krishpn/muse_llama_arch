@@ -1,0 +1,23 @@
+# Smoke / reviewer test-run config -- NOT a results config.
+# Clone of main.yaml with n_bootstrap: 0, so a reviewer can confirm the causal pipeline
+# (align to Paper 1 artifact -> build panel -> DiD / total effect / event study / RDD -> save
+# JSON) runs end to end in seconds. n_bootstrap: 0 means CR1 cluster-robust SEs only and NO
+# wild-cluster bootstrap: the POINT ESTIMATES are identical to main.yaml, only the wild p-values
+# are absent. Use main.yaml (9,999 draws) for any p-value that goes in the paper. See README
+# "Reviewer quick test run". Every other field matches main.yaml exactly.
+artifact_path: src/open_nrb/results/baseline/real_run_seed0.pt
+csv_path: src/open_nrb/data/processed/monthly_statistical_bfis/nrb_balance_sheet.csv
+pnl_csv_path: src/open_nrb/data/processed/monthly_statistical_bfis/nrb_profit_and_loss.csv
+capital_floor: 0.04
+paid_up_capital_requirement: 8000
+pre_window_end: [2072, "Mangsir"]
+effective_period: [2073, "Asar"]
+post_window_end: [2075, "Falgun"]
+pnl_ytd_cumulative: true
+blank_as_zero: [loan_written_off]
+outcome_construction: quarterly
+weighting: unweighted
+n_bootstrap: 0
+bootstrap_seed: 0
+rdd_bandwidth: 0.02
+rdd_window: [[2073, "Shrawan"], [2075, "Asar"]]

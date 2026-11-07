@@ -3,16 +3,27 @@
 # requires-python = ">=3.12"
 # dependencies = []
 # ///
+"""Define the hyperparameter dataclasses for the reconstruction model and its baselines.
+
+One config per component: the uncapped Sinkhorn baseline, the capacitated
+projection, the synthetic sampler, the encoder/decoder, the reparameterized
+samplers, and the train step. Fields are numerical tolerances/stabilizers or
+layer sizes; genuine per-experiment modeling choices (e.g.
+TrainStepConfig.lambda_smooth) deliberately carry no default so the caller must
+set them explicitly.
+"""
 
 from dataclasses import dataclass
 
 
 @dataclass
 class SinkhornConfig:
-    """Hyperparameters for the uncapped Sinkhorn/IPF projection (Sec 5/7) -- the
-    classical Gandy-Veraart/RAS baseline this paper compares against, NOT the model's
-    own constraint layer (see CapacityProjectionConfig below for that). This config has
-    no cap-related field because sinkhorn_projection takes no cap argument at all.
+    """Hyperparameters for the uncapped Sinkhorn/IPF projection (Sec 5/7).
+
+    The classical Gandy-Veraart/RAS baseline this paper compares against, NOT the
+    model's own constraint layer (see CapacityProjectionConfig below for that). This
+    config has no cap-related field because sinkhorn_projection takes no cap argument
+    at all.
     """
 
     # eps=1.0 reduces the kernel to plain Sinkhorn-Knopp/IPF matrix balancing on
@@ -27,10 +38,11 @@ class SinkhornConfig:
 
 @dataclass
 class CapacityProjectionConfig:
-    """Hyperparameters for capacitated_projection (Eq. 8, Sec 5/11 Algorithm 1) -- the
-    model's actual constraint layer: Dykstra's alternating-projections algorithm onto
-    row marginals, column marginals, and the per-row obligor cap, simultaneously and
-    exactly.
+    """Hyperparameters for capacitated_projection (Eq. 8, Sec 5/11 Algorithm 1).
+
+    The model's actual constraint layer: Dykstra's alternating-projections algorithm
+    onto row marginals, column marginals, and the per-row obligor cap, simultaneously
+    and exactly.
 
     kappa (the regulatory single-obligor cap multiplier) deliberately does NOT live
     here -- it's a modeling/business constant the caller uses to build the `cap`
@@ -79,8 +91,9 @@ class EncoderDecoderConfig:
 
 @dataclass
 class ReparamConfig:
-    """Temperatures for the reparameterized/relaxed samplers used in Algorithm 3
-    (Sec 4, Eq. 3-4, 7, steps 5/8/9) -- Gumbel-softmax for z (Jang et al., 2017;
+    """Temperatures for the reparameterized/relaxed samplers used in Algorithm 3.
+
+    Sec 4, Eq. 3-4, 7, steps 5/8/9 -- Gumbel-softmax for z (Jang et al., 2017;
     Maddison et al., 2017), Gumbel-sigmoid (binary concrete) for the existence gate
     e_ij. Lower tau = closer to the true discrete distribution but higher-variance
     gradients; higher tau = smoother gradients but a more biased relaxation.

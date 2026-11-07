@@ -1,3 +1,13 @@
+% book.bib -- consolidated bibliography for paper1 (interbank network reconstruction) and paper2 (causal spillover).
+% Generated 2026-11-07 by merging paper1_network_reconstruction.bib + paper2_draft.bib (5 shared keys deduplicated, byte-identical).
+
+% Paper 2 bibliography.
+% Entries copied verbatim from paper1_network_reconstruction.bib are marked "reused from Paper 1".
+% Every other entry is written from recall and carries note = {TO VERIFY}: check authors, title,
+% volume, pages and year against the publisher record before submission.
+
+% --- reused from Paper 1 -------------------------------------------------------------------
+
 @article{upper2011simulation,
   author  = {Upper, Christian},
   title   = {Simulation methods to assess the contagion risk in interbank markets},
@@ -19,52 +29,14 @@
   doi     = {10.1016/j.physrep.2018.06.008}
 }
 
-@inproceedings{cuturi2013sinkhorn,
-  author    = {Cuturi, Marco},
-  title     = {Sinkhorn Distances: Lightspeed Computation of Optimal Transport},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  volume    = {26},
-  pages     = {2292--2300},
-  year      = {2013},
-  doi       = {10.5555/2999792.2999888}
-}
-
-@inproceedings{mena2018learning,
-  author    = {Mena, Gonzalo and Belanger, David and Linderman, Scott and Snoek, Jasper},
-  title     = {Learning Latent Permutations with {Gumbel-Sinkhorn} Networks},
-  booktitle = {International Conference on Learning Representations (ICLR)},
-  year      = {2018},
-  doi       = {10.48550/arxiv.1802.08665}
-}
-
-@inproceedings{kipf2018neural,
-  author    = {Kipf, Thomas and Fetaya, Ethan and Wang, Kuan-Chieh and Welling, Max and Zemel, Richard},
-  title     = {Neural Relational Inference for Interacting Systems},
-  booktitle = {Proceedings of the 35th International Conference on Machine Learning (ICML)},
-  volume    = {80},
-  pages     = {2688--2697},
-  year      = {2018},
-  doi       = {10.48550/arxiv.1802.04687}
-}
-
-@article{holland1983stochastic,
-  author  = {Holland, Paul W and Laskey, Kathryn Blackmond and Leinhardt, Samuel},
-  title   = {Stochastic blockmodels: First steps},
-  journal = {Social Networks},
-  volume  = {5},
-  number  = {2},
-  pages   = {109--137},
-  year    = {1983}
-}
-
-@article{nowicki2001estimation,
-  author  = {Nowicki, Krzysztof and Snijders, Tom A B},
-  title   = {Estimation and prediction for stochastic blockstructures},
-  journal = {Journal of the American Statistical Association},
-  volume  = {96},
-  number  = {455},
-  pages   = {1077--1087},
-  year    = {2001}
+@article{anand2018filling,
+  author  = {Anand, Kartik and Craig, Ben and von Peter, Goetz},
+  title   = {Filling in the blanks: Network structure and interbank contagion},
+  journal = {Quantitative Finance},
+  volume  = {18},
+  number  = {4},
+  pages   = {625--636},
+  year    = {2018}
 }
 
 @article{gandy2013financial,
@@ -77,25 +49,6 @@
   year    = {2013}
 }
 
-@article{anand2018filling,
-  author  = {Anand, Kartik and Craig, Ben and von Peter, Goetz},
-  title   = {Filling in the blanks: Network structure and interbank contagion},
-  journal = {Quantitative Finance},
-  volume  = {18},
-  number  = {4},
-  pages   = {625--636},
-  year    = {2018}
-}
-
-@article{squartini2017maximum,
-  author  = {Squartini, Tiziano and Garlaschelli, Diego},
-  title   = {Maximum-entropy networks: A foundational perspective},
-  journal = {Physics Reports},
-  volume  = {710},
-  pages   = {1--49},
-  year    = {2017}
-}
-
 @article{deming1940least,
   author  = {Deming, W Edwards and Stephan, Frederick F},
   title   = {On a least squares adjustment of a sampled frequency table when the expected marginal totals are known},
@@ -106,12 +59,418 @@
   year    = {1940}
 }
 
-@book{stone1961input,
-  author    = {Stone, Richard},
-  title     = {Input-Output Relationships, 1954-1966},
-  year      = {1961},
-  publisher = {Chapman and Hall}
+% --- companion paper and institutional sources ---------------------------------------------
+
+@unpublished{paper1companion,
+  author = {{[Author(s)]}},
+  title  = {{Reconstructing Interbank Exposure Networks from Published Marginals: A Capped Projection Method and What Nepal's Bulletins Allow}},
+  note   = {Companion paper. TO FILL: authors, status},
+  year   = {2026}
 }
+
+@misc{nrb2015caf,
+  author       = {{Nepal Rastra Bank}},
+  title        = {Capital Adequacy Framework, 2015},
+  howpublished = {Bank and Financial Institutions Regulation Department, Kathmandu},
+  year         = {2015},
+  note         = {TO VERIFY: exact title, issuing department, URL}
+}
+
+@misc{nrb2073unified,
+  author       = {{Nepal Rastra Bank}},
+  title        = {Unified Directive 2073 (Ekikrit Nirdeshan 2073)},
+  howpublished = {Kathmandu},
+  year         = {2016},
+  note         = {Consolidated through 2073-06-11 BS. TO VERIFY: English title, AD year, URL; quoted text decoded from Preeti font, check against the PDF}
+}
+
+@misc{nrb2064circular25,
+  author       = {{Nepal Rastra Bank}},
+  title        = {Circular no. 25 (2063/64), on raising capital (Punji vriddhi bare)},
+  howpublished = {Kathmandu},
+  year         = {2007},
+  note         = {Dated 2064-01-02 BS. TO VERIFY: AD date; text decoded from Preeti font, check against the PDF}
+}
+
+@misc{nrb2070circular02,
+  author       = {{Nepal Rastra Bank}},
+  title        = {Circular no. 02 (2070/71), to Class A, B and C institutions},
+  howpublished = {Kathmandu},
+  year         = {2013},
+  note         = {Dated 2070-04-27 BS. TO VERIFY: AD date; text decoded from Preeti font, check against the PDF}
+}
+
+@misc{nrbbulletins,
+  author       = {{Nepal Rastra Bank}},
+  title        = {Banking and Financial Statistics, monthly bulletin},
+  howpublished = {Bank and Financial Institutions Regulation Department, Kathmandu},
+  year         = {2013--2026},
+  note         = {Baisakh 2070 -- Shrawan 2083 BS. TO VERIFY: series title as printed}
+}
+
+@misc{nrblistbfi,
+  author       = {{Nepal Rastra Bank}},
+  title        = {List of Banks and Financial Institutions},
+  howpublished = {Kathmandu},
+  year         = {2025},
+  note         = {Paid-up capital as of mid-January 2025; supplied by the author. TO VERIFY: title, URL}
+}
+
+@techreport{npc2015pdna,
+  author      = {{National Planning Commission, Government of Nepal}},
+  title       = {Nepal Earthquake 2015: Post Disaster Needs Assessment},
+  institution = {Government of Nepal},
+  address     = {Kathmandu},
+  year        = {2015},
+  note        = {TO VERIFY}
+}
+
+@misc{bcbs2014leverage,
+  author       = {{Basel Committee on Banking Supervision}},
+  title        = {Basel {III} leverage ratio framework and disclosure requirements},
+  howpublished = {Bank for International Settlements},
+  year         = {2014},
+  note         = {TO VERIFY}
+}
+
+% --- interference and causal inference ------------------------------------------------------
+
+@article{aronow2017estimating,
+  author  = {Aronow, Peter M. and Samii, Cyrus},
+  title   = {Estimating average causal effects under general interference, with application to a social network experiment},
+  journal = {The Annals of Applied Statistics},
+  volume  = {11},
+  number  = {4},
+  pages   = {1912--1947},
+  year    = {2017},
+  note    = {TO VERIFY}
+}
+
+@article{hudgens2008toward,
+  author  = {Hudgens, Michael G. and Halloran, M. Elizabeth},
+  title   = {Toward causal inference with interference},
+  journal = {Journal of the American Statistical Association},
+  volume  = {103},
+  number  = {482},
+  pages   = {832--842},
+  year    = {2008},
+  note    = {TO VERIFY}
+}
+
+@article{leung2020treatment,
+  author  = {Leung, Michael P.},
+  title   = {Treatment and spillover effects under network interference},
+  journal = {The Review of Economics and Statistics},
+  volume  = {102},
+  number  = {2},
+  pages   = {368--380},
+  year    = {2020},
+  note    = {TO VERIFY}
+}
+
+@article{tchetgen2012causal,
+  author  = {Tchetgen Tchetgen, Eric J. and VanderWeele, Tyler J.},
+  title   = {On causal inference in the presence of interference},
+  journal = {Statistical Methods in Medical Research},
+  volume  = {21},
+  number  = {1},
+  pages   = {55--75},
+  year    = {2012},
+  note    = {TO VERIFY}
+}
+
+@incollection{hirano2004propensity,
+  author    = {Hirano, Keisuke and Imbens, Guido W.},
+  title     = {The propensity score with continuous treatments},
+  booktitle = {Applied Bayesian Modeling and Causal Inference from Incomplete-Data Perspectives},
+  editor    = {Gelman, Andrew and Meng, Xiao-Li},
+  publisher = {Wiley},
+  pages     = {73--84},
+  year      = {2004},
+  note      = {TO VERIFY}
+}
+
+@book{kish1965survey,
+  author    = {Kish, Leslie},
+  title     = {Survey Sampling},
+  publisher = {Wiley},
+  address   = {New York},
+  year      = {1965},
+  note      = {TO VERIFY}
+}
+
+@book{angrist2009mostly,
+  author    = {Angrist, Joshua D. and Pischke, J{\"o}rn-Steffen},
+  title     = {Mostly Harmless Econometrics: An Empiricist's Companion},
+  publisher = {Princeton University Press},
+  year      = {2009},
+  note      = {TO VERIFY}
+}
+
+@book{imbens2015causal,
+  author    = {Imbens, Guido W. and Rubin, Donald B.},
+  title     = {Causal Inference for Statistics, Social, and Biomedical Sciences: An Introduction},
+  publisher = {Cambridge University Press},
+  year      = {2015},
+  note      = {TO VERIFY}
+}
+
+% --- difference-in-differences and event studies -------------------------------------------
+
+@article{callaway2024continuous,
+  author  = {Callaway, Brantly and Goodman-Bacon, Andrew and Sant'Anna, Pedro H. C.},
+  title   = {Difference-in-differences with a continuous treatment},
+  journal = {arXiv preprint arXiv:2107.02637},
+  year    = {2024},
+  note    = {TO VERIFY: publication status and version}
+}
+
+@article{goodmanbacon2021difference,
+  author  = {Goodman-Bacon, Andrew},
+  title   = {Difference-in-differences with variation in treatment timing},
+  journal = {Journal of Econometrics},
+  volume  = {225},
+  number  = {2},
+  pages   = {254--277},
+  year    = {2021},
+  note    = {TO VERIFY}
+}
+
+@article{dechaisemartin2020two,
+  author  = {de Chaisemartin, Cl{\'e}ment and D'Haultf{\oe}uille, Xavier},
+  title   = {Two-way fixed effects estimators with heterogeneous treatment effects},
+  journal = {American Economic Review},
+  volume  = {110},
+  number  = {9},
+  pages   = {2964--2996},
+  year    = {2020},
+  note    = {TO VERIFY}
+}
+
+@article{rambachan2023more,
+  author  = {Rambachan, Ashesh and Roth, Jonathan},
+  title   = {A more credible approach to parallel trends},
+  journal = {The Review of Economic Studies},
+  volume  = {90},
+  number  = {5},
+  pages   = {2555--2591},
+  year    = {2023},
+  note    = {TO VERIFY}
+}
+
+@article{roth2022pretest,
+  author  = {Roth, Jonathan},
+  title   = {Pretest with caution: Event-study estimates after testing for parallel trends},
+  journal = {American Economic Review: Insights},
+  volume  = {4},
+  number  = {3},
+  pages   = {305--322},
+  year    = {2022},
+  note    = {TO VERIFY}
+}
+
+@article{freyaldenhoven2019pre,
+  author  = {Freyaldenhoven, Simon and Hansen, Christian and Shapiro, Jesse M.},
+  title   = {Pre-event trends in the panel event-study design},
+  journal = {American Economic Review},
+  volume  = {109},
+  number  = {9},
+  pages   = {3307--3338},
+  year    = {2019},
+  note    = {TO VERIFY}
+}
+
+@article{bertrand2004much,
+  author  = {Bertrand, Marianne and Duflo, Esther and Mullainathan, Sendhil},
+  title   = {How much should we trust differences-in-differences estimates?},
+  journal = {The Quarterly Journal of Economics},
+  volume  = {119},
+  number  = {1},
+  pages   = {249--275},
+  year    = {2004},
+  note    = {TO VERIFY}
+}
+
+% --- inference with few clusters and multiple testing --------------------------------------
+
+@article{cameron2008bootstrap,
+  author  = {Cameron, A. Colin and Gelbach, Jonah B. and Miller, Douglas L.},
+  title   = {Bootstrap-based improvements for inference with clustered errors},
+  journal = {The Review of Economics and Statistics},
+  volume  = {90},
+  number  = {3},
+  pages   = {414--427},
+  year    = {2008},
+  note    = {TO VERIFY}
+}
+
+@article{webb2023reworking,
+  author  = {Webb, Matthew D.},
+  title   = {Reworking wild bootstrap-based inference for clustered errors},
+  journal = {Canadian Journal of Economics},
+  volume  = {56},
+  number  = {3},
+  pages   = {839--858},
+  year    = {2023},
+  note    = {TO VERIFY}
+}
+
+@article{mackinnon2017wild,
+  author  = {MacKinnon, James G. and Webb, Matthew D.},
+  title   = {Wild bootstrap inference for wildly different cluster sizes},
+  journal = {Journal of Applied Econometrics},
+  volume  = {32},
+  number  = {2},
+  pages   = {233--254},
+  year    = {2017},
+  note    = {TO VERIFY}
+}
+
+@article{roodman2019fast,
+  author  = {Roodman, David and MacKinnon, James G. and Nielsen, Morten {\O}rregaard and Webb, Matthew D.},
+  title   = {Fast and wild: Bootstrap inference in {Stata} using boottest},
+  journal = {The Stata Journal},
+  volume  = {19},
+  number  = {1},
+  pages   = {4--60},
+  year    = {2019},
+  note    = {TO VERIFY}
+}
+
+@article{holm1979simple,
+  author  = {Holm, Sture},
+  title   = {A simple sequentially rejective multiple test procedure},
+  journal = {Scandinavian Journal of Statistics},
+  volume  = {6},
+  number  = {2},
+  pages   = {65--70},
+  year    = {1979},
+  note    = {TO VERIFY}
+}
+
+@article{benjamini1995controlling,
+  author  = {Benjamini, Yoav and Hochberg, Yosef},
+  title   = {Controlling the false discovery rate: A practical and powerful approach to multiple testing},
+  journal = {Journal of the Royal Statistical Society: Series B},
+  volume  = {57},
+  number  = {1},
+  pages   = {289--300},
+  year    = {1995},
+  note    = {TO VERIFY}
+}
+
+% --- bank capital regulation ---------------------------------------------------------------
+
+@article{gropp2019banks,
+  author  = {Gropp, Reint and Mosk, Thomas and Ongena, Steven and Wix, Carlo},
+  title   = {Banks response to higher capital requirements: Evidence from a quasi-natural experiment},
+  journal = {The Review of Financial Studies},
+  volume  = {32},
+  number  = {1},
+  pages   = {266--299},
+  year    = {2019},
+  note    = {TO VERIFY}
+}
+
+@article{aiyar2014does,
+  author  = {Aiyar, Shekhar and Calomiris, Charles W. and Wieladek, Tomasz},
+  title   = {Does macro-prudential regulation leak? Evidence from a {UK} policy experiment},
+  journal = {Journal of Money, Credit and Banking},
+  volume  = {46},
+  number  = {s1},
+  pages   = {181--214},
+  year    = {2014},
+  note    = {TO VERIFY}
+}
+
+@article{jimenez2017macroprudential,
+  author  = {Jim{\'e}nez, Gabriel and Ongena, Steven and Peydr{\'o}, Jos{\'e}-Luis and Saurina, Jes{\'u}s},
+  title   = {Macroprudential policy, countercyclical bank capital buffers, and credit supply: Evidence from the {Spanish} dynamic provisioning experiments},
+  journal = {Journal of Political Economy},
+  volume  = {125},
+  number  = {6},
+  pages   = {2126--2177},
+  year    = {2017},
+  note    = {TO VERIFY}
+}
+
+@article{mesonnier2015did,
+  author  = {M{\'e}sonnier, Jean-St{\'e}phane and Monks, Allen},
+  title   = {Did the {EBA} capital exercise cause a credit crunch in the euro area?},
+  journal = {International Journal of Central Banking},
+  volume  = {11},
+  number  = {3},
+  pages   = {75--117},
+  year    = {2015},
+  note    = {TO VERIFY}
+}
+
+@book{admati2013bankers,
+  author    = {Admati, Anat and Hellwig, Martin},
+  title     = {The Bankers' New Clothes: What's Wrong with Banking and What to Do about It},
+  publisher = {Princeton University Press},
+  year      = {2013},
+  note      = {TO VERIFY}
+}
+
+@article{myers1984corporate,
+  author  = {Myers, Stewart C. and Majluf, Nicholas S.},
+  title   = {Corporate financing and investment decisions when firms have information that investors do not have},
+  journal = {Journal of Financial Economics},
+  volume  = {13},
+  number  = {2},
+  pages   = {187--221},
+  year    = {1984},
+  note    = {TO VERIFY}
+}
+
+% --- interbank networks and contagion ------------------------------------------------------
+
+@article{allen2000financial,
+  author  = {Allen, Franklin and Gale, Douglas},
+  title   = {Financial contagion},
+  journal = {Journal of Political Economy},
+  volume  = {108},
+  number  = {1},
+  pages   = {1--33},
+  year    = {2000},
+  note    = {TO VERIFY}
+}
+
+@article{eisenberg2001systemic,
+  author  = {Eisenberg, Larry and Noe, Thomas H.},
+  title   = {Systemic risk in financial systems},
+  journal = {Management Science},
+  volume  = {47},
+  number  = {2},
+  pages   = {236--249},
+  year    = {2001},
+  note    = {TO VERIFY}
+}
+
+@article{acemoglu2015systemic,
+  author  = {Acemoglu, Daron and Ozdaglar, Asuman and Tahbaz-Salehi, Alireza},
+  title   = {Systemic risk and stability in financial networks},
+  journal = {American Economic Review},
+  volume  = {105},
+  number  = {2},
+  pages   = {564--608},
+  year    = {2015},
+  note    = {TO VERIFY}
+}
+
+@article{furfine2003interbank,
+  author  = {Furfine, Craig H.},
+  title   = {Interbank exposures: Quantifying the risk of contagion},
+  journal = {Journal of Money, Credit and Banking},
+  volume  = {35},
+  number  = {1},
+  pages   = {111--128},
+  year    = {2003},
+  note    = {TO VERIFY}
+}
+
+% ---- Entries unique to paper1 (interbank network reconstruction) ----
 
 @article{clementi2019tiered,
   author  = {Clementi, Fabio and Gallegati, Mauro and Squartini, Tiziano},
@@ -120,6 +479,59 @@
   volume  = {103},
   pages   = {145--168},
   year    = {2019}
+}
+
+@inproceedings{cuturi2013sinkhorn,
+  author    = {Cuturi, Marco},
+  title     = {Sinkhorn Distances: Lightspeed Computation of Optimal Transport},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  volume    = {26},
+  pages     = {2292--2300},
+  year      = {2013},
+  doi       = {10.5555/2999792.2999888}
+}
+
+@article{guimera2009missing,
+  author  = {Guimer{\`a}, Roger and Sales-Pardo, Marta},
+  title   = {Missing and spurious interactions and the reconstruction of complex networks},
+  journal = {Proceedings of the National Academy of Sciences},
+  volume  = {106},
+  number  = {52},
+  pages   = {22073--22078},
+  year    = {2009},
+  month   = {December},
+  doi     = {10.1073/pnas.0908366106}
+}
+
+@article{holland1983stochastic,
+  author  = {Holland, Paul W and Laskey, Kathryn Blackmond and Leinhardt, Samuel},
+  title   = {Stochastic blockmodels: First steps},
+  journal = {Social Networks},
+  volume  = {5},
+  number  = {2},
+  pages   = {109--137},
+  year    = {1983}
+}
+
+@inproceedings{kipf2018neural,
+  author    = {Kipf, Thomas and Fetaya, Ethan and Wang, Kuan-Chieh and Welling, Max and Zemel, Richard},
+  title     = {Neural Relational Inference for Interacting Systems},
+  booktitle = {Proceedings of the 35th International Conference on Machine Learning (ICML)},
+  volume    = {80},
+  pages     = {2688--2697},
+  year      = {2018},
+  doi       = {10.48550/arxiv.1802.04687}
+}
+
+@article{martin2016structural,
+  author    = {Martin, Travis and Ball, Brian and Newman, M. E. J.},
+  title     = {Structural inference for uncertain networks},
+  journal   = {Physical Review E},
+  volume    = {93},
+  number    = {1},
+  pages     = {012306},
+  year      = {2016},
+  doi       = {10.1103/PhysRevE.93.012306}
 }
 
 @article{mele2017structural,
@@ -132,15 +544,52 @@
   year    = {2017}
 }
 
-@article{martin2016structural,
-  author    = {Martin, Travis and Ball, Brian and Newman, M. E. J.},
-  title     = {Structural inference for uncertain networks},
-  journal   = {Physical Review E},
-  volume    = {93},
-  number    = {1},
-  pages     = {012306},
-  year      = {2016},
-  doi       = {10.1103/PhysRevE.93.012306}
+@inproceedings{mena2018learning,
+  author    = {Mena, Gonzalo and Belanger, David and Linderman, Scott and Snoek, Jasper},
+  title     = {Learning Latent Permutations with {Gumbel-Sinkhorn} Networks},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2018},
+  doi       = {10.48550/arxiv.1802.08665}
+}
+
+@article{nowicki2001estimation,
+  author  = {Nowicki, Krzysztof and Snijders, Tom A B},
+  title   = {Estimation and prediction for stochastic blockstructures},
+  journal = {Journal of the American Statistical Association},
+  volume  = {96},
+  number  = {455},
+  pages   = {1077--1087},
+  year    = {2001}
+}
+
+@article{peixoto2018reconstructing,
+  author        = {Peixoto, Tiago P.},
+  title         = {Reconstructing Networks with Unknown and Heterogeneous Errors},
+  journal       = {Physical Review X},
+  volume        = {8},
+  number        = {4},
+  pages         = {041011},
+  year          = {2018},
+  month         = {October},
+  doi           = {10.1103/PhysRevX.8.041011},
+  eprint        = {1806.07956},
+  archivePrefix = {arXiv},
+  primaryClass  = {physics.soc-ph}
+}
+
+@article{peixoto2019reconstruction,
+  author        = {Peixoto, Tiago P.},
+  title         = {Network Reconstruction and Community Detection from Dynamics},
+  journal       = {Physical Review Letters},
+  volume        = {123},
+  number        = {12},
+  pages         = {128301},
+  year          = {2019},
+  month         = {September},
+  doi           = {10.1103/PhysRevLett.123.128301},
+  eprint        = {1903.10833},
+  archivePrefix = {arXiv},
+  primaryClass  = {physics.soc-ph}
 }
 
 @article{peixoto2020latent,
@@ -165,6 +614,22 @@
   doi       = {10.1103/PhysRevX.12.011004}
 }
 
+@article{squartini2017maximum,
+  author  = {Squartini, Tiziano and Garlaschelli, Diego},
+  title   = {Maximum-entropy networks: A foundational perspective},
+  journal = {Physics Reports},
+  volume  = {710},
+  pages   = {1--49},
+  year    = {2017}
+}
+
+@book{stone1961input,
+  author    = {Stone, Richard},
+  title     = {Input-Output Relationships, 1954-1966},
+  year      = {1961},
+  publisher = {Chapman and Hall}
+}
+
 @article{vallescatala2018modelselection,
   author    = {Vall{\`e}s-Catal{\`a}, Ignasi and De Bacco, Caterina and Cozzo, Emanuele and Antonioni, Alberto and Moreno, Yamir and Sales-Pardo, Marta and Guimer{\`a}, Roger},
   title     = {Consistencies and inconsistencies between model selection and link prediction in networks},
@@ -176,44 +641,3 @@
   doi       = {10.1103/PhysRevX.8.021051}
 }
 
-@article{peixoto2018reconstructing,
-  author        = {Peixoto, Tiago P.},
-  title         = {Reconstructing Networks with Unknown and Heterogeneous Errors},
-  journal       = {Physical Review X},
-  volume        = {8},
-  number        = {4},
-  pages         = {041011},
-  year          = {2018},
-  month         = {October},
-  doi           = {10.1103/PhysRevX.8.041011},
-  eprint        = {1806.07956},
-  archivePrefix = {arXiv},
-  primaryClass  = {physics.soc-ph}
-}
-
-@article{peixoto2019reconstruction,
-  author        = {Peixoto, Tiago P.},
-  title         = {Network Reconstruction and Community Detection from Dynamics},
-  journal       = {Physical Review Letters},
-  volume        = {123},
-  number        = {12},s
-  pages         = {128301},
-  year          = {2019},
-  month         = {September},
-  doi           = {10.1103/PhysRevLett.123.128301},
-  eprint        = {1903.10833},
-  archivePrefix = {arXiv},
-  primaryClass  = {physics.soc-ph}
-}
-
-@article{guimera2009missing,
-  author  = {Guimer{\`a}, Roger and Sales-Pardo, Marta},
-  title   = {Missing and spurious interactions and the reconstruction of complex networks},
-  journal = {Proceedings of the National Academy of Sciences},
-  volume  = {106},
-  number  = {52},
-  pages   = {22073--22078},
-  year    = {2009},
-  month   = {December},
-  doi     = {10.1073/pnas.0908366106}
-}

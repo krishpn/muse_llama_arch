@@ -5,6 +5,7 @@
 #     "torch",
 # ]
 # ///
+"""Test the Algorithm 3 train_step and ReconstructionModel training loop."""
 
 import sys
 from pathlib import Path
@@ -61,6 +62,7 @@ def _toy_batch(n: int, d: int, k: int, n_periods: int, generator: torch.Generato
 
 
 def shapes_and_update_case() -> bool:
+    """Assert train_step returns a finite scalar loss and updates the model parameters."""
     torch.manual_seed(0)
     gen = torch.Generator().manual_seed(0)
     n, d, k, hidden = 6, 3, 2, 8
@@ -97,7 +99,9 @@ def shapes_and_update_case() -> bool:
 
 
 def real_data_branch_case() -> bool:
-    """When no period carries W_true (real-data branch, steps 13-14), L_recon
+    """Assert the real-data branch (no W_true) keeps L_recon exactly 0 and still completes.
+
+    When no period carries W_true (real-data branch, steps 13-14), L_recon
     must stay exactly 0 and the step must still run to completion.
     """
     torch.manual_seed(1)
@@ -128,7 +132,9 @@ def real_data_branch_case() -> bool:
 
 
 def loss_decreases_case() -> bool:
-    """Basic trainability smoke test: repeatedly stepping on a FIXED synthetic
+    """Assert repeated steps on a fixed synthetic batch drive the loss down (late mean < early mean).
+
+    Basic trainability smoke test: repeatedly stepping on a FIXED synthetic
     batch should push the loss down overall, confirming the whole pipeline
     (encoder -> posterior -> decoder -> samplers -> projection -> loss ->
     backprop) is actually learnable end to end, not just shape-correct.
@@ -164,6 +170,21 @@ def loss_decreases_case() -> bool:
         f"-> {'PASS' if passed else 'FAIL'}"
     )
     return passed
+
+
+def test_shapes_and_update():
+    """Assert shapes_and_update_case passes."""
+    assert shapes_and_update_case()
+
+
+def test_real_data_branch():
+    """Assert real_data_branch_case passes."""
+    assert real_data_branch_case()
+
+
+def test_loss_decreases():
+    """Assert loss_decreases_case passes."""
+    assert loss_decreases_case()
 
 
 if __name__ == "__main__":

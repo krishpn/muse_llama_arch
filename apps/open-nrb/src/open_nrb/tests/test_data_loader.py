@@ -5,6 +5,7 @@
 #     "torch",
 # ]
 # ///
+"""Test the NRB balance-sheet CSV data loader (infer_sides, load_panel, read_rows)."""
 import math
 import sys
 import tempfile
@@ -107,8 +108,11 @@ def _full_period_rows(
 
 
 def side_inference_collision_case() -> bool:
-    """item_code=1 collides (CAPITAL FUND on liabilities, LIQUID FUNDS on assets);
-    side must come from the TOTAL LIABILITIES / TOTAL ASSETS markers, not the code."""
+    """Assert item_code=1 resolves by section marker, not by the colliding code.
+
+    item_code=1 collides (CAPITAL FUND on liabilities, LIQUID FUNDS on assets);
+    side must come from the TOTAL LIABILITIES / TOTAL ASSETS markers, not the code.
+    """
     rows_csv = [
         _row("b.pdf", 2080, "Asar", 1, "NBL", "1", "1 CAPITAL FUND", 100),
         _row("b.pdf", 2080, "Asar", 1, "NBL", "2", "TOTAL Liabilities", 100),
@@ -132,11 +136,14 @@ def side_inference_collision_case() -> bool:
 
 
 def missing_marker_row_fallback_case() -> bool:
-    """Pre-2075-era bulletins (confirmed against real Asar-2074.pdf, 2026-10-22) never
+    """Assert side falls back to the item_code restart when no TOTAL marker row exists.
+
+    Pre-2075-era bulletins (confirmed against real Asar-2074.pdf, 2026-10-22) never
     extract a 'TOTAL Liabilities' marker row -- the liabilities section just ends and
     the assets section starts back at item_code '1' with no boundary cue. Side must
     fall back to the item_code restart itself (bare top-level codes strictly increase
-    within one side), not require the marker row to exist."""
+    within one side), not require the marker row to exist.
+    """
     rows_csv = [
         _row("i.pdf", 2074, "Asar", 1, "NBL", "1", "1 CAPITAL FUND", 10),
         _row("i.pdf", 2074, "Asar", 1, "NBL", "a.", "a. Paid-up Capital", 10),
@@ -163,11 +170,14 @@ def missing_marker_row_fallback_case() -> bool:
 
 
 def unwatched_label_collision_case() -> bool:
-    """'e. Others' is reused across unrelated sections with opposite true sides
+    """Assert infer_sides tolerates an unwatched colliding label while still resolving watched ones.
+
+    'e. Others' is reused across unrelated sections with opposite true sides
     (confirmed real data, Asar-2074.pdf/NBL, 2026-10-22: under '3 DEPOSITS' on
     liabilities, under '8 OTHER ASSETS' on assets). infer_sides must not raise on
     this -- it isn't one of the 8 fields _compute_fields actually reads -- while
-    still correctly resolving the watched labels around it."""
+    still correctly resolving the watched labels around it.
+    """
     rows_csv = [
         _row("j.pdf", 2074, "Asar", 1, "NBL", "1", "1 CAPITAL FUND", 10),
         _row("j.pdf", 2074, "Asar", 1, "NBL", "3", "3 DEPOSITS", 20),
@@ -200,6 +210,11 @@ def unwatched_label_collision_case() -> bool:
 
 
 def covariate_formula_case() -> bool:
+    """Assert load_panel builds the five-covariate vector X and the r/c/K scalars to their hand-computed values.
+
+    Checks X[0, 0] == [100, 20/100, 40/100, 50/25, 4/10], r == 10, c == 6, K == 20
+    for the fixture below (see the inline size == 100 note).
+    """
     rows_csv = _full_period_rows(
         "c.pdf", 2080, "Asar", "NBL",
         liquid_funds=40, loans_advances=50, interbank_r=10,
@@ -228,11 +243,14 @@ def covariate_formula_case() -> bool:
 
 
 def optional_asset_category_blank_case() -> bool:
-    """A single optional asset category with a blank value cell (e.g. a smaller BFI that
+    """Assert a blank optional asset cell loads (dropped, not zeroed) and size still sums the other 9.
+
+    A single optional asset category with a blank value cell (e.g. a smaller BFI that
     doesn't report '9 EXPENSES NOT WRITTEN OFF') is dropped entirely by read_rows (Sec 9
     blank-value note), so it's simply absent from rec -- not a zero. 'size' must still sum
     the other 9 categories via _lookup_field_or_zero and the cell must load successfully,
-    not raise ValueError / drop the whole bfi-period cell the way strict _lookup_field did."""
+    not raise ValueError / drop the whole bfi-period cell the way strict _lookup_field did.
+    """
     rows_csv = _full_period_rows(
         "k.pdf", 2080, "Asar", "NBL",
         liquid_funds=40, loans_advances=50, interbank_r=10,
@@ -265,8 +283,11 @@ def optional_asset_category_blank_case() -> bool:
 
 
 def borrowings_fallback_case() -> bool:
-    """When '2 BORROWINGS' subtotal is unreported, denominator falls back to the
-    sum of confirmed real sub-items a.-e. (Sec 8b/9.4 note on X^(5))."""
+    """Assert the borrowings denominator falls back to the sum of sub-items a.-e. (X^(5) == 2/6).
+
+    When '2 BORROWINGS' subtotal is unreported, denominator falls back to the
+    sum of confirmed real sub-items a.-e. (Sec 8b/9.4 note on X^(5)).
+    """
     rows_csv = _full_period_rows(
         "d.pdf", 2075, "Asar", "NBL",
         liquid_funds=10, loans_advances=10, interbank_r=5,
@@ -289,8 +310,11 @@ def borrowings_fallback_case() -> bool:
 
 
 def period_chronology_rollover_case() -> bool:
-    """Chaitra (month 12) of year Y must sort before Baisakh (month 1) of year
-    Y+1 -- lexicographic month-name sort would get this wrong."""
+    """Assert Chaitra (month 12) of year Y sorts before Baisakh (month 1) of year Y+1.
+
+    Chaitra (month 12) of year Y must sort before Baisakh (month 1) of year
+    Y+1 -- lexicographic month-name sort would get this wrong.
+    """
     rows_csv = _full_period_rows(
         "e.pdf", 2079, "Chaitra", "NBL",
         liquid_funds=1, loans_advances=1, interbank_r=1,
@@ -315,12 +339,15 @@ def period_chronology_rollover_case() -> bool:
 
 
 def missing_field_left_nan_case() -> bool:
-    """A cell missing a required field entirely (e.g. no DEPOSITS row at all) is a real
+    """Assert a cell missing a required field entirely loads with the cell left NaN, not raising.
+
+    A cell missing a required field entirely (e.g. no DEPOSITS row at all) is a real
     extraction gap, confirmed present even among institutions later dropped by
     filter_commercial_banks (2026-10-25) -- load_panel builds a dense panel for every raw
     bfi_name, not just whatever subset a caller filters to afterward, so this must load
     successfully with the cell left NaN (same convention as zero_deposits_left_nan_case),
-    not kill the whole panel load the way it used to."""
+    not kill the whole panel load the way it used to.
+    """
     rows_csv = _full_period_rows(
         "f.pdf", 2080, "Asar", "NBL",
         liquid_funds=1, loans_advances=1, interbank_r=1,
@@ -343,11 +370,14 @@ def missing_field_left_nan_case() -> bool:
 
 
 def omitted_nrb_borrowing_case() -> bool:
-    """'a. NRB' omitted entirely (not printed as 0), confirmed live in real data (1546 cells,
+    """Assert an omitted 'a. NRB' leaf loads with nrb_dependence computed as 0, not raising.
+
+    'a. NRB' omitted entirely (not printed as 0), confirmed live in real data (1546 cells,
     e.g. ADBNL across many periods) for a bank/period with no NRB borrowing -- same
     leaf-omission convention as the optional asset categories above (borrowings_nrb is now
     looked up via _lookup_field_or_zero, not the strict _lookup_field). Must load successfully
-    with nrb_dependence computed as 0, not raise."""
+    with nrb_dependence computed as 0, not raise.
+    """
     rows_csv = _full_period_rows(
         "onb.pdf", 2080, "Asar", "NBL",
         liquid_funds=10, loans_advances=10, interbank_r=5,
@@ -374,9 +404,12 @@ def omitted_nrb_borrowing_case() -> bool:
 
 
 def zero_borrowings_total_case() -> bool:
-    """borrowings_total==0 means NO borrowing of any kind (confirmed live in real data, caused
+    """Assert borrowings_total == 0 loads as 0 NRB dependence, not a ZeroDivisionError.
+
+    borrowings_total == 0 means NO borrowing of any kind (confirmed live in real data, caused
     a ZeroDivisionError) -- borrowings_nrb is a strict subset of borrowings_total, so this is
-    legitimately 0 NRB dependence, not missing data; the cell must load successfully."""
+    legitimately 0 NRB dependence, not missing data; the cell must load successfully.
+    """
     rows_csv = _full_period_rows(
         "zbt.pdf", 2080, "Asar", "NBL",
         liquid_funds=10, loans_advances=10, interbank_r=5,
@@ -398,10 +431,13 @@ def zero_borrowings_total_case() -> bool:
 
 
 def zero_deposits_left_nan_case() -> bool:
-    """deposits==0 (e.g. a non-deposit-taking BFI, confirmed live in real data) has no
+    """Assert deposits == 0 leaves the cell NaN rather than raising or killing the load.
+
+    deposits == 0 (e.g. a non-deposit-taking BFI, confirmed live in real data) has no
     principled ldr substitute value -- unlike zero_borrowings_total_case, this must leave the
     cell NaN (same convention as a bank with zero rows that period), NOT raise/kill the whole
-    load the way a genuinely missing field does."""
+    load the way a genuinely missing field does.
+    """
     rows_csv = _full_period_rows(
         "zd.pdf", 2080, "Asar", "NBL",
         liquid_funds=10, loans_advances=10, interbank_r=5,
@@ -419,9 +455,12 @@ def zero_deposits_left_nan_case() -> bool:
 
 
 def truncated_label_matching_case() -> bool:
-    """Mid-word label truncation seen in some real extractions (e.g. '1 CAPITAL FUND' ->
+    """Assert mid-word truncated labels still resolve to the right field via mutual-prefix matching.
+
+    Mid-word label truncation seen in some real extractions (e.g. '1 CAPITAL FUND' ->
     '1 CAPITAL', '4 LOANS & ADVANCES' -> '4 LOANS &') must still resolve to the right
-    field via mutual-prefix matching, not raise/misfire (Sec 9.5)."""
+    field via mutual-prefix matching, not raise/misfire (Sec 9.5).
+    """
     rows_csv = _full_period_rows(
         "g.pdf", 2080, "Asar", "NBL",
         liquid_funds=10, loans_advances=20, interbank_r=5,
@@ -448,12 +487,15 @@ def truncated_label_matching_case() -> bool:
 
 
 def multi_bank_interleaved_case() -> bool:
-    """Real bulletins extract row-major by line item -- bank A's row for item N is
+    """Assert infer_sides keys its state machine per (source_file, bfi_name) for interleaved banks.
+
+    Real bulletins extract row-major by line item -- bank A's row for item N is
     immediately followed by bank B's row for item N, not bank A's whole sheet then
     bank B's whole sheet (confirmed against real data 2026-10-22, caused a live
     'inconsistent side' ValueError). infer_sides must key its liabilities->assets
     state machine per (source_file, bfi_name), not just per file, or bank B's
-    TOTAL LIABILITIES marker collides with bank A's already-flipped state."""
+    TOTAL LIABILITIES marker collides with bank A's already-flipped state.
+    """
     rows_csv = [
         _row("h.pdf", 2080, "Asar", 1, "NBL", "1", "1 CAPITAL FUND", 10),
         _row("h.pdf", 2080, "Asar", 1, "EBL", "1", "1 CAPITAL FUND", 20),
@@ -497,54 +539,67 @@ CASES = [
 
 
 def test_side_inference_collision():
+    """Assert side_inference_collision_case passes."""
     assert side_inference_collision_case()
 
 
 def test_missing_marker_row_fallback():
+    """Assert missing_marker_row_fallback_case passes."""
     assert missing_marker_row_fallback_case()
 
 
 def test_unwatched_label_collision():
+    """Assert unwatched_label_collision_case passes."""
     assert unwatched_label_collision_case()
 
 
 def test_multi_bank_interleaved():
+    """Assert multi_bank_interleaved_case passes."""
     assert multi_bank_interleaved_case()
 
 
 def test_covariate_formula():
+    """Assert covariate_formula_case passes."""
     assert covariate_formula_case()
 
 
 def test_optional_asset_category_blank():
+    """Assert optional_asset_category_blank_case passes."""
     assert optional_asset_category_blank_case()
 
 
 def test_borrowings_fallback():
+    """Assert borrowings_fallback_case passes."""
     assert borrowings_fallback_case()
 
 
 def test_period_chronology_rollover():
+    """Assert period_chronology_rollover_case passes."""
     assert period_chronology_rollover_case()
 
 
 def test_missing_field_left_nan():
+    """Assert missing_field_left_nan_case passes."""
     assert missing_field_left_nan_case()
 
 
 def test_omitted_nrb_borrowing():
+    """Assert omitted_nrb_borrowing_case passes."""
     assert omitted_nrb_borrowing_case()
 
 
 def test_zero_borrowings_total():
+    """Assert zero_borrowings_total_case passes."""
     assert zero_borrowings_total_case()
 
 
 def test_zero_deposits_left_nan():
+    """Assert zero_deposits_left_nan_case passes."""
     assert zero_deposits_left_nan_case()
 
 
 def test_truncated_label_matching():
+    """Assert truncated_label_matching_case passes."""
     assert truncated_label_matching_case()
 
 

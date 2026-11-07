@@ -1,0 +1,44 @@
+# Non-SBM (misspecification) generator check (reviewer check 4, 2026-11-06): the ground-truth
+# network is generated with NO community structure -- every block-pair cell of lambda_matrix and
+# eta_block is identical, so Lambda[z_i, z_j] and eta_block[z_i, z_j] no longer depend on z at
+# all. Edge intensity then reduces to the pure degree-corrected fitness term phi_i * phi_j (Eq. 2,
+# driven only by covariates X and w), and the existence gate is a single constant probability --
+# i.e. the data-generating process is a degree-corrected Erdos-Renyi/fitness model, NOT a
+# stochastic blockmodel. The MODEL is left at num_blocks=2, so it is now MISSPECIFIED: it looks
+# for two communities in a panel that has none. The question this answers: does imposing a
+# (spurious) block structure HURT reconstruction when the truth has no blocks, or does the
+# covariate/cap/smoothness machinery carry it regardless?
+#
+# Chosen constants keep overall scale comparable to synthetic_baseline so the test isn't
+# confounded by a gross density/intensity change:
+#   lambda_matrix all = 0.6  -- the pi-weighted average of the baseline's {2.5 (cc), 0.6 (cp),
+#                               0.2 (pp)} cells under pi=[0.3,0.7] is ~0.58, rounded to 0.6.
+#   eta_block all = -0.63     -- logit of the baseline's pi-weighted mean existence probability
+#                               (~0.35) under the same pi, so mean edge density matches too.
+# pi set to [0.5,0.5] only to make it unambiguous that z is now an inert label with no effect on
+# W_true (the sampler still draws z; W_true simply no longer depends on it). Everything else is
+# identical to sweep_lambda_mi_0.yaml for a clean one-variable comparison via seed_significance.py.
+training:
+  epochs: 3000
+  eval_every: 200
+  lr: 0.01
+  kl_beta_max: 0.15
+  kl_warmup_epochs: 300
+  kl_free_bits: 0.05
+  lambda_mi: 0.0
+  lambda_smooth: 0.05
+model:
+  hidden_dim: 16
+  decoder_hidden_dim: 16
+  num_blocks: 2
+scenario:
+  n_banks: 24
+  n_periods: 16
+  covariate_dim: 5
+  pi: [0.5, 0.5]
+  lambda_matrix: [[0.6, 0.6], [0.6, 0.6]]
+  eta_block: [[-0.63, -0.63], [-0.63, -0.63]]
+  w: [0.05, 0.8, 0.5, -0.3, 0.4]
+  sigma2: 0.15
+  cap: 6.0
+seeds: [0, 1, 2, 3, 4]

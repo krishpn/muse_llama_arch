@@ -5,6 +5,12 @@
 #     "torch",
 # ]
 # ///
+"""Define the amortized inference network: temporal encoder, block posterior, pairwise decoder (Sec 4).
+
+Three nn.Modules implementing Algorithm 3's learnable maps -- a shared GRU temporal
+encoder (Eq. 6), the categorical block-assignment posterior q_psi(z) (Eq. 7), and the
+pairwise decoder that produces each edge's (eta, lambda) parameters (Eq. 3-4).
+"""
 
 import torch
 import torch.nn as nn
@@ -31,7 +37,12 @@ class TemporalEncoder(nn.Module):
         self.cell = nn.GRUCell(config.input_dim + 2, config.hidden_dim)  # +2 for r_t, c_t
 
     def forward(self, X_t: torch.Tensor, r_t: torch.Tensor, c_t: torch.Tensor, h_prev: torch.Tensor) -> torch.Tensor:
-        """X_t: (N, input_dim) covariates this period. r_t, c_t: (N,) observed
+        """Advance the GRU hidden state one period (Eq. 6).
+
+        Computes h_{i,t} = GRU_theta([X_{i,t}; r_{i,t}; c_{i,t}], h_{i,t-1}),
+        concatenating the covariates with the two observed marginals before the cell.
+
+        X_t: (N, input_dim) covariates this period. r_t, c_t: (N,) observed
         interbank lending/borrowing marginals this period -- real, measured
         aggregate fields (Sec 8), not derived from the model's own inference of
         the latent bilateral W_t, so including them here isn't circular (Sec 4).
@@ -44,11 +55,13 @@ class TemporalEncoder(nn.Module):
         return self.cell(inputs, h_prev)
 
     def init_hidden(self, n: int, device=None, dtype=None) -> torch.Tensor:
+        """Return a zeroed initial GRU hidden state of shape (n, hidden_dim)."""
         return torch.zeros(n, self.cell.hidden_size, device=device, dtype=dtype)
 
 
 class BlockPosteriorMLP(nn.Module):
-    """Amortized block-assignment posterior, Eq. 7:
+    """Compute the amortized block-assignment posterior logits (Eq. 7).
+
     q_psi(z_i | X_{i,1:t}) = Categorical(softmax(MLP_psi(h_{i,t}))).
 
     Returns logits, not probabilities -- callers apply softmax (or Gumbel-softmax
@@ -64,17 +77,17 @@ class BlockPosteriorMLP(nn.Module):
         )
 
     def forward(self, h: torch.Tensor) -> torch.Tensor:
-        """h: (N, hidden_dim) -> logits (N, num_blocks)."""
+        """Map hidden states to block logits: h (N, hidden_dim) -> logits (N, num_blocks)."""
         return self.net(h)
 
 
 class PairwiseDecoder(nn.Module):
-    """Pairwise decoder, Eq. 3-4: produces (eta_ij, lambda_ij) from
-    (h_i, h_j, z_i, z_j) for every ordered pair (i, j).
+    """Decode pairwise edge parameters (eta_ij, lambda_ij) for every ordered pair (Eq. 3-4).
 
-    Vectorized over the full (N, N) grid rather than looping over index pairs --
-    mathematically the same computation the pseudocode's "for i, j = 1..N" loop
-    specifies, just without a Python-level double loop.
+    Produces (eta_ij, lambda_ij) from (h_i, h_j, z_i, z_j). Vectorized over the full
+    (N, N) grid rather than looping over index pairs -- mathematically the same
+    computation the pseudocode's "for i, j = 1..N" loop specifies, just without a
+    Python-level double loop.
     """
 
     def __init__(self, config: EncoderDecoderConfig):
@@ -87,7 +100,14 @@ class PairwiseDecoder(nn.Module):
         )
 
     def forward(self, h: torch.Tensor, z_soft: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        """h: (N, hidden_dim) node embeddings.
+        """Decode (eta, lambda) for all pairs from node embeddings and block assignments.
+
+        For every ordered pair (i, j), with MLP_psi the two-output decoder network:
+            (eta_ij, raw_ij) = MLP_psi([h_i; h_j; z_i; z_j])
+            lambda_ij = softplus(raw_ij)
+        so lambda_ij >= 0 (Eq. 3) and eta_ij is the raw zero-inflation logit (Eq. 4).
+
+        h: (N, hidden_dim) node embeddings.
         z_soft: (N, num_blocks) a distribution over blocks per node -- soft
             (Gumbel-softmax relaxation) so gradients flow through z for Algorithm 3's
             backprop, or hard one-hot, which is just a special case of the same shape.

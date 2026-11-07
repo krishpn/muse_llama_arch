@@ -203,6 +203,13 @@ def _superseded_source_files(csv_path: Path) -> set[str]:
 
 
 def read_rows(csv_path: Path) -> list[_Row]:
+    """Read the balance-sheet CSV into _Row records, dropping blank/superseded rows.
+
+    Skips rows with a blank value or belonging to a '-NEW'-superseded source file,
+    recovers a blank month_bs from the source filename where possible (see
+    _recover_period_from_source_file), and warns with counts for superseded,
+    recovered, and unrecoverable-blank-month rows.
+    """
     superseded = _superseded_source_files(csv_path)
     rows: list[_Row] = []
     blank_month_count = 0
@@ -272,11 +279,13 @@ def read_rows(csv_path: Path) -> list[_Row]:
 
 
 def infer_sides(rows: list[_Row]) -> dict[str, str]:
-    """Map each _WATCHED_LABELS entry (normalized line_item text actually read by
-    _compute_fields) to 'liabilities' / 'assets'. Unwatched labels are walked for
-    their state-machine cues (markers, item_code resets) but never recorded or
-    checked -- lettered sub-item text isn't reliably unique across sections after
-    all ("e. Others" appears under both DEPOSITS and OTHER ASSETS, Sec 9.4 update).
+    """Map each watched balance-sheet label to its side ('liabilities' / 'assets').
+
+    Covers only _WATCHED_LABELS entries (normalized line_item text actually read by
+    _compute_fields). Unwatched labels are walked for their state-machine cues
+    (markers, item_code resets) but never recorded or checked -- lettered sub-item
+    text isn't reliably unique across sections after all ("e. Others" appears under
+    both DEPOSITS and OTHER ASSETS, Sec 9.4 update).
 
     item_code restarts at 1 independently on each side of the balance sheet (Sec 9
     caveat 1), so it can't disambiguate alone. Side is instead recovered by
@@ -341,6 +350,8 @@ def _period_key(year_bs: int, month_bs: str) -> tuple[int, int]:
 
 @dataclass
 class Panel:
+    """Hold the dense (N, T) model-input panel: covariates, marginals, and capital fund."""
+
     bfi_names: list[str]
     periods: list[tuple[int, str]]  # (year_bs, month_bs), chronological
     X: torch.Tensor      # (N, T, 5), covariate order = COVARIATE_ORDER
@@ -380,6 +391,7 @@ COMMERCIAL_BANK_PREFIXES = {
 
 
 def is_commercial_bank(bfi_name: str) -> bool:
+    """Return True if bfi_name is a commercial ('A' class) bank by name prefix."""
     # "...DB" suffix marks a development-bank sibling of a commercial-bank prefix (e.g.
     # "LumbiniDB", "PrabhuDB" -- distinct institutions from "Lumbini"/"Prabhu"/"PRABHU",
     # see COMMERCIAL_BANK_PREFIXES comment) -- excluded before the prefix check below,
@@ -390,9 +402,10 @@ def is_commercial_bank(bfi_name: str) -> bool:
 
 
 def filter_commercial_banks(panel: Panel) -> Panel:
-    """Scopes panel down to commercial banks only (Sec 8/11) -- see COMMERCIAL_BANK_PREFIXES.
-    Warns with the dropped names rather than silently shrinking N, same convention as
-    load_panel's other diagnostic warnings.
+    """Scope panel down to commercial banks only (Sec 8/11).
+
+    See COMMERCIAL_BANK_PREFIXES. Warns with the dropped names rather than silently
+    shrinking N, same convention as load_panel's other diagnostic warnings.
     """
     keep = [i for i, name in enumerate(panel.bfi_names) if is_commercial_bank(name)]
     dropped = sorted(name for name in panel.bfi_names if not is_commercial_bank(name))
@@ -430,7 +443,8 @@ MIN_PERIOD = (2072, "Asar")
 
 
 def filter_from_period(panel: Panel, start: tuple[int, str] = MIN_PERIOD) -> Panel:
-    """Scopes panel to periods >= `start` (inclusive), dropping the T axis accordingly.
+    """Scope panel to periods >= `start` (inclusive), dropping the T axis accordingly.
+
     See MIN_PERIOD comment for why BS 2072-03 is the current study-window start.
     """
     start_key = _period_key(*start)
@@ -456,6 +470,14 @@ def filter_from_period(panel: Panel, start: tuple[int, str] = MIN_PERIOD) -> Pan
 
 
 def load_panel(csv_path: Path) -> Panel:
+    """Load the CSV into a dense (N, T) Panel of covariates, marginals, and capital fund.
+
+    Reads rows, infers each field's balance-sheet side, validates them against
+    FIELD_LABELS, then assembles per (bank, period) covariates X and the r/c/K
+    tensors -- leaving NaN (and warning with counts) for cells with a missing
+    required field or a zero size/deposits denominator rather than failing the whole
+    load.
+    """
     rows = read_rows(csv_path)
     sides = infer_sides(rows)
 

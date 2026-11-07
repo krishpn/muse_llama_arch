@@ -8,7 +8,9 @@
 #     "matplotlib",
 # ]
 # ///
-"""EXPLORATORY, not yet an official evaluation/ step -- sketched to check whether the model's
+"""Check whether the model's flat 2-block split survives independent hierarchical clustering.
+
+EXPLORATORY, not yet an official evaluation/ step -- sketched to check whether the model's
 flat 2-block split (printed by run_real_experiment.py's top-banks table) is an artifact of
 forcing K=2, or something an independent, unsupervised hierarchical clustering would recover on
 its own. If graph-tool's nested-SBM-style dendrograms ever become worth the non-pip install cost
@@ -76,6 +78,13 @@ def _best_permutation(flat_clusters: np.ndarray, model_blocks: np.ndarray, k: in
 
 
 def main() -> None:
+    """Cluster banks by exposure profile and compare the flat cut to the model's blocks.
+
+    Loads the real reconstruction artifact, builds each bank's z-scored lending+borrowing
+    feature vector, runs average-linkage hierarchical clustering, cuts it at the model's K,
+    reports the best label-aligned agreement with the model's block argmax, and saves a
+    dendrogram with leaves colored by model block.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--seed", type=int, default=0)

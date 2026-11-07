@@ -5,6 +5,12 @@
 #     "torch",
 # ]
 # ///
+"""Sample a ground-truth synthetic SBM network for validating the model (Sec 11, Algorithm 2).
+
+The only setting with a real supervised reconstruction target: real NRB data never
+observes the bilateral network W_t, so this generative sampler is how Sec 6's
+accuracy and block-recovery numbers get a known target to score against.
+"""
 
 import torch
 
@@ -28,11 +34,11 @@ def sample_synthetic_network(
     config: SyntheticConfig,
     generator: torch.Generator | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Algorithm 2 (paper1_network_reconstruction.md Sec 11, Eq. 1-5, 8).
+    """Sample a ground-truth synthetic network W_true (Algorithm 2, Sec 11, Eq. 1-5, 8).
 
-    Samples a ground-truth synthetic network W_true for validating the model against a
-    known target (Sec 6) -- the only setting where the reconstruction loss has a real
-    supervised target, since real NRB data never observes W_t itself.
+    Validates the model against a known target (Sec 6) -- the only setting where the
+    reconstruction loss has a real supervised target, since real NRB data never
+    observes W_t itself.
 
     N (num institutions) and d (covariate dim) come from X's shape; K (num SBM blocks)
     comes from pi's shape -- nothing here is a literal problem size.
