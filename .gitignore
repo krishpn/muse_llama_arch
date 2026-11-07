@@ -32,6 +32,7 @@ __pycache__/
 # uv package manager
 .uv/
 uv.lock
+model_repository/
 model_repository
 
 # Data and Downloads
@@ -39,6 +40,8 @@ raw_pdfs/
 **/raw_pdfs/
 processed/
 **/processed/
+**/design_docs
+design_docs/
 .csv
 .json
 .pdf
