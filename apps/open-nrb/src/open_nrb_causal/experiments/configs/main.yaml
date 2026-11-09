@@ -1,0 +1,22 @@
+# Main specification for open_nrb_causal/run_causal_experiment.py (user decision 2026-11-03):
+# clean window (as clean_window.yaml) x quarterly outcomes x unweighted TWFE. Quarterly because
+# the bulletin P&L is a reliable fiscal-YTD figure only at quarter ends (design doc Sec 5b item
+# 11a); unweighted because the HT/GPS weights can't achieve overlap with 16 banks (item 8).
+# baseline.yaml and clean_window.yaml are the monthly appendix runs. See baseline.yaml for the
+# meaning of each field.
+artifact_path: src/open_nrb/results/baseline/real_run_seed0.pt
+csv_path: src/open_nrb/data/processed/monthly_statistical_bfis/nrb_balance_sheet.csv
+pnl_csv_path: src/open_nrb/data/processed/monthly_statistical_bfis/nrb_profit_and_loss.csv
+capital_floor: 0.04
+paid_up_capital_requirement: 8000
+pre_window_end: [2072, "Mangsir"]
+effective_period: [2073, "Asar"]
+post_window_end: [2075, "Falgun"]
+pnl_ytd_cumulative: true
+blank_as_zero: [loan_written_off]
+outcome_construction: quarterly
+weighting: unweighted
+n_bootstrap: 9999
+bootstrap_seed: 0
+rdd_bandwidth: 0.02
+rdd_window: [[2073, "Shrawan"], [2075, "Asar"]]

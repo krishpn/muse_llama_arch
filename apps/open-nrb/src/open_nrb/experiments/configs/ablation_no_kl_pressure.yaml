@@ -1,0 +1,21 @@
+# Posterior-collapse ablation (design doc Sec 10 open item): kl_beta_max=0.0 removes all KL
+# pressure on q_psi(z) to test whether it ever moves off the uniform prior without that
+# competing signal. Everything else matches baseline.yaml, including baseline.yaml's
+# 2026-10-31 lambda_mi panel-size-invariance fix note -- re-check this config's own
+# components_trend (now including mi_reg_weighted) before trusting it as "KL pressure off"
+# in isolation, since lambda_mi (unaffected by kl_beta_max) is still active here too.
+training:
+  epochs: 500
+  eval_every: 25
+  lr: 0.01
+  kl_beta_max: 0.0
+  kl_warmup_epochs: 300
+  kl_free_bits: 0.05
+  lambda_mi: 0.00
+  lambda_smooth: 0.05
+model:
+  hidden_dim: 16
+  decoder_hidden_dim: 16
+  num_blocks: 2
+kappa: 0.05
+seed: 0

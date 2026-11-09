@@ -1,0 +1,13 @@
+config: d=5 h=16 K=2 decoder_h=16
+per-submodule:
+  encoder (GRUCell)         1200
+  posterior MLP              306
+  pairwise decoder           626
+  _raw_sigma2 (scalar)         1
+TOTAL PARAMETERS: 2133
+
+N x T                         = 2128   (params/NT = 1.002)
+marginal observations (2 N T) = 4256   (params/2NT = 0.501)
+latent bilateral entries      = 31920   (N(N-1)T; params/latent = 0.0668)
+
+Parameter count is independent of N and T (set only by d, h, K, decoder_h).

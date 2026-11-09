@@ -1,0 +1,30 @@
+# Smoke / reviewer test-run config -- NOT a results config.
+# Clone of synthetic_baseline.yaml with the epoch budget and seed list cut right down so a
+# reviewer can confirm the synthetic pipeline (generate -> train -> capped projection -> save
+# artifact -> evaluate) runs end to end in ~1-2 min on CPU. The reconstruction quality here is
+# meaningless (150 epochs, one seed): use synthetic_baseline.yaml / sweep_lambda_mi_0.yaml for
+# any number that goes in the paper. See README "Reviewer quick test run".
+training:
+  epochs: 150
+  eval_every: 50
+  lr: 0.01
+  kl_beta_max: 0.15
+  kl_warmup_epochs: 50
+  kl_free_bits: 0.05
+  lambda_mi: 0.0
+  lambda_smooth: 0.05
+model:
+  hidden_dim: 16
+  decoder_hidden_dim: 16
+  num_blocks: 2
+scenario:
+  n_banks: 16
+  n_periods: 8
+  covariate_dim: 5
+  pi: [0.3, 0.7]
+  lambda_matrix: [[2.5, 0.6], [0.6, 0.2]]
+  eta_block: [[2.0, 0.0], [0.0, -2.0]]
+  w: [0.05, 0.8, 0.5, -0.3, 0.4]
+  sigma2: 0.15
+  cap: 6.0
+seeds: [0]

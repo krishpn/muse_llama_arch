@@ -1,0 +1,30 @@
+# lambda_mi retuning sweep, variant 1/3 (design doc Sec 10, 2026-10-31 follow-up): lambda_mi=0.0
+# isolates what block_acc looks like with the IIC/IMSAT clustering regularizer OFF entirely --
+# the control cell this sweep needs to tell "mi_reg helps correctness" apart from "mi_reg just
+# forces a confident split regardless of correctness". Everything else matches
+# synthetic_baseline.yaml (now with train.py's mi_reg panel-size-invariance fix applied, so this
+# sweep's numbers aren't comparable to any pre-fix run).
+training:
+  epochs: 3000
+  eval_every: 200
+  lr: 0.01
+  kl_beta_max: 0.15
+  kl_warmup_epochs: 300
+  kl_free_bits: 0.05
+  lambda_mi: 0.0
+  lambda_smooth: 0.05
+model:
+  hidden_dim: 16
+  decoder_hidden_dim: 16
+  num_blocks: 2
+scenario:
+  n_banks: 24
+  n_periods: 16
+  covariate_dim: 5
+  pi: [0.3, 0.7]
+  lambda_matrix: [[2.5, 0.6], [0.6, 0.2]]
+  eta_block: [[2.0, 0.0], [0.0, -2.0]]
+  w: [0.05, 0.8, 0.5, -0.3, 0.4]
+  sigma2: 0.15
+  cap: 6.0
+seeds: [0, 1, 2, 3, 4]

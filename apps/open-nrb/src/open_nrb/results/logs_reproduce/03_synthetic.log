@@ -1,0 +1,54 @@
+NOTE: 4 workers will each open their own CUDA context on cuda (7642 MiB currently free of 7839 MiB total -- shared with any other process already using this GPU). If seeds fail with CUDA out-of-memory below, rerun with a smaller --workers or --device cpu.
+running 5 seeds across 4 worker processes (prints below will interleave)
+
+--- seed 0 ---
+device: cuda
+
+--- seed 1 ---
+device: cuda
+
+--- seed 2 ---
+device: cuda
+
+--- seed 3 ---
+device: cuda
+RAS/Sinkhorn baseline mean rel. error (fixed, doesn't depend on training): 0.5965
+
+RAS/Sinkhorn baseline mean rel. error (fixed, doesn't depend on training): 0.5327
+
+RAS/Sinkhorn baseline mean rel. error (fixed, doesn't depend on training): 0.5666
+
+RAS/Sinkhorn baseline mean rel. error (fixed, doesn't depend on training): 0.5915
+
+epoch     0  loss= 12369.593  model_rel_error=0.4981  (baseline=0.5965)  block_acc=0.7370  kl_beta=0.000  recon= 11228.056  kl=   0.050  mi_reg_w=  -0.000  smooth_w= 828.746
+epoch     0  loss= 13769.517  model_rel_error=0.5264  (baseline=0.5327)  block_acc=0.5234  kl_beta=0.000  recon= 12337.068  kl=   0.050  mi_reg_w=  -0.000  smooth_w= 796.970
+epoch     0  loss= 14072.415  model_rel_error=0.4797  (baseline=0.5666)  block_acc=0.6797  kl_beta=0.000  recon= 12719.038  kl=   0.050  mi_reg_w=  -0.000  smooth_w=1018.424
+epoch     0  loss= 14794.076  model_rel_error=0.3998  (baseline=0.5915)  block_acc=0.6745  kl_beta=0.000  recon= 12794.804  kl=   0.050  mi_reg_w=  -0.000  smooth_w=1545.190
+epoch   200  loss=  7286.408  model_rel_error=0.4472  (baseline=0.5666)  block_acc=0.8932  kl_beta=0.100  recon=  5918.735  kl=   0.652  mi_reg_w=  -0.024  smooth_w=1215.839
+epoch   200  loss=  7943.257  model_rel_error=0.3691  (baseline=0.5915)  block_acc=0.7969  kl_beta=0.100  recon=  6079.409  kl=   0.588  mi_reg_w=  -0.025  smooth_w=1737.268
+epoch   200  loss=  6422.277  model_rel_error=0.4573  (baseline=0.5965)  block_acc=0.7656  kl_beta=0.100  recon=  5308.846  kl=   0.679  mi_reg_w=  -0.005  smooth_w= 955.500
+epoch   200  loss=  7190.712  model_rel_error=0.4848  (baseline=0.5327)  block_acc=0.6953  kl_beta=0.100  recon=  6115.614  kl=   0.693  mi_reg_w=  -0.000  smooth_w= 929.398
+epoch   400  loss=  6895.676  model_rel_error=0.4503  (baseline=0.5666)  block_acc=0.8880  kl_beta=0.150  recon=  5531.050  kl=   0.677  mi_reg_w=  -0.024  smooth_w=1217.514
+epoch   400  loss=  7405.122  model_rel_error=0.3637  (baseline=0.5915)  block_acc=0.7943  kl_beta=0.150  recon=  5530.691  kl=   0.658  mi_reg_w=  -0.028  smooth_w=1707.658
+epoch   400  loss=  6796.331  model_rel_error=0.4916  (baseline=0.5327)  block_acc=0.6953  kl_beta=0.150  recon=  5719.567  kl=   0.690  mi_reg_w=  -0.000  smooth_w= 965.211
+epoch   400  loss=  5857.030  model_rel_error=0.4579  (baseline=0.5965)  block_acc=0.7682  kl_beta=0.150  recon=  4780.081  kl=   0.686  mi_reg_w=  -0.006  smooth_w= 976.744
+epoch   600  loss=  7037.120  model_rel_error=0.3605  (baseline=0.5915)  block_acc=0.7578  kl_beta=0.150  recon=  5170.998  kl=   0.664  mi_reg_w=  -0.028  smooth_w=1708.841
+epoch   600  loss=  6689.234  model_rel_error=0.4519  (baseline=0.5666)  block_acc=0.8802  kl_beta=0.150  recon=  5309.922  kl=   0.685  mi_reg_w=  -0.024  smooth_w=1205.516
+epoch   600  loss=  6528.254  model_rel_error=0.4875  (baseline=0.5327)  block_acc=0.6901  kl_beta=0.150  recon=  5476.505  kl=   0.692  mi_reg_w=  -0.001  smooth_w= 956.181
+epoch   600  loss=  5531.672  model_rel_error=0.4567  (baseline=0.5965)  block_acc=0.7734  kl_beta=0.150  recon=  4443.583  kl=   0.692  mi_reg_w=  -0.007  smooth_w= 970.558
+epoch   800  loss=  6931.205  model_rel_error=0.3600  (baseline=0.5915)  block_acc=0.7734  kl_beta=0.150  recon=  5101.262  kl=   0.671  mi_reg_w=  -0.028  smooth_w=1704.593
+epoch   800  loss=  6470.792  model_rel_error=0.4500  (baseline=0.5666)  block_acc=0.8802  kl_beta=0.150  recon=  5132.329  kl=   0.686  mi_reg_w=  -0.024  smooth_w=1197.588
+epoch   800  loss=  6413.626  model_rel_error=0.4835  (baseline=0.5327)  block_acc=0.6901  kl_beta=0.150  recon=  5346.180  kl=   0.693  mi_reg_w=  -0.001  smooth_w= 953.833
+epoch   800  loss=  5311.338  model_rel_error=0.4560  (baseline=0.5965)  block_acc=0.7734  kl_beta=0.150  recon=  4226.092  kl=   0.693  mi_reg_w=  -0.007  smooth_w= 978.075
+epoch  1000  loss=  6768.250  model_rel_error=0.3586  (baseline=0.5915)  block_acc=0.7630  kl_beta=0.150  recon=  4921.164  kl=   0.682  mi_reg_w=  -0.028  smooth_w=1700.837
+epoch  1000  loss=  6266.879  model_rel_error=0.4805  (baseline=0.5327)  block_acc=0.6901  kl_beta=0.150  recon=  5217.562  kl=   0.693  mi_reg_w=  -0.001  smooth_w= 944.433
+epoch  1000  loss=  6504.741  model_rel_error=0.4461  (baseline=0.5666)  block_acc=0.8854  kl_beta=0.150  recon=  5226.341  kl=   0.685  mi_reg_w=  -0.024  smooth_w=1168.330
+epoch  1000  loss=  5176.493  model_rel_error=0.4548  (baseline=0.5965)  block_acc=0.7734  kl_beta=0.150  recon=  4108.271  kl=   0.693  mi_reg_w=  -0.007  smooth_w= 993.914
+epoch  1200  loss=  6631.302  model_rel_error=0.3599  (baseline=0.5915)  block_acc=0.7656  kl_beta=0.150  recon=  4798.392  kl=   0.685  mi_reg_w=  -0.028  smooth_w=1700.782
+epoch  1200  loss=  6169.876  model_rel_error=0.4808  (baseline=0.5327)  block_acc=0.6901  kl_beta=0.150  recon=  5098.146  kl=   0.693  mi_reg_w=  -0.001  smooth_w= 956.179
+epoch  1200  loss=  6314.276  model_rel_error=0.4465  (baseline=0.5666)  block_acc=0.8854  kl_beta=0.150  recon=  4955.775  kl=   0.686  mi_reg_w=  -0.025  smooth_w=1197.600
+epoch  1200  loss=  5023.722  model_rel_error=0.4452  (baseline=0.5965)  block_acc=0.7734  kl_beta=0.150  recon=  3955.546  kl=   0.693  mi_reg_w=  -0.007  smooth_w= 977.707
+epoch  1400  loss=  6539.058  model_rel_error=0.3598  (baseline=0.5915)  block_acc=0.7656  kl_beta=0.150  recon=  4691.158  kl=   0.682  mi_reg_w=  -0.028  smooth_w=1703.152
+epoch  1400  loss=  6159.918  model_rel_error=0.4791  (baseline=0.5327)  block_acc=0.6901  kl_beta=0.150  recon=  5041.458  kl=   0.693  mi_reg_w=  -0.001  smooth_w= 949.860
+epoch  1400  loss=  5006.819  model_rel_error=0.4400  (baseline=0.5965)  block_acc=0.7734  kl_beta=0.150  recon=  3899.390  kl=   0.693  mi_reg_w=  -0.007  smooth_w= 968.794
+epoch  1400  loss=  7258.201  model_rel_error=0.4527  (baseline=0.5666)  block_acc=0.8750  kl_beta=0.150  recon=  5479.924  kl=   0.684  mi_reg_w=  -0.024  smooth_w=1211.835

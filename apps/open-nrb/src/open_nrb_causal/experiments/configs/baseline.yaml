@@ -1,0 +1,52 @@
+# Config for open_nrb_causal/run_causal_experiment.py.
+#
+# capital_floor = 0.04 is NRB's Basel III leverage-ratio minimum (Capital Adequacy
+# Framework 2015, Sec 2.7.B.a) -- see variables.py's CAPITAL_FLOOR docstring for why
+# this was chosen over the Total/CET1 Capital Ratio floors (RWA-denominator mismatch
+# with Paper 1's capital_ratio covariate) and the approximation caveats that follow
+# from it (Tier1-vs-CAPITAL FUND numerator, Exposure-Measure-vs-size denominator,
+# and the 2016-2018-only period applicability).
+# Paths are relative to CWD -- run from the apps/open-nrb repo root, same convention as
+# open_nrb.models.run_real_experiment's DEFAULT_CSV. artifact_path's results/baseline/
+# subdir + seed0 are assumed; adjust to whichever real_run_seed*.pt Paper 1 actually saved.
+artifact_path: src/open_nrb/results/baseline/real_run_seed0.pt
+csv_path: src/open_nrb/data/processed/monthly_statistical_bfis/nrb_balance_sheet.csv
+pnl_csv_path: src/open_nrb/data/processed/monthly_statistical_bfis/nrb_profit_and_loss.csv
+capital_floor: 0.04
+# Alternative dose (reviewer_checks --only paid_up_dose): the minimum paid-up capital NRB
+# required of commercial banks, in NPR mn (the balance-sheet CSV's units). 8000 = Rs 800 crore,
+# Class "ka" national level: NRB Unified Directive 2073, directive 23 point 4 (from the FY
+# 2072/73 Monetary Policy); capital plan due Bhadra end 2072, compliance by Asar end 2074
+# (design doc Sec 4a). null = skip the estimates, print the pre-window paid-up table only.
+paid_up_capital_requirement: 8000
+# Mandate timing (NRB Capital Adequacy Framework 2015, Sec 1.9): parallel run starts Poush
+# end 2072 BS, full enforcement from Asar end 2073 BS (= Mid July 2016). Pre-mandate window =
+# panel start (2072 Asar) .. Mangsir 2072, the last month before the parallel run -- dose is
+# frozen at its mean over that window. Poush 2072 .. Asar 2073 is the transition (dropped
+# from the pooled DiD, its own event-study bin); post = Shrawan 2073 onward.
+pre_window_end: [2072, "Mangsir"]
+effective_period: [2073, "Asar"]
+# Last period kept (inclusive); null = the whole panel. clean_window.yaml sets Falgun 2075,
+# the last bulletin before the extraction corruption starts (design doc Sec 5a audit).
+post_window_end: null
+# Set from run_causal_experiment's printed YTD diagnostic: ~0.08 => cumulative (set true),
+# ~1 => already monthly flows (keep false). First real run 2026-11-03: 0.087 => cumulative.
+pnl_ytd_cumulative: true
+# Outcome fields whose blank bulletin row reads as 0 where the bank reported other P&L lines
+# that month (no P&L row at all stays missing). User decision 2026-11-04, design doc Sec 5b
+# item 11b: loans written off, blank = nothing written off. [] = every blank is missing.
+blank_as_zero: [loan_written_off]
+# "monthly" = de-cumulated monthly flows; "quarterly" = quarter-end YTD only (the P&L is
+# reliable only at Ashwin/Poush/Chaitra/Asar, design doc Sec 5b item 11a). main.yaml uses
+# quarterly; this config and clean_window.yaml are the monthly appendix runs.
+outcome_construction: monthly
+# "unweighted" TWFE is the main estimator (user decision 2026-11-03: with 16 banks the HT/GPS
+# weights can't achieve overlap, Sec 5b item 8); "ht" = the original stabilised HT weights.
+# reviewer_checks --only weights gps_period reports the HT variants.
+weighting: unweighted
+n_bootstrap: 9999
+bootstrap_seed: 0
+rdd_bandwidth: 0.02
+# Pooled RDD over the explicitly-mandated 4% period (Mid July 2016 - Mid July 2018,
+# Sec 2.7.B.a) -- a single cross-section has ~1 bank per side at this bandwidth (N=16).
+rdd_window: [[2073, "Shrawan"], [2075, "Asar"]]
