@@ -13,6 +13,13 @@ dependencies = [
     "networkx>=3.0",
     "scipy>=1.10.0",
     "pyyaml>=6.0",
+    "pyarrow",
+    "pymongo",
+    "pyfixest",
+    "matplotlib",
+    "scipy",
+    "powerlaw>=2.0.0",
+    "python-igraph>=1.0.0",
 ]
 
 [project.optional-dependencies]
