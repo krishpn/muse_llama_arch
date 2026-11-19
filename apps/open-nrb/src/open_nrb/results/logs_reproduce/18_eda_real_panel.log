@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/evaluation/eda_real_panel.py", line 44, in <module>
+    import polars as pl
+ModuleNotFoundError: No module named 'polars'

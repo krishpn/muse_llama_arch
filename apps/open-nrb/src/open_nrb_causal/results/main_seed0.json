@@ -1,0 +1,917 @@
+{
+  "config": "src/open_nrb_causal/experiments/configs/main.yaml",
+  "capital_floor": 0.04,
+  "n_banks": 16,
+  "periods": [
+    [
+      2072,
+      "Asar"
+    ],
+    [
+      2072,
+      "Shrawan"
+    ],
+    [
+      2072,
+      "Bhadra"
+    ],
+    [
+      2072,
+      "Ashwin"
+    ],
+    [
+      2072,
+      "Kartik"
+    ],
+    [
+      2072,
+      "Mangsir"
+    ],
+    [
+      2072,
+      "Poush"
+    ],
+    [
+      2072,
+      "Magh"
+    ],
+    [
+      2072,
+      "Falgun"
+    ],
+    [
+      2072,
+      "Chaitra"
+    ],
+    [
+      2073,
+      "Baisakh"
+    ],
+    [
+      2073,
+      "Jestha"
+    ],
+    [
+      2073,
+      "Asar"
+    ],
+    [
+      2073,
+      "Shrawan"
+    ],
+    [
+      2073,
+      "Bhadra"
+    ],
+    [
+      2073,
+      "Ashwin"
+    ],
+    [
+      2073,
+      "Kartik"
+    ],
+    [
+      2073,
+      "Mangsir"
+    ],
+    [
+      2073,
+      "Poush"
+    ],
+    [
+      2073,
+      "Magh"
+    ],
+    [
+      2073,
+      "Falgun"
+    ],
+    [
+      2073,
+      "Chaitra"
+    ],
+    [
+      2074,
+      "Baisakh"
+    ],
+    [
+      2074,
+      "Jestha"
+    ],
+    [
+      2074,
+      "Asar"
+    ],
+    [
+      2074,
+      "Shrawan"
+    ],
+    [
+      2074,
+      "Bhadra"
+    ],
+    [
+      2074,
+      "Ashwin"
+    ],
+    [
+      2074,
+      "Kartik"
+    ],
+    [
+      2074,
+      "Mangsir"
+    ],
+    [
+      2074,
+      "Poush"
+    ],
+    [
+      2074,
+      "Magh"
+    ],
+    [
+      2074,
+      "Falgun"
+    ],
+    [
+      2074,
+      "Chaitra"
+    ],
+    [
+      2075,
+      "Baisakh"
+    ],
+    [
+      2075,
+      "Jestha"
+    ],
+    [
+      2075,
+      "Asar"
+    ],
+    [
+      2075,
+      "Shrawan"
+    ],
+    [
+      2075,
+      "Bhadra"
+    ],
+    [
+      2075,
+      "Ashwin"
+    ],
+    [
+      2075,
+      "Kartik"
+    ],
+    [
+      2075,
+      "Mangsir"
+    ],
+    [
+      2075,
+      "Poush"
+    ],
+    [
+      2075,
+      "Magh"
+    ],
+    [
+      2075,
+      "Falgun"
+    ]
+  ],
+  "pre_window_end": [
+    2072,
+    "Mangsir"
+  ],
+  "effective_period": [
+    2073,
+    "Asar"
+  ],
+  "post_window_end": [
+    2075,
+    "Falgun"
+  ],
+  "event_bins": [
+    "-2",
+    "-1",
+    "-1",
+    "-1",
+    "-1",
+    "-1",
+    "transition",
+    "transition",
+    "transition",
+    "transition",
+    "transition",
+    "transition",
+    "transition",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "2",
+    "2",
+    "2",
+    "2",
+    "2",
+    "2",
+    "2",
+    "2"
+  ],
+  "pnl_ytd_cumulative": true,
+  "outcome_construction": "quarterly",
+  "blank_as_zero": [
+    "loan_written_off"
+  ],
+  "weighting": "unweighted",
+  "total_effect_panel": {
+    "start": [
+      2070,
+      "Baisakh"
+    ],
+    "end": [
+      2075,
+      "Falgun"
+    ],
+    "n_periods": 68,
+    "missing_months": [
+      [
+        2071,
+        "Chaitra"
+      ],
+      [
+        2072,
+        "Baisakh"
+      ],
+      [
+        2072,
+        "Jestha"
+      ]
+    ]
+  },
+  "total_effect_note": "",
+  "ytd_diagnostic": 0.08408539742231369,
+  "outcome_scaling": "divided by size (sum of top-level assets)",
+  "dose_pre": {
+    "ADBNL": -0.08094046264886856,
+    "EBL": -0.03436848148703575,
+    "Global": -0.05734787881374359,
+    "HBL": -0.040004879236221313,
+    "Kumari": -0.04049163684248924,
+    "Laxmi": -0.04430748149752617,
+    "MBL": -0.039397530257701874,
+    "NABIL": -0.020348282530903816,
+    "NBL": 0.0003131050616502762,
+    "NIC": -0.04838692024350166,
+    "NMB": -0.04930565878748894,
+    "NSBI": -0.04375820979475975,
+    "Prime": -0.04923953488469124,
+    "RBB": -0.0007697933469898999,
+    "SBL": -0.028077445924282074,
+    "SCBNL": -0.050106167793273926
+  },
+  "n_bootstrap": 9999,
+  "outcomes": {
+    "net_profit_loss": {
+      "n_missing_outcome": 510,
+      "did": {
+        "beta_dose": 0.024704438611948834,
+        "beta_exposure": -9.358946680168272e-05,
+        "beta_controls": {
+          "exposure_level": 9.74568919632892e-05,
+          "liquidity_ratio_pre_x_post": 0.000995669492798868,
+          "ldr_pre_x_post": 0.00026519494894183343,
+          "nrb_dependence_pre_x_post": 0.0031455068621708813,
+          "log_size_pre_x_post": 0.00041944214619398526
+        },
+        "n_obs": 169,
+        "residual_std": 0.0012262323293503058,
+        "se_dose": 0.01969723942943252,
+        "se_exposure": 8.734532236952712e-05,
+        "p_dose": 0.2305230523052305,
+        "p_exposure": 0.3639363936393639,
+        "n_clusters": 16,
+        "dropped_regressors": [],
+        "n_cells_nonfinite_regressor": 0
+      },
+      "did_ras_baseline": {
+        "beta_dose": 0.028070700000621996,
+        "beta_exposure": -0.00011355864687470337,
+        "beta_controls": {
+          "exposure_level": 0.00011538098857209801,
+          "liquidity_ratio_pre_x_post": -0.002107196403612111,
+          "ldr_pre_x_post": -0.00232885343343369,
+          "nrb_dependence_pre_x_post": 0.0015917656336573765,
+          "log_size_pre_x_post": -8.805274825734347e-05
+        },
+        "n_obs": 169,
+        "residual_std": 0.0012261280457897704,
+        "se_dose": 0.022365173372737142,
+        "se_exposure": 7.206662392152799e-05,
+        "p_dose": 0.22642264226422643,
+        "p_exposure": 0.17241724172417242,
+        "n_clusters": 16,
+        "dropped_regressors": [],
+        "n_cells_nonfinite_regressor": 0
+      },
+      "beta_dose_diff": -0.003366261388673162,
+      "beta_exposure_diff": 1.9969180073020647e-05,
+      "event_study": {
+        "reference_bin": -1,
+        "bins": [
+          "transition",
+          "0",
+          "1",
+          "2"
+        ],
+        "dose": {
+          "transition": {
+            "beta": 0.016197967483082748,
+            "se": 0.011973118143543852,
+            "p": 0.1395139513951395
+          },
+          "0": {
+            "beta": -0.0035140499425512063,
+            "se": 0.020207646770674166,
+            "p": 0.8650865086508651
+          },
+          "1": {
+            "beta": 0.004776215962276353,
+            "se": 0.01904923788552747,
+            "p": 0.8215821582158216
+          },
+          "2": {
+            "beta": 0.00919623444604499,
+            "se": 0.020388583323159612,
+            "p": 0.6451645164516452
+          }
+        },
+        "exposure": {
+          "transition": {
+            "beta": -7.897043453004862e-05,
+            "se": 3.935550952462798e-05,
+            "p": 0.14531453145314532
+          },
+          "0": {
+            "beta": -6.780229305026976e-05,
+            "se": 4.7954323510457486e-05,
+            "p": 0.18401840184018403
+          },
+          "1": {
+            "beta": -3.3859137276525754e-05,
+            "se": 4.5905177871150014e-05,
+            "p": 0.45784578457845787
+          },
+          "2": {
+            "beta": -4.33742267244922e-05,
+            "se": 5.064407227329737e-05,
+            "p": 0.43804380438043805
+          }
+        },
+        "n_obs": 210,
+        "n_clusters": 16,
+        "dropped_bins": [
+          "-2"
+        ],
+        "dropped_regressors": [],
+        "note": "",
+        "joint": {
+          "dose_post": {
+            "wald": 5.0540440030069265,
+            "p": 0.49814981498149813,
+            "q": 3,
+            "names": [
+              "dose[0]",
+              "dose[1]",
+              "dose[2]"
+            ]
+          },
+          "exposure_post": {
+            "wald": 18.976119930306147,
+            "p": 0.5481548154815482,
+            "q": 3,
+            "names": [
+              "exposure[0]",
+              "exposure[1]",
+              "exposure[2]"
+            ]
+          }
+        }
+      },
+      "rdd": {
+        "beta_left": 0.004751925822347403,
+        "beta_right": NaN,
+        "discontinuity": NaN,
+        "bandwidth": 0.02,
+        "n_left": 9,
+        "n_right": 0,
+        "n_banks_left": 3,
+        "n_banks_right": 0
+      },
+      "total_effect": {
+        "beta_dose": -0.007274205114401097,
+        "se_dose": 0.017760051540714555,
+        "p_dose": 0.7144714471447144,
+        "beta_lead": 0.007819091333960207,
+        "se_lead": 0.031921630198561854,
+        "p_lead": 0.6931693169316931,
+        "n_obs": 290,
+        "n_clusters": 16,
+        "pre_mean": 0.004169465973973274,
+        "effect_1sd": -0.00014630223062686652,
+        "dropped_regressors": [],
+        "note": "",
+        "extra": {},
+        "trend": {},
+        "post_centre": 1.9583333730697632
+      }
+    },
+    "loan_loss_provision": {
+      "n_missing_outcome": 526,
+      "did": {
+        "beta_dose": 0.007645864932207452,
+        "beta_exposure": 1.748828588061987e-05,
+        "beta_controls": {
+          "exposure_level": -2.534779143941875e-05,
+          "liquidity_ratio_pre_x_post": 0.002658898131567739,
+          "ldr_pre_x_post": -6.629829074547535e-05,
+          "nrb_dependence_pre_x_post": -0.0014745760226966133,
+          "log_size_pre_x_post": 0.00012060413800943268
+        },
+        "n_obs": 156,
+        "residual_std": 0.0013714839194316328,
+        "se_dose": 0.0198537008299288,
+        "se_exposure": 7.239188448470473e-05,
+        "p_dose": 0.6748674867486749,
+        "p_exposure": 0.8402840284028403,
+        "n_clusters": 16,
+        "dropped_regressors": [],
+        "n_cells_nonfinite_regressor": 0
+      },
+      "did_ras_baseline": {
+        "beta_dose": 0.0075181375324208655,
+        "beta_exposure": 2.3271914191728416e-05,
+        "beta_controls": {
+          "exposure_level": -2.9211444667159954e-05,
+          "liquidity_ratio_pre_x_post": 0.0037641027408200235,
+          "ldr_pre_x_post": 0.0007873380039326625,
+          "nrb_dependence_pre_x_post": -0.0012107119703898873,
+          "log_size_pre_x_post": 0.000281274892869076
+        },
+        "n_obs": 156,
+        "residual_std": 0.0013745694513126513,
+        "se_dose": 0.019126520740855447,
+        "se_exposure": 6.289933310341307e-05,
+        "p_dose": 0.665966596659666,
+        "p_exposure": 0.7382738273827383,
+        "n_clusters": 16,
+        "dropped_regressors": [],
+        "n_cells_nonfinite_regressor": 0
+      },
+      "beta_dose_diff": 0.00012772739978658687,
+      "beta_exposure_diff": -5.783628311108547e-06,
+      "event_study": {
+        "reference_bin": -1,
+        "bins": [
+          "transition",
+          "0",
+          "1",
+          "2"
+        ],
+        "dose": {
+          "transition": {
+            "beta": 0.010217990401169982,
+            "se": 0.007989720615081462,
+            "p": 0.24992499249924993
+          },
+          "0": {
+            "beta": -0.00929831825579226,
+            "se": 0.011339512906590474,
+            "p": 0.42424242424242425
+          },
+          "1": {
+            "beta": -0.003049416233129002,
+            "se": 0.015347433956933462,
+            "p": 0.8697869786978698
+          },
+          "2": {
+            "beta": 0.0017311418492886952,
+            "se": 0.015378718913771513,
+            "p": 0.9250925092509251
+          }
+        },
+        "exposure": {
+          "transition": {
+            "beta": 3.409555547957511e-05,
+            "se": 2.8405762463000983e-05,
+            "p": 0.24932493249324933
+          },
+          "0": {
+            "beta": 1.5552905705749026e-05,
+            "se": 4.4076478659145316e-05,
+            "p": 0.7445744574457446
+          },
+          "1": {
+            "beta": 1.0368935517488739e-05,
+            "se": 5.310556739312651e-05,
+            "p": 0.8509850985098509
+          },
+          "2": {
+            "beta": 2.4308526284262984e-05,
+            "se": 4.4847370830289394e-05,
+            "p": 0.6193619361936193
+          }
+        },
+        "n_obs": 194,
+        "n_clusters": 16,
+        "dropped_bins": [
+          "-2"
+        ],
+        "dropped_regressors": [],
+        "note": "",
+        "joint": {
+          "dose_post": {
+            "wald": 7.001393628256426,
+            "p": 0.47674767476747676,
+            "q": 3,
+            "names": [
+              "dose[0]",
+              "dose[1]",
+              "dose[2]"
+            ]
+          },
+          "exposure_post": {
+            "wald": 26.26880779362846,
+            "p": 0.12431243124312431,
+            "q": 3,
+            "names": [
+              "exposure[0]",
+              "exposure[1]",
+              "exposure[2]"
+            ]
+          }
+        }
+      },
+      "rdd": {
+        "beta_left": 0.004433350171893835,
+        "beta_right": NaN,
+        "discontinuity": NaN,
+        "bandwidth": 0.02,
+        "n_left": 9,
+        "n_right": 0,
+        "n_banks_left": 3,
+        "n_banks_right": 0
+      },
+      "total_effect": {
+        "beta_dose": 0.011915844216616095,
+        "se_dose": 0.010335232648495108,
+        "p_dose": 0.3343334333433343,
+        "beta_lead": 0.0018520419835320078,
+        "se_lead": 0.005329020835070566,
+        "p_lead": 0.757975797579758,
+        "n_obs": 268,
+        "n_clusters": 16,
+        "pre_mean": 0.000910895352717489,
+        "effect_1sd": 0.00023965705685723065,
+        "dropped_regressors": [],
+        "note": "",
+        "extra": {},
+        "trend": {},
+        "post_centre": 1.9583333730697632
+      }
+    },
+    "loan_written_off": {
+      "n_missing_outcome": 510,
+      "did": {
+        "beta_dose": -0.00045293426585669896,
+        "beta_exposure": -1.3365370630039723e-06,
+        "beta_controls": {
+          "exposure_level": 1.3298229036305272e-06,
+          "liquidity_ratio_pre_x_post": -0.0006104984820300215,
+          "ldr_pre_x_post": -0.0002443096920645246,
+          "nrb_dependence_pre_x_post": -2.686906327578506e-05,
+          "log_size_pre_x_post": -5.584953559261496e-05
+        },
+        "n_obs": 169,
+        "residual_std": 8.666002581814974e-05,
+        "se_dose": 0.0006215306273877894,
+        "se_exposure": 3.1070369542688394e-06,
+        "p_dose": 0.5652565256525652,
+        "p_exposure": 0.7151715171517151,
+        "n_clusters": 16,
+        "dropped_regressors": [],
+        "n_cells_nonfinite_regressor": 0
+      },
+      "did_ras_baseline": {
+        "beta_dose": -0.00013360824074525447,
+        "beta_exposure": -2.827953353822124e-06,
+        "beta_controls": {
+          "exposure_level": 2.868125496595384e-06,
+          "liquidity_ratio_pre_x_post": -0.0007023974145965,
+          "ldr_pre_x_post": -0.00034135537460116503,
+          "nrb_dependence_pre_x_post": -7.916186938996368e-05,
+          "log_size_pre_x_post": -8.17732086617373e-05
+        },
+        "n_obs": 169,
+        "residual_std": 8.662933266193569e-05,
+        "se_dose": 0.0006974787366085237,
+        "se_exposure": 2.9610441059109262e-06,
+        "p_dose": 0.8583858385838584,
+        "p_exposure": 0.4296429642964296,
+        "n_clusters": 16,
+        "dropped_regressors": [],
+        "n_cells_nonfinite_regressor": 0
+      },
+      "beta_dose_diff": -0.0003193260251114445,
+      "beta_exposure_diff": 1.491416290818152e-06,
+      "event_study": {
+        "reference_bin": -1,
+        "bins": [
+          "transition",
+          "0",
+          "1",
+          "2"
+        ],
+        "dose": {
+          "transition": {
+            "beta": 0.0007027729729301752,
+            "se": 0.0006364102281391305,
+            "p": 0.26872687268726875
+          },
+          "0": {
+            "beta": 0.0004518848093223851,
+            "se": 0.0010122860313749964,
+            "p": 0.746074607460746
+          },
+          "1": {
+            "beta": 0.00037801447689655954,
+            "se": 0.0011307010756980338,
+            "p": 0.7932793279327933
+          },
+          "2": {
+            "beta": 0.00041715931676344247,
+            "se": 0.0010434079383867894,
+            "p": 0.7477747774777478
+          }
+        },
+        "exposure": {
+          "transition": {
+            "beta": -1.4708205919068155e-06,
+            "se": 1.2541166750374003e-06,
+            "p": 0.3234323432343234
+          },
+          "0": {
+            "beta": -1.8575073902685271e-06,
+            "se": 1.4924508979153313e-06,
+            "p": 0.32553255325532554
+          },
+          "1": {
+            "beta": -2.0184948492694718e-06,
+            "se": 1.3148753261671255e-06,
+            "p": 0.22552255225522552
+          },
+          "2": {
+            "beta": -1.4042391540681753e-06,
+            "se": 1.3456613174033216e-06,
+            "p": 0.36633663366336633
+          }
+        },
+        "n_obs": 210,
+        "n_clusters": 16,
+        "dropped_bins": [
+          "-2"
+        ],
+        "dropped_regressors": [],
+        "note": "",
+        "joint": {
+          "dose_post": {
+            "wald": 0.408148336554521,
+            "p": 0.9697969796979699,
+            "q": 3,
+            "names": [
+              "dose[0]",
+              "dose[1]",
+              "dose[2]"
+            ]
+          },
+          "exposure_post": {
+            "wald": 4.077848174889272,
+            "p": 0.30043004300430043,
+            "q": 3,
+            "names": [
+              "exposure[0]",
+              "exposure[1]",
+              "exposure[2]"
+            ]
+          }
+        }
+      },
+      "rdd": {
+        "beta_left": -0.0,
+        "beta_right": NaN,
+        "discontinuity": NaN,
+        "bandwidth": 0.02,
+        "n_left": 9,
+        "n_right": 0,
+        "n_banks_left": 3,
+        "n_banks_right": 0
+      },
+      "total_effect": {
+        "beta_dose": -0.00200347763055574,
+        "se_dose": 0.0014961540497665676,
+        "p_dose": 0.27972797279727973,
+        "beta_lead": -0.0005192065713900122,
+        "se_lead": 0.0005626933076784111,
+        "p_lead": 0.39523952395239526,
+        "n_obs": 290,
+        "n_clusters": 16,
+        "pre_mean": 3.077421206398867e-05,
+        "effect_1sd": -4.029488332423338e-05,
+        "dropped_regressors": [],
+        "note": "",
+        "extra": {},
+        "trend": {},
+        "post_centre": 1.9583333730697632
+      }
+    },
+    "nim": {
+      "n_missing_outcome": 514,
+      "did": {
+        "beta_dose": 0.08217413068169092,
+        "beta_exposure": -0.00020414118225610642,
+        "beta_controls": {
+          "exposure_level": 0.00021102911760963964,
+          "liquidity_ratio_pre_x_post": 0.003383719313672493,
+          "ldr_pre_x_post": -0.0024666910782539645,
+          "nrb_dependence_pre_x_post": -0.0012594472119215106,
+          "log_size_pre_x_post": -0.000918180027116171
+        },
+        "n_obs": 167,
+        "residual_std": 0.0010112594178473767,
+        "se_dose": 0.02365498245866711,
+        "se_exposure": 0.0001025780965120448,
+        "p_dose": 0.039503950395039504,
+        "p_exposure": 0.18331833183318333,
+        "n_clusters": 16,
+        "dropped_regressors": [],
+        "n_cells_nonfinite_regressor": 0
+      },
+      "did_ras_baseline": {
+        "beta_dose": 0.08799226256475781,
+        "beta_exposure": -0.0002184429902929975,
+        "beta_controls": {
+          "exposure_level": 0.00022508021161154264,
+          "liquidity_ratio_pre_x_post": 0.00016150195852177376,
+          "ldr_pre_x_post": -0.005470257962481023,
+          "nrb_dependence_pre_x_post": -0.003362971994851278,
+          "log_size_pre_x_post": -0.0016442948429996596
+        },
+        "n_obs": 167,
+        "residual_std": 0.0010067236018458812,
+        "se_dose": 0.02190458702613653,
+        "se_exposure": 7.161419634726247e-05,
+        "p_dose": 0.0111011101110111,
+        "p_exposure": 0.08390839083908391,
+        "n_clusters": 16,
+        "dropped_regressors": [],
+        "n_cells_nonfinite_regressor": 0
+      },
+      "beta_dose_diff": -0.005818131883066888,
+      "beta_exposure_diff": 1.4301808036891071e-05,
+      "event_study": {
+        "reference_bin": -1,
+        "bins": [
+          "transition",
+          "0",
+          "1",
+          "2"
+        ],
+        "dose": {
+          "transition": {
+            "beta": 0.045361405103127105,
+            "se": 0.01913924597575927,
+            "p": 0.05920592059205921
+          },
+          "0": {
+            "beta": 0.031881584384726575,
+            "se": 0.02752873946832433,
+            "p": 0.3708370837083708
+          },
+          "1": {
+            "beta": 0.05941356326255463,
+            "se": 0.025266673397347943,
+            "p": 0.0777077707770777
+          },
+          "2": {
+            "beta": 0.04117298934854532,
+            "se": 0.02369581737786566,
+            "p": 0.15851585158515852
+          }
+        },
+        "exposure": {
+          "transition": {
+            "beta": -0.00014960621990164094,
+            "se": 3.647911764767115e-05,
+            "p": 0.019201920192019203
+          },
+          "0": {
+            "beta": -0.0001364212433090099,
+            "se": 3.221072164904794e-05,
+            "p": 0.0186018601860186
+          },
+          "1": {
+            "beta": -0.00011826575824759292,
+            "se": 4.0476133237619346e-05,
+            "p": 0.0387038703870387
+          },
+          "2": {
+            "beta": -0.00011953871864644527,
+            "se": 3.951207988660856e-05,
+            "p": 0.034503450345034506
+          }
+        },
+        "n_obs": 206,
+        "n_clusters": 16,
+        "dropped_bins": [
+          "-2"
+        ],
+        "dropped_regressors": [],
+        "note": "",
+        "joint": {
+          "dose_post": {
+            "wald": 26.860032979779607,
+            "p": 0.13651365136513652,
+            "q": 3,
+            "names": [
+              "dose[0]",
+              "dose[1]",
+              "dose[2]"
+            ]
+          },
+          "exposure_post": {
+            "wald": 30.59630357393381,
+            "p": 0.037703770377037704,
+            "q": 3,
+            "names": [
+              "exposure[0]",
+              "exposure[1]",
+              "exposure[2]"
+            ]
+          }
+        }
+      },
+      "rdd": {
+        "beta_left": 0.00815430749207735,
+        "beta_right": NaN,
+        "discontinuity": NaN,
+        "bandwidth": 0.02,
+        "n_left": 9,
+        "n_right": 0,
+        "n_banks_left": 3,
+        "n_banks_right": 0
+      },
+      "total_effect": {
+        "beta_dose": 0.01956670065459347,
+        "se_dose": 0.027047764619609168,
+        "p_dose": 0.5661566156615662,
+        "beta_lead": -0.006635752469848998,
+        "se_lead": 0.008584658945103773,
+        "p_lead": 0.4373437343734373,
+        "n_obs": 284,
+        "n_clusters": 16,
+        "pre_mean": 0.008006684482097626,
+        "effect_1sd": 0.0003935346758517797,
+        "dropped_regressors": [],
+        "note": "",
+        "extra": {},
+        "trend": {},
+        "post_centre": 1.9583333730697632
+      }
+    }
+  }
+}

@@ -1,0 +1,2 @@
+runs: ['baseline (full panel, monthly, unweighted)', 'main (post to Falgun 2075, quarterly, unweighted)', 'clean_window (post to Falgun 2075, monthly, unweighted)']
+wrote event_study.png, did_forest.png, did_table.md, extraction_audit.png to /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/results/figures

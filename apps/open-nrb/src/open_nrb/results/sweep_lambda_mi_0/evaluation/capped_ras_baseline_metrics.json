@@ -1,0 +1,68 @@
+{
+  "config": "src/open_nrb/experiments/configs/sweep_lambda_mi_0.yaml",
+  "cap": 6.0,
+  "per_seed": [
+    {
+      "seed": 0,
+      "capped_ras_mean": 0.4834472907258997,
+      "uncapped_ras_mean": 0.5964964003132791,
+      "model_mean": 0.46137288698158735
+    },
+    {
+      "seed": 1,
+      "capped_ras_mean": 0.38840734582435205,
+      "uncapped_ras_mean": 0.5914611217502417,
+      "model_mean": 0.34732224082918184
+    },
+    {
+      "seed": 2,
+      "capped_ras_mean": 0.46652885660759436,
+      "uncapped_ras_mean": 0.5666206314855875,
+      "model_mean": 0.43712650530721137
+    },
+    {
+      "seed": 3,
+      "capped_ras_mean": 0.5083013274809713,
+      "uncapped_ras_mean": 0.5327266080026211,
+      "model_mean": 0.46747488664555215
+    },
+    {
+      "seed": 4,
+      "capped_ras_mean": 0.478873873422763,
+      "uncapped_ras_mean": 0.5412773966540941,
+      "model_mean": 0.4342939833200307
+    }
+  ],
+  "aggregates": {
+    "capped_ras": {
+      "mean": 0.46511173881231616,
+      "std": 0.04068538191753185
+    },
+    "uncapped_ras": {
+      "mean": 0.5657164316411647,
+      "std": 0.025677258469037838
+    },
+    "model": {
+      "mean": 0.4295181006167127,
+      "std": 0.043109862592526534
+    }
+  },
+  "cap_contribution_capped_vs_uncapped": {
+    "n_seeds": 5,
+    "mean_paired_difference": -0.10060469282884861,
+    "ttest_rel": {
+      "statistic": -3.361569719092017,
+      "p_value": 0.028263665888022326
+    },
+    "wilcoxon_min_achievable_p": 0.0625
+  },
+  "learned_prior_contribution_model_vs_capped": {
+    "n_seeds": 5,
+    "mean_paired_difference": -0.035593638195603405,
+    "ttest_rel": {
+      "statistic": -8.396584059087461,
+      "p_value": 0.0011009075332534654
+    },
+    "wilcoxon_min_achievable_p": 0.0625
+  }
+}

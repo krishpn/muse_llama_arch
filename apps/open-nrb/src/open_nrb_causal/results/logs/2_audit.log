@@ -1,0 +1,181 @@
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/evaluation/audit_bs_extraction.py:137: UserWarning: 1844 rows dropped: belong to a source_file superseded by a '-NEW' resubmission of the same bulletin
+  for r in read_rows(args.csv):
+4094 sheets (42 banks, 156 source files)
+layout: numbering_reset=1537, total_rows=2557  (numbering_reset = no TOTAL Liabilities row; liab checked vs TOTAL ASSETS, balance n/a)
+
+BY FISCAL YEAR   n    pass rate:  liab  assets capital balance  mean frag  median |assets gap|
+  FY2069     82                100%   100%   100%    n/a        0.0       0.00%
+  FY2070    336                100%   100%   100%    n/a        0.2       0.00%
+  FY2071    251                100%   100%   100%    n/a        0.1       0.00%
+  FY2072    312                100%   100%    37%    n/a        0.1       0.00%
+  FY2073    312                100%   100%    60%    n/a        0.0       0.00%
+  FY2074    325                100%   100%   100%   100%        0.0       0.00%
+  FY2075    318                 71%    71%    71%   100%        8.1       0.00%
+  FY2076    317                 20%    22%    18%   100%       15.2      15.06%
+  FY2077    308                 26%    28%    24%   100%       11.2       9.08%
+  FY2078    275                 92%    91%    81%   100%        2.5       0.04%
+  FY2079    296                 50%    50%    41%   100%        6.7       0.64%
+  FY2080    312                  1%     0%     2%   100%       12.2      37.78%
+  FY2081    312                  1%     2%     0%   100%       12.3      37.61%
+  FY2082    312                  1%     2%     3%   100%       15.2      34.83%
+  FY2083     26                  0%     0%     0%   100%       19.9      27.51%
+
+BY SOURCE FILE (chronological)   n    pass rate:  liab  assets capital balance  mean frag  median |assets gap|
+  Monthly_Statistics-2070-01-Mid-May2013.pdf    (2070, 'Baisakh')    27   100%   100%   100%    n/a        0.0       0.00%
+  Monthly_Statistics-2070-02-Mid-June2013.pdf   (2070, 'Jestha')     27   100%   100%   100%    n/a        0.0       0.00%
+  Asar_2070.pdf                                 (2070, 'Asar')       28   100%   100%   100%    n/a        0.1       0.00%
+  Monthly_Statistics-2070-04-Mid-Aug-2013.pdf   (2070, 'Shrawan')    28   100%   100%   100%    n/a        0.1       0.00%
+  Monthly_Statistics-2070-05-Mid-Sep-2013.pdf   (2070, 'Bhadra')     28   100%   100%   100%    n/a        0.2       0.00%
+  Monthly_Statistics-2070-06-Mid-Oct-2013.pdf   (2070, 'Ashwin')     28   100%   100%   100%    n/a        0.1       0.00%
+  Monthly_Statistics-2070-07-Mid-Nov-2013.pdf   (2070, 'Kartik')     28   100%   100%   100%    n/a        0.2       0.00%
+  Monthly_Statistics-2070-08-Mid-Dec-2013.pdf   (2070, 'Mangsir')    28   100%   100%   100%    n/a        0.2       0.00%
+  Monthly_Statistics-2070-09-Mid-Jan-2014.pdf   (2070, 'Poush')      28   100%   100%   100%    n/a        0.2       0.00%
+  Monthly_Statistics-2070-10-Mid-Feb-2014.pdf   (2070, 'Magh')       28   100%   100%   100%    n/a        0.3       0.00%
+  Monthly_Statistics-2070-11-Mid-Mar-2014.pdf   (2070, 'Falgun')     28   100%   100%   100%    n/a        0.2       0.00%
+  Monthly_Statistics-2070-12-Mid-Apr-2014.pdf   (2070, 'Chaitra')    28   100%   100%   100%    n/a        0.1       0.00%
+  Monthly_Statistics-2071-01-Mid-May-2014.pdf   (2071, 'Baisakh')    28   100%   100%   100%    n/a        0.2       0.00%
+  Monthly_Statistics-2071-02-Mid-June-2014.pdf  (2071, 'Jestha')     28   100%   100%   100%    n/a        0.1       0.00%
+  Monthly_Statistics-2071-03-Mid-July-2014.pdf  (2071, 'Asar')       28   100%   100%   100%    n/a        0.1       0.00%
+  Monthly_Statistics-2071-04-Mid-Aug-2014.pdf   (2071, 'Shrawan')    28   100%   100%   100%    n/a        0.1       0.00%
+  Monthly_Statistics-2071-05-Mid-Sep-2014.pdf   (2071, 'Bhadra')     28   100%   100%   100%    n/a        0.1       0.00%
+  Monthly_Statistics-2071-06-Mid-Oct-2014-NEW.p (2071, 'Ashwin')     28   100%   100%   100%    n/a        0.1       0.00%
+  Monthly_Statistics-2071-07-Mid-Nov-2014.pdf   (2071, 'Kartik')     29   100%   100%   100%    n/a        0.1       0.00%
+  Monthly_Statistics-2071-08-Mid-Dec-2014.pdf   (2071, 'Mangsir')    29   100%   100%   100%    n/a        0.1       0.00%
+  Monthly_Statistics-2071-09-Mid-Jan-2015.pdf   (2071, 'Poush')      28   100%   100%   100%    n/a        0.2       0.00%
+  Monthly_Statistics-2071-10-Mid-Feb-2015.pdf   (2071, 'Magh')       28   100%   100%   100%    n/a        0.2       0.00%
+  Monthly_Statistics-2071-11-Mid-March-2015.pdf (2071, 'Falgun')     27    96%   100%    96%    n/a        0.1       0.00%
+  Monthly_Statistics-2072-03-Mid-July-2015.pdf  (2072, 'Asar')       26   100%   100%   100%    n/a        0.0       0.00%
+  Monthly_Statistics-2072-04-Mid-Aug-2015.pdf   (2072, 'Shrawan')    26   100%   100%   100%    n/a        0.0       0.00%
+  Monthly_Statistics-2072-05-Mid-Sep-2015.pdf   (2072, 'Bhadra')     26   100%   100%   100%    n/a        0.1       0.00%
+  Monthly_Statistics-2072-06-Mid-Oct-2015.pdf   (2072, 'Ashwin')     26   100%   100%   100%    n/a        0.0       0.00%
+  Monthly_Statistics-2072-07-Mid-Nov-2015.pdf   (2072, 'Kartik')     26   100%   100%   100%    n/a        0.0       0.00%
+  Monthly_Statistics-2072-08-Mid-Dec-2015.pdf   (2072, 'Mangsir')    26   100%   100%     4%    n/a        0.1       0.00%
+  Monthly_Statistics-2072-09-Mid-Jan-2016.pdf   (2072, 'Poush')      26   100%   100%     8%    n/a        0.1       0.00%
+  Monthly_Statistics-2072-10-Mid-Feb-2016.pdf   (2072, 'Magh')       26   100%   100%     8%    n/a        0.1       0.00%
+  Monthly_Statistics-2072-11-Mid-Mar-2016.pdf   (2072, 'Falgun')     26   100%   100%     8%    n/a        0.0       0.00%
+  Monthly_Statistics-2072-12-Mid-Apr-2016.pdf   (2072, 'Chaitra')    26   100%   100%     8%    n/a        0.0       0.00%
+  Monthly_Statistics-2073-01-Mid-May-2016.pdf   (2073, 'Baisakh')    26   100%   100%     4%    n/a        0.1       0.00%
+  Monthly_Statistics-2073-02-Mid-Jun-2016.pdf   (2073, 'Jestha')     26   100%   100%     4%    n/a        0.2       0.00%
+  Monthly_Statistics-2073-03-Mid-July-2016.pdf  (2073, 'Asar')       26   100%   100%     4%    n/a        0.1       0.00%
+  Monthly_Statistics-2073-04-Mid-Aug-2016.pdf   (2073, 'Shrawan')    26   100%   100%     4%    n/a        0.0       0.00%
+  Monthly_Statistics-2073-05-Mid-Sep-2016.pdf   (2073, 'Bhadra')     26   100%   100%     4%    n/a        0.0       0.00%
+  Monthly_Statistics-2073-06-Mid-Oct-2016.pdf   (2073, 'Ashwin')     26   100%   100%     4%    n/a        0.1       0.00%
+  Monthly_Statistics-2073-07-Mid-Nov-2016.pdf   (2073, 'Kartik')     26   100%   100%     4%    n/a        0.0       0.00%
+  Monthly_Statistics-2073-08-Mid-Dec-2016.pdf   (2073, 'Mangsir')    26   100%   100%     4%    n/a        0.0       0.00%
+  Monthly_Statistics-2073-09-Mid-Jan-2017.pdf   (2073, 'Poush')      26   100%   100%   100%    n/a        0.1       0.00%
+  Monthly_Statistics-2073-10-Mid-Feb-2017.pdf   (2073, 'Magh')       26   100%   100%   100%    n/a        0.0       0.00%
+  Monthly_Statistics-2073-11-Mid-Mar-2017.pdf   (2073, 'Falgun')     26   100%   100%   100%    n/a        0.0       0.00%
+  Monthly_Statistics-2073-12-Mid-Apr-2017.pdf   (2073, 'Chaitra')    26   100%   100%   100%    n/a        0.0       0.00%
+  Baishakh-2074.pdf                             (2074, 'Baisakh')    26   100%   100%   100%    n/a        0.0       0.00%
+  Jestha-2074.pdf                               (2074, 'Jestha')     26   100%   100%   100%    n/a        0.0       0.00%
+  Asar-2074.pdf                                 (2074, 'Asar')       26   100%   100%   100%    n/a        0.0       0.00%
+  Saun-2074.pdf                                 (2074, 'Shrawan')    27   100%   100%   100%    n/a        0.1       0.00%
+  Bhadra-2074.pdf                               (2074, 'Bhadra')     27   100%   100%   100%    n/a        0.0       0.00%
+  Aswin-2074.pdf                                (2074, 'Ashwin')     27   100%   100%   100%    n/a        0.0       0.00%
+  Kattik-2074.pdf                               (2074, 'Kartik')     27   100%   100%   100%    n/a        0.0       0.00%
+  Mangsir-2074.pdf                              (2074, 'Mangsir')    27   100%   100%   100%    n/a        0.0       0.00%
+  Poush-2074.pdf                                (2074, 'Poush')      27   100%   100%   100%    n/a        0.0       0.00%
+  Magh-2074.pdf                                 (2074, 'Magh')       27   100%   100%   100%    n/a        0.0       0.00%
+  Falgun-2074.pdf                               (2074, 'Falgun')     27   100%   100%   100%    n/a        0.0       0.00%
+  Chait-2074.pdf                                (2074, 'Chaitra')    28   100%   100%   100%    n/a        0.0       0.00%
+  Baishakh-2075.pdf                             (2075, 'Baisakh')    27   100%   100%   100%   100%        0.0       0.00%
+  Jestha-2075_Jun-2018.pdf                      (2075, 'Jestha')     27   100%   100%   100%   100%        0.0       0.00%
+  Asar_2075.pdf                                 (2075, 'Asar')       27   100%   100%   100%   100%        0.1       0.00%
+  Saun_2075Mid-Aug-2018.pdf                     (2075, 'Shrawan')    27   100%   100%   100%   100%        0.1       0.00%
+  Bhadau_2075Mid-Sep-2018.pdf                   (2075, 'Bhadra')     27   100%   100%   100%   100%        0.1       0.00%
+  Asoj_2075-Mid-Oct-2018.pdf                    (2075, 'Ashwin')     27   100%   100%   100%   100%        0.1       0.00%
+  Kartik_2075-Mid-Nov-2018.pdf                  (2075, 'Kartik')     27   100%   100%   100%   100%        0.0       0.00%
+  Mangsir_2075Mid-Dec-2018.pdf                  (2075, 'Mangsir')    27   100%   100%   100%   100%        0.0       0.00%
+  Paush_2075Mid-Jan-2019.pdf                    (2075, 'Poush')      27   100%   100%   100%   100%        0.0       0.00%
+  Magh_2075Mid-Feb-2019-V1.0.pdf                (2075, 'Magh')       27   100%   100%   100%   100%        0.0       0.00%
+  Falgun_2075-Mid-Mar2019.pdf                   (2075, 'Falgun')     27   100%   100%   100%   100%        0.1       0.00%
+  Chaitra_2075-Mid-April2019.pdf                (2075, 'Chaitra')    26    15%    15%    15%   100%       23.5      13.39%
+  Baisakh_2076-Mid-May-2019-V1.0.pdf            (2076, 'Baisakh')    26    12%    12%    12%   100%       25.6      15.58%
+  Jestha_2076-Mid-Jun-2019.pdf                  (2076, 'Jestha')     26    12%    12%    12%   100%       25.8      16.33%
+  Asar_2076-Mid-Jul-2019.pdf                    (2076, 'Asar')       24     0%     0%     0%   100%       25.9     221.66%
+  Shrawan_2076_04.pdf                           (2076, 'Shrawan')    26    27%    23%    15%   100%        1.7      67.08%
+  Monthly-Statistics-_-2076_05-Sep-2019-V1.0.pd (2076, 'Bhadra')     25   100%    96%    76%   100%        0.2       0.02%
+  Monthly-Statistics-_-2076_06-Oct-2019.pdf     (2076, 'Ashwin')     25    88%   100%    76%   100%        0.0       0.00%
+  Monthly-Statistics-_-2076_07-Nov-2019_NFRS-V2 (2076, 'Kartik')     26    31%    46%    23%   100%       12.1       1.00%
+  Monthly-Statistics-_-2076_08-Dec-2019_V1.0.pd (2076, 'Mangsir')    26     4%    12%     0%   100%       24.3      14.92%
+  Monthly-Statistics-_-2076_09-Jan-2020.pdf     (2076, 'Poush')      27     4%     0%     4%   100%       15.9      24.50%
+  Monthly-Statistics-_-2076_10-Feb-2020.pdf     (2076, 'Magh')       27     0%     0%     7%   100%       16.2      18.87%
+  Monthly-Statistics-_-2076_11-Mar-2020.pdf     (2076, 'Falgun')     27     0%     0%    11%   100%       15.6      17.66%
+  Monthly-Statistics-_-2076_12-Apr-2020-V3.0.pd (2076, 'Chaitra')    27     0%     0%     0%   100%       26.3      17.83%
+  Monthly-Statistics-_-2077_01-May-2020-1.pdf   (2077, 'Baisakh')    27     0%     0%     0%   100%       26.9      19.65%
+  Monthly-Statistics-_-2077_02-June-2020.pdf    (2077, 'Jestha')     27     0%     0%     0%   100%       26.2      20.48%
+  Monthly-Statistics-_-2077_03-July-2020.pdf    (2077, 'Asar')       27     0%     0%    11%   100%       14.0      13.06%
+  Monthly-Statistics-_-2077_04-Aug-2020-V1.0.pd (2077, 'Shrawan')    27     7%     0%     4%   100%       13.7      13.32%
+  Monthly-Statistics-_-2077_05-Sep-2020.pdf     (2077, 'Bhadra')     27     0%     0%     4%   100%       14.7      13.10%
+  Monthly-Statistics-_-2077_06-Oct-2020.pdf     (2077, 'Ashwin')     27     4%     0%     4%   100%       14.3      11.45%
+  Monthly-Statistics-_-2077_07-Nov-2020.pdf     (2077, 'Kartik')     27     0%     0%     7%   100%       14.9      14.31%
+  Monthly-Statistics-_-2077_08-Dec-2020.pdf     (2077, 'Mangsir')    27     4%     0%     7%   100%       15.5      11.87%
+  Monthly-Statistics-_-2077_09-Jan-2021-V3.0-1. (2077, 'Poush')      27     0%     7%     7%   100%       15.3      13.60%
+  Monthly-Statistics-_-2077_10-Feb-2021-V1.0.pd (2077, 'Magh')       22     0%    18%     0%   100%       14.4      67.74%
+  Monthly-Statistics-_-2077_11-Mar-2021-V1.0.pd (2077, 'Falgun')     22     0%    18%     0%   100%       14.3      66.42%
+  Monthly-Statistics-_-2077_12_v1.0Apr-2021.pdf (2077, 'Chaitra')    25   100%    96%    84%   100%        0.0       0.00%
+  Monthly-Statistics-_-2078_01-May-2021-V1.pdf  (2078, 'Baisakh')    27     0%     4%    11%   100%       16.5      13.42%
+  Monthly-Statistics-_-2078_02-Jun-2021.pdf     (2078, 'Jestha')     25   100%   100%    80%   100%        0.0       0.00%
+  Monthly-Statistics-_-2078_03-Jul-2021-V1.0.pd (2078, 'Asar')       25   100%   100%    80%   100%        0.0       0.01%
+  Monthly-Statistics-_-2078_04-Aug-2021-1.pdf   (2078, 'Shrawan')    25   100%   100%    92%   100%        0.1       0.01%
+  Bhadra_2078_V1.1.pdf                          (2078, 'Bhadra')     25   100%   100%    92%   100%        0.1       0.03%
+  Ashwin2078_NFRS_Publish.pdf                   (2078, 'Ashwin')     25    24%     0%     0%   100%       26.4      15.64%
+  Mangsir-2078.pdf                              (2078, 'Mangsir')    25    96%   100%    88%   100%        0.0       0.03%
+  Poush-2078_Publish2.pdf                       (2078, 'Poush')      25   100%   100%    92%   100%        0.0       0.03%
+  Magh2078_NFRS_Publish-1.pdf                   (2078, 'Magh')       25    92%   100%    92%   100%        0.0       0.01%
+  Falgun2078_NFRS_Publish.pdf                   (2078, 'Falgun')     25   100%   100%    88%   100%        0.0       0.01%
+  Chaitra-2078.pdf                              (2078, 'Chaitra')    25   100%   100%    92%   100%        0.2       0.01%
+  Baishakh-2079.pdf                             (2079, 'Baisakh')    25    96%   100%    92%   100%        0.0       0.02%
+  Jestha_2079_PublishV1.pdf                     (2079, 'Jestha')     25   100%   100%    92%   100%        0.2       0.01%
+  Ashar2079_Publish-1.pdf                       (2079, 'Asar')       25   100%   100%    76%   100%        0.2       0.03%
+  Shrawan_2079_NFRSV1.pdf                       (2079, 'Shrawan')    25   100%   100%    88%   100%        0.1       0.02%
+  Bhadra_2079_Publish-1.pdf                     (2079, 'Bhadra')     25   100%   100%    92%   100%        0.1       0.02%
+  Asoj2079_Publish-V1.pdf                       (2079, 'Ashwin')     25   100%    96%    76%   100%        0.0       0.01%
+  Kartik2079_publish.pdf                        (2079, 'Kartik')     25   100%   100%    80%   100%        0.0       0.02%
+  Mangshir_2079_Publish.pdf                     (2079, 'Mangsir')    25   100%   100%    84%   100%        0.0       0.02%
+  Poush2079_Publish.pdf                         (2079, 'Poush')      25    92%    88%    64%   100%        0.1       0.01%
+  Magh_2079_Publish-5.pdf                       (2079, 'Magh')       24     0%     0%     0%   100%       12.1      59.65%
+  Falgun_2079_Publish-4.pdf                     (2079, 'Falgun')     24     0%     4%     0%   100%       12.6      47.68%
+  Chaitra_2079_Publish.pdf                      (2079, 'Chaitra')    24     0%     0%     0%   100%       12.5      46.61%
+  Baisakh_2080_Publish-1.pdf                    (2080, 'Baisakh')    24     0%     0%     0%   100%       15.4     728.76%
+  Jestha_2080_Publish.pdf                       (2080, 'Jestha')     24     0%     0%     0%   100%       15.0     499.22%
+  Asar_2080_Publish.pdf                         (2080, 'Asar')       26     4%     0%     0%   100%       13.0      34.85%
+  Saun_2080_Publish-3.pdf                       (2080, 'Shrawan')    26     0%     0%     0%   100%       12.6      35.10%
+  Bhadra_2080_Publish-1.pdf                     (2080, 'Bhadra')     26     0%     0%     4%   100%       12.4      36.38%
+  Asoj_2080_publish.pdf                         (2080, 'Ashwin')     26     0%     0%     4%   100%       12.8      38.03%
+  Kartik_2080_Publish.pdf                       (2080, 'Kartik')     26     0%     0%     4%   100%       12.4      43.52%
+  Mangshir_2080_Publish.pdf                     (2080, 'Mangsir')    26     0%     0%     0%   100%       12.6      37.14%
+  Poush_2080_Publish-2.pdf                      (2080, 'Poush')      26     4%     0%     4%   100%       12.3      40.63%
+  Magh_2080_Publish.pdf                         (2080, 'Magh')       26     4%     0%     4%   100%       12.6      40.53%
+  Falgun_2080_Publish-2.pdf                     (2080, 'Falgun')     26     0%     0%     4%   100%        7.5  573839.00%
+  Chaitra_2080_Publish.pdf                      (2080, 'Chaitra')    26     4%     0%     0%   100%       12.4      36.87%
+  Baisakh_2081_Publish.pdf                      (2081, 'Baisakh')    26     4%     0%     0%   100%       13.1      37.35%
+  Jestha_2081_Publish-2.pdf                     (2081, 'Jestha')     26     0%     0%     0%   100%       12.9      35.43%
+  Asar_2081_Publish.pdf                         (2081, 'Asar')       26     0%     0%     0%   100%       12.7      37.59%
+  Shrawan_2081_Publish-1.pdf                    (2081, 'Shrawan')    26     0%     0%     0%   100%       12.2      35.21%
+  Bhadau_2081_Publish-1.pdf                     (2081, 'Bhadra')     26     0%     0%     0%   100%       12.5      35.89%
+  Ashwin_2081_Publish-1.pdf                     (2081, 'Ashwin')     26     0%     0%     0%   100%       12.8      41.77%
+  Kartik_2081_Publish.pdf                       (2081, 'Kartik')     26     0%     0%     0%   100%       12.7      47.96%
+  Mangshir_2081_Publish-V2.pdf                  (2081, 'Mangsir')    26     0%     4%     0%   100%       12.7      48.09%
+  Poush_2081_Publish_2.pdf                      (2081, 'Poush')      26     0%     4%     0%   100%       12.3      36.66%
+  Magh_2081_Publish-3.pdf                       (2081, 'Magh')       26     0%     4%     0%   100%       12.6      37.61%
+  Falgun_2081_Publish.pdf                       (2081, 'Falgun')     26     0%     0%     0%   100%       12.5      38.86%
+  Chaitra_2081_Publish.pdf                      (2081, 'Chaitra')    26     4%     4%     0%   100%       12.0      32.29%
+  Baisakh_2082_Publish-2.pdf                    (2082, 'Baisakh')    26     4%     8%     0%   100%       11.5      35.22%
+  Jestha_2082_Publish-2.pdf                     (2082, 'Jestha')     26     4%     0%     0%   100%       11.8      36.98%
+  Asar_2082_Publish.pdf                         (2082, 'Asar')       26     0%     0%     0%   100%       12.2      40.75%
+  Shrawan_2082_Publish.pdf                      (2082, 'Shrawan')    26     0%     4%     0%   100%       11.4      42.05%
+  Bhadau_2082_Publish.pdf                       (2082, 'Bhadra')     26     0%     4%     0%   100%       11.8      36.97%
+  Asoj_2082_Publish.pdf                         (2082, 'Ashwin')     26     0%     4%     0%   100%       11.7      37.84%
+  Kartik_2082_Publish.pdf                       (2082, 'Kartik')     26     0%     4%     0%   100%       11.4      39.78%
+  Mangshir_2082_Publish.pdf                     (2082, 'Mangsir')    26     0%     4%     0%   100%       11.0      39.09%
+  Poush_2082_Publish.pdf                        (2082, 'Poush')      26     0%     0%     0%   100%       11.5      35.52%
+  Magh_2082_Publish-2.pdf                       (2082, 'Magh')       26     0%     0%     0%   100%       11.8      44.92%
+  Falgun_2082_Publish.pdf                       (2082, 'Falgun')     26     4%     0%     4%   100%       20.7      28.21%
+  Chaitra_2082_Publish.pdf                      (2082, 'Chaitra')    26     4%     0%     0%   100%       20.5      28.64%
+  Baisakh_2083_Publish.pdf                      (2083, 'Baisakh')    26     4%     0%    12%   100%       20.2      28.69%
+  Jestha_2083_Publish-1.pdf                     (2083, 'Jestha')     26     0%     0%    12%   100%       20.2      31.18%
+  Asar_2083_Publish-1.pdf                       (2083, 'Asar')       26     0%     0%     4%   100%       20.3      30.86%
+  Shrawan_2083_Publish.pdf                      (2083, 'Shrawan')    26     0%     0%     0%   100%       19.9      27.51%
+
+per-sheet flags written to /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/results/bs_extraction_audit.csv

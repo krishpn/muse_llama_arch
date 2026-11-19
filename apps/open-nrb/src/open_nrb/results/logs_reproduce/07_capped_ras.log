@@ -1,0 +1,26 @@
+
+########## Capped-RAS baseline: sweep_lambda_mi_0 (cap=6.0, 5 seeds) ##########
+seed 0: capped_RAS=0.4834  uncapped_RAS=0.5965  model=0.4614
+seed 1: capped_RAS=0.3884  uncapped_RAS=0.5915  model=0.3473
+seed 2: capped_RAS=0.4665  uncapped_RAS=0.5666  model=0.4371
+seed 3: capped_RAS=0.5083  uncapped_RAS=0.5327  model=0.4675
+seed 4: capped_RAS=0.4789  uncapped_RAS=0.5413  model=0.4343
+
+--- aggregates (mean relative Frobenius error, lower is better) ---
+  capped_RAS    : mean=0.4651  std=0.0407
+  uncapped_RAS  : mean=0.5657  std=0.0257
+  model         : mean=0.4295  std=0.0431
+
+=== cap contribution: capped_RAS vs uncapped_RAS ===
+  n_seeds=5  mean paired difference (a - b): -0.100605
+  paired t-test: statistic=-3.3616  p=0.0283
+  NOTE: at n=5 seeds a signed-rank test cannot reach p<0.05; read the effect size.
+
+=== learned-prior contribution: model vs capped_RAS ===
+  n_seeds=5  mean paired difference (a - b): -0.035594
+  paired t-test: statistic=-8.3966  p=0.0011
+  NOTE: at n=5 seeds a signed-rank test cannot reach p<0.05; read the effect size.
+
+reading: a negative 'capped_RAS vs uncapped_RAS' mean difference = the cap alone already improves RAS; a negative 'model vs capped_RAS' mean difference = the covariate-informed learned prior adds reconstruction accuracy BEYOND the cap. If model vs capped_RAS is ~0, the synthetic win is essentially all cap, and Section 5.2/5.4 must say so.
+saved: /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/results/sweep_lambda_mi_0/evaluation/capped_ras_baseline_report.txt
+saved: /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/results/sweep_lambda_mi_0/evaluation/capped_ras_baseline_metrics.json

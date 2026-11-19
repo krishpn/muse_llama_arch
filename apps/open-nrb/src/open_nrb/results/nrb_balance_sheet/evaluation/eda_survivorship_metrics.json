@@ -1,0 +1,125 @@
+{
+  "bucket_counts": {
+    "complete": 16,
+    "late_entry": 2,
+    "early_exit": 7,
+    "internal_gap": 8,
+    "zero_denom_only": 0
+  },
+  "never_appears": 0,
+  "bucket_summary": {
+    "complete": {
+      "n": 16,
+      "mean_size": 147313.5693359375,
+      "mean_interbank_activity": 1071.1765594482422
+    },
+    "late_entry": {
+      "n": 2,
+      "mean_size": 242908.8515625,
+      "mean_interbank_activity": 943.6875
+    },
+    "early_exit": {
+      "n": 7,
+      "mean_size": 73985.35016741071,
+      "mean_interbank_activity": 808.21826171875
+    },
+    "internal_gap": {
+      "n": 8,
+      "mean_size": 82289.052734375,
+      "mean_interbank_activity": 751.4205589294434
+    }
+  },
+  "dropped_banks": {
+    "late_entry": [
+      {
+        "name": "Citizen",
+        "n_active_periods": 90,
+        "total_periods": 156
+      },
+      {
+        "name": "NIMB",
+        "n_active_periods": 43,
+        "total_periods": 156
+      }
+    ],
+    "early_exit": [
+      {
+        "name": "BOK",
+        "n_active_periods": 112,
+        "total_periods": 156
+      },
+      {
+        "name": "Citizens",
+        "n_active_periods": 66,
+        "total_periods": 156
+      },
+      {
+        "name": "Lumbini",
+        "n_active_periods": 35,
+        "total_periods": 156
+      },
+      {
+        "name": "NBB",
+        "n_active_periods": 66,
+        "total_periods": 156
+      },
+      {
+        "name": "NCC",
+        "n_active_periods": 112,
+        "total_periods": 156
+      },
+      {
+        "name": "NIBL",
+        "n_active_periods": 113,
+        "total_periods": 156
+      },
+      {
+        "name": "Sunrise",
+        "n_active_periods": 118,
+        "total_periods": 156
+      }
+    ],
+    "internal_gap": [
+      {
+        "name": "CBL",
+        "n_active_periods": 43,
+        "total_periods": 156
+      },
+      {
+        "name": "Century",
+        "n_active_periods": 52,
+        "total_periods": 156
+      },
+      {
+        "name": "Civil",
+        "n_active_periods": 52,
+        "total_periods": 156
+      },
+      {
+        "name": "Mega",
+        "n_active_periods": 109,
+        "total_periods": 156
+      },
+      {
+        "name": "NBBL",
+        "n_active_periods": 40,
+        "total_periods": 156
+      },
+      {
+        "name": "PRABHU",
+        "n_active_periods": 50,
+        "total_periods": 156
+      },
+      {
+        "name": "Prabhu",
+        "n_active_periods": 88,
+        "total_periods": 156
+      },
+      {
+        "name": "Sanima",
+        "n_active_periods": 61,
+        "total_periods": 156
+      }
+    ]
+  }
+}

@@ -1,0 +1,1123 @@
+# Reviewer checks: baseline (N=16 x T=133, (2072, 'Asar') .. (2083, 'Shrawan'), n_boot=9999, outcomes monthly, main = unweighted TWFE)
+
+## Survivorship (item 2): included vs excluded commercial banks
+33 commercial banks from (2072, 'Asar'); 16 in the estimation panel (Paper 1 complete-case filter). Pre window = (2072, 'Asar')..(2072, 'Mangsir').
+
+| bank | in panel | months with complete data | first | last | dose_pre | pre size (NPR mn) |
+|---|---|---|---|---|---|---|
+| ADBNL | yes | 133/133 | Asar 2072 | Shrawan 2083 | -0.0809 | 120,083 |
+| BOK | no | 89/133 | Asar 2072 | Mangsir 2079 | -0.0398 | 48,351 |
+| CBL | no | 43/133 | Magh 2075 | Magh 2079 | n/a | n/a |
+| Century | no | 41/133 | Shrawan 2074 | Mangsir 2079 | n/a | n/a |
+| Citizen | no | 90/133 | Magh 2075 | Shrawan 2083 | n/a | n/a |
+| Citizens | no | 43/133 | Asar 2072 | Poush 2075 | -0.0436 | 45,824 |
+| Civil | no | 31/133 | Asar 2073 | Poush 2075 | n/a | n/a |
+| EBL | yes | 133/133 | Asar 2072 | Shrawan 2083 | -0.0344 | 91,391 |
+| Global | yes | 133/133 | Asar 2072 | Shrawan 2083 | -0.0573 | 73,660 |
+| HBL | yes | 133/133 | Asar 2072 | Shrawan 2083 | -0.0400 | 89,690 |
+| Kumari | yes | 133/133 | Asar 2072 | Shrawan 2083 | -0.0405 | 41,610 |
+| Laxmi | yes | 133/133 | Asar 2072 | Shrawan 2083 | -0.0443 | 49,876 |
+| Lumbini | no | 12/133 | Asar 2072 | Jestha 2073 | -0.0765 | 24,311 |
+| MBL | yes | 133/133 | Asar 2072 | Shrawan 2083 | -0.0394 | 51,715 |
+| Mega | no | 86/133 | Asar 2072 | Mangsir 2079 | -0.0679 | 28,018 |
+| NABIL | yes | 133/133 | Asar 2072 | Shrawan 2083 | -0.0203 | 130,822 |
+| NBB | no | 43/133 | Asar 2072 | Poush 2075 | -0.0699 | 44,508 |
+| NBBL | no | 40/133 | Magh 2075 | Jestha 2079 | n/a | n/a |
+| NBL | yes | 133/133 | Asar 2072 | Shrawan 2083 | 0.0003 | 90,513 |
+| NCC | no | 89/133 | Asar 2072 | Mangsir 2079 | -0.0568 | 31,770 |
+| NIBL | no | 90/133 | Asar 2072 | Poush 2079 | -0.0424 | 115,496 |
+| NIC | yes | 133/133 | Asar 2072 | Shrawan 2083 | -0.0484 | 64,001 |
+| NIMB | no | 43/133 | Magh 2079 | Shrawan 2083 | n/a | n/a |
+| NMB | yes | 133/133 | Asar 2072 | Shrawan 2083 | -0.0493 | 47,823 |
+| NSBI | yes | 133/133 | Asar 2072 | Shrawan 2083 | -0.0438 | 64,912 |
+| PRABHU | no | 43/133 | Asar 2072 | Poush 2075 | -0.0265 | 52,687 |
+| Prabhu | no | 88/133 | Magh 2075 | Shrawan 2083 | n/a | n/a |
+| Prime | yes | 133/133 | Asar 2072 | Shrawan 2083 | -0.0492 | 49,098 |
+| RBB | yes | 133/133 | Asar 2072 | Shrawan 2083 | -0.0008 | 152,077 |
+| SBL | yes | 133/133 | Asar 2072 | Shrawan 2083 | -0.0281 | 56,342 |
+| SCBNL | yes | 133/133 | Asar 2072 | Shrawan 2083 | -0.0501 | 68,359 |
+| Sanima | no | 59/133 | Chaitra 2074 | Shrawan 2083 | n/a | n/a |
+| Sunrise | no | 95/133 | Asar 2072 | Jestha 2080 | -0.0438 | 41,272 |
+
+dose_pre: included median -0.04376 (n=16) vs excluded median -0.0438 (n=9), Mann-Whitney p=0.246
+pre-window size: included median 6.491e+04 (n=16) vs excluded median 4.451e+04 (n=9), Mann-Whitney p=0.005
+Excluded banks whose last complete month falls inside the post window are candidate merger exits; check names/dates against NRB merger records before writing it up.
+
+## HT/GPS weights (item 8)
+| network | cells w>0 | mean | p99 / mean | max / mean | Kish ESS | ESS / cells |
+|---|---|---|---|---|---|---|
+| W_hat | 2016 | 1.05 | 70.74 | 75.98 | 30 | 0.02 |
+| RAS | 2016 | 0.988 | 67.92 | 67.92 | 34 | 0.02 |
+
+Where the weight sits: share of total HT weight per bank (top 5), and per period block.
+- W_hat: NMB 0.32, SCBNL 0.14, Global 0.12, NBL 0.09, Prime 0.09; pre-window cells 0.00, post cells 1.00
+- RAS: NMB 0.24, Global 0.14, Prime 0.10, Kumari 0.10, NBL 0.09; pre-window cells 0.00, post cells 1.00
+
+Trimmed HT weights (cap at the q-th percentile of positive weights, a standard IPW fix) vs main:
+
+q = 0.95:
+| outcome | network | coef | main beta | main p | alt beta | alt SE | alt p | alt n_obs |
+|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | W_hat | dose | -0.02061 | 0.342 | -0.01242 | 0.0157 | 0.507 | 1967 |
+| net_profit_loss | W_hat | exposure | -3.41e-05 | 0.078 | -3.132e-05 | 1.8e-05 | 0.229 | 1967 |
+| net_profit_loss | RAS | dose | -0.02076 | 0.325 | -0.01154 | 0.0162 | 0.541 | 1967 |
+| net_profit_loss | RAS | exposure | -4.989e-05 | 0.125 | -3.675e-05 | 2.74e-05 | 0.296 | 1967 |
+| loan_loss_provision | W_hat | dose | 0.01371 | 0.424 | 0.01766 | 0.0134 | 0.340 | 1830 |
+| loan_loss_provision | W_hat | exposure | 5.215e-06 | 0.642 | 9.309e-06 | 1.1e-05 | 0.442 | 1830 |
+| loan_loss_provision | RAS | dose | 0.01324 | 0.408 | 0.01907 | 0.0117 | 0.181 | 1830 |
+| loan_loss_provision | RAS | exposure | -2.901e-06 | 0.791 | -3.546e-06 | 7.69e-06 | 0.660 | 1830 |
+| loan_written_off | W_hat | dose | -0.002157 | 0.198 | -0.00195 | 0.00136 | 0.227 | 1967 |
+| loan_written_off | W_hat | exposure | 1.382e-06 | 0.058 | 1.527e-06 | 6.37e-07 | 0.031 | 1967 |
+| loan_written_off | RAS | dose | -0.002149 | 0.199 | -0.001447 | 0.0013 | 0.330 | 1967 |
+| loan_written_off | RAS | exposure | 1.916e-06 | 0.030 | 1.138e-06 | 7e-07 | 0.135 | 1967 |
+| nim | W_hat | dose | -0.009635 | 0.805 | -0.07211 | 0.0288 | 0.055 | 1955 |
+| nim | W_hat | exposure | -2.562e-05 | 0.454 | 8.698e-06 | 4.57e-05 | 0.867 | 1955 |
+| nim | RAS | dose | -0.008984 | 0.812 | -0.06142 | 0.0312 | 0.108 | 1955 |
+| nim | RAS | exposure | -5.63e-05 | 0.156 | 2.242e-05 | 4.32e-05 | 0.660 | 1955 |
+
+q = 0.9:
+| outcome | network | coef | main beta | main p | alt beta | alt SE | alt p | alt n_obs |
+|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | W_hat | dose | -0.02061 | 0.342 | -0.0151 | 0.0163 | 0.460 | 1967 |
+| net_profit_loss | W_hat | exposure | -3.41e-05 | 0.078 | -3.914e-05 | 1.62e-05 | 0.107 | 1967 |
+| net_profit_loss | RAS | dose | -0.02076 | 0.325 | -0.0147 | 0.0153 | 0.440 | 1967 |
+| net_profit_loss | RAS | exposure | -4.989e-05 | 0.125 | -5.077e-05 | 2.48e-05 | 0.134 | 1967 |
+| loan_loss_provision | W_hat | dose | 0.01371 | 0.424 | 0.01375 | 0.0126 | 0.426 | 1830 |
+| loan_loss_provision | W_hat | exposure | 5.215e-06 | 0.642 | 1.199e-05 | 1.05e-05 | 0.356 | 1830 |
+| loan_loss_provision | RAS | dose | 0.01324 | 0.408 | 0.01318 | 0.0119 | 0.405 | 1830 |
+| loan_loss_provision | RAS | exposure | -2.901e-06 | 0.791 | 5.925e-07 | 9.64e-06 | 0.953 | 1830 |
+| loan_written_off | W_hat | dose | -0.002157 | 0.198 | -0.002016 | 0.00143 | 0.236 | 1967 |
+| loan_written_off | W_hat | exposure | 1.382e-06 | 0.058 | 1.4e-06 | 6.58e-07 | 0.054 | 1967 |
+| loan_written_off | RAS | dose | -0.002149 | 0.199 | -0.001964 | 0.00141 | 0.239 | 1967 |
+| loan_written_off | RAS | exposure | 1.916e-06 | 0.030 | 1.69e-06 | 8.36e-07 | 0.039 | 1967 |
+| nim | W_hat | dose | -0.009635 | 0.805 | -0.02333 | 0.0275 | 0.436 | 1955 |
+| nim | W_hat | exposure | -2.562e-05 | 0.454 | -2.414e-05 | 3.65e-05 | 0.570 | 1955 |
+| nim | RAS | dose | -0.008984 | 0.812 | -0.01341 | 0.0317 | 0.699 | 1955 |
+| nim | RAS | exposure | -5.63e-05 | 0.156 | -4.616e-05 | 3.89e-05 | 0.282 | 1955 |
+
+The other weighting (ht) vs main (unweighted), same cells:
+| outcome | network | coef | main beta | main p | alt beta | alt SE | alt p | alt n_obs |
+|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | W_hat | dose | -0.02061 | 0.342 | 0.0144 | 0.0237 | 0.603 | 1967 |
+| net_profit_loss | W_hat | exposure | -3.41e-05 | 0.078 | -2.975e-05 | 2.2e-05 | 0.305 | 1967 |
+| net_profit_loss | RAS | dose | -0.02076 | 0.325 | 0.04642 | 0.0433 | 0.377 | 1967 |
+| net_profit_loss | RAS | exposure | -4.989e-05 | 0.125 | 2.986e-05 | 4.43e-05 | 0.671 | 1967 |
+| loan_loss_provision | W_hat | dose | 0.01371 | 0.424 | 0.003824 | 0.0174 | 0.851 | 1830 |
+| loan_loss_provision | W_hat | exposure | 5.215e-06 | 0.642 | -6.828e-07 | 1.02e-05 | 0.956 | 1830 |
+| loan_loss_provision | RAS | dose | 0.01324 | 0.408 | 0.06867 | 0.0637 | 0.307 | 1830 |
+| loan_loss_provision | RAS | exposure | -2.901e-06 | 0.791 | -3.24e-05 | 2.58e-05 | 0.162 | 1830 |
+| loan_written_off | W_hat | dose | -0.002157 | 0.198 | -0.001835 | 0.00119 | 0.174 | 1967 |
+| loan_written_off | W_hat | exposure | 1.382e-06 | 0.058 | 2.491e-07 | 3.29e-07 | 0.437 | 1967 |
+| loan_written_off | RAS | dose | -0.002149 | 0.199 | -0.001149 | 0.000907 | 0.243 | 1967 |
+| loan_written_off | RAS | exposure | 1.916e-06 | 0.030 | 6.019e-07 | 4.14e-07 | 0.229 | 1967 |
+| nim | W_hat | dose | -0.009635 | 0.805 | -0.09727 | 0.0686 | 0.288 | 1955 |
+| nim | W_hat | exposure | -2.562e-05 | 0.454 | 4.043e-05 | 5.51e-05 | 0.542 | 1955 |
+| nim | RAS | dose | -0.008984 | 0.812 | -0.09219 | 0.0512 | 0.171 | 1955 |
+| nim | RAS | exposure | -5.63e-05 | 0.156 | 8.375e-05 | 6.4e-05 | 0.407 | 1955 |
+
+## GPS with period intercepts + per-period sigma (item 8 remedy)
+The main GPS conditions only on frozen pre-mandate covariates, so its fitted mean is constant over time while exposure trends with W's nominal level; whole periods land in the density tails. Same regressors here, only the HT weights change.
+| network | cells w>0 | mean | p99 / mean | max / mean | Kish ESS | ESS / cells |
+|---|---|---|---|---|---|---|
+| W_hat | 2016 | 0.951 | 28.15 | 102.45 | 53 | 0.03 |
+| RAS | 2016 | 0.997 | 26.22 | 169.36 | 35 | 0.02 |
+
+Where the weight sits: share of total HT weight per bank (top 5), and per period block.
+- W_hat: NBL 0.26, Global 0.15, NMB 0.14, Kumari 0.14, ADBNL 0.09; pre-window cells 0.08, post cells 0.92
+- RAS: Kumari 0.25, NBL 0.22, Global 0.13, NMB 0.12, ADBNL 0.07; pre-window cells 0.02, post cells 0.98
+
+| outcome | network | coef | main beta | main p | alt beta | alt SE | alt p | alt n_obs |
+|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | W_hat | dose | -0.02061 | 0.342 | 0.007091 | 0.011 | 0.530 | 1967 |
+| net_profit_loss | W_hat | exposure | -3.41e-05 | 0.078 | -2.77e-05 | 1.8e-05 | 0.234 | 1967 |
+| net_profit_loss | RAS | dose | -0.02076 | 0.325 | 0.01546 | 0.0144 | 0.282 | 1967 |
+| net_profit_loss | RAS | exposure | -4.989e-05 | 0.125 | -5.579e-05 | 3.6e-05 | 0.165 | 1967 |
+| loan_loss_provision | W_hat | dose | 0.01371 | 0.424 | 0.00251 | 0.00956 | 0.801 | 1830 |
+| loan_loss_provision | W_hat | exposure | 5.215e-06 | 0.642 | -9.812e-06 | 6.51e-06 | 0.312 | 1830 |
+| loan_loss_provision | RAS | dose | 0.01324 | 0.408 | 0.007843 | 0.0107 | 0.518 | 1830 |
+| loan_loss_provision | RAS | exposure | -2.901e-06 | 0.791 | -7.523e-06 | 9.99e-06 | 0.515 | 1830 |
+| loan_written_off | W_hat | dose | -0.002157 | 0.198 | -0.0009315 | 0.000897 | 0.359 | 1967 |
+| loan_written_off | W_hat | exposure | 1.382e-06 | 0.058 | 1.441e-06 | 4.08e-07 | 0.042 | 1967 |
+| loan_written_off | RAS | dose | -0.002149 | 0.199 | -0.0008284 | 0.00114 | 0.516 | 1967 |
+| loan_written_off | RAS | exposure | 1.916e-06 | 0.030 | 1.172e-06 | 7.69e-07 | 0.269 | 1967 |
+| nim | W_hat | dose | -0.009635 | 0.805 | -0.1588 | 0.0455 | 0.001 | 1955 |
+| nim | W_hat | exposure | -2.562e-05 | 0.454 | 8.495e-05 | 4.97e-05 | 0.177 | 1955 |
+| nim | RAS | dose | -0.008984 | 0.812 | -0.1592 | 0.0437 | 0.002 | 1955 |
+| nim | RAS | exposure | -5.63e-05 | 0.156 | 0.000142 | 6.97e-05 | 0.050 | 1955 |
+
+## Negative de-cumulated monthly flows (item 11a)
+pnl_ytd_cumulative=True. NIM and loans written off should be non-negative; provisions can be legitimately negative (write-backs), net profit can be either.
+| outcome | finite cells | negative | share | worst FY (share) |
+|---|---|---|---|---|
+| net_profit_loss | 2060 | 426 | 0.207 | FY2074 (0.33) |
+| loan_loss_provision | 1921 | 453 | 0.236 | FY2077 (0.34) |
+| loan_written_off | 2060 | 73 | 0.035 | FY2077 (0.10) |
+| nim | 2046 | 243 | 0.119 | FY2074 (0.28) |
+
+Negative share by calendar month (Shrawan values are single months, never differenced):
+| outcome | Shrawan | Bhadra | Ashwin | Kartik | Mangsir | Poush | Magh | Falgun | Chaitra | Baisakh | Jestha | Asar |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | 0.18 | 0.24 | 0.29 | 0.27 | 0.20 | 0.19 | 0.18 | 0.18 | 0.25 | 0.19 | 0.12 | 0.18 |
+| loan_loss_provision | 0.07 | 0.17 | 0.13 | 0.28 | 0.26 | 0.34 | 0.28 | 0.16 | 0.25 | 0.25 | 0.20 | 0.40 |
+| loan_written_off | 0.00 | 0.03 | 0.02 | 0.02 | 0.04 | 0.05 | 0.07 | 0.03 | 0.07 | 0.04 | 0.02 | 0.04 |
+| nim | 0.19 | 0.22 | 0.01 | 0.20 | 0.17 | 0.00 | 0.19 | 0.13 | 0.02 | 0.17 | 0.13 | 0.01 |
+
+## Quarterly outcomes from quarter-end YTD only (item 11a remedy)
+Flow at Ashwin, Poush, Chaitra, Asar = YTD minus the previous quarter end of the same fiscal year (Ashwin = YTD itself), divided by quarter-end size. Non-quarter-end months are never read. Regressors unchanged; non-quarter cells drop out as NaN outcomes.
+
+| outcome | finite quarter cells | in pre window | negative share |
+|---|---|---|---|
+| net_profit_loss | 690 | 15 | 0.043 |
+| loan_loss_provision | 667 | 12 | 0.246 |
+| loan_written_off | 690 | 15 | 0.041 |
+| nim | 686 | 13 | 0.035 |
+
+Quarterly DiD, pooled-GPS HT weights (main = monthly outcome, unweighted):
+| outcome | network | coef | main beta | main p | alt beta | alt SE | alt p | alt n_obs |
+|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | W_hat | dose | -0.02061 | 0.342 | 0.2261 | 0.0669 | 0.003 | 649 |
+| net_profit_loss | W_hat | exposure | -3.41e-05 | 0.078 | -0.0007894 | 0.000275 | 0.048 | 649 |
+| net_profit_loss | RAS | dose | -0.02076 | 0.325 | 0.1694 | 0.0799 | 0.027 | 649 |
+| net_profit_loss | RAS | exposure | -4.989e-05 | 0.125 | -0.0002202 | 0.000205 | 0.447 | 649 |
+| loan_loss_provision | W_hat | dose | 0.01371 | 0.424 | 0.0179 | 0.0332 | 0.619 | 629 |
+| loan_loss_provision | W_hat | exposure | 5.215e-06 | 0.642 | -0.000195 | 8.72e-05 | 0.134 | 629 |
+| loan_loss_provision | RAS | dose | 0.01324 | 0.408 | 0.1304 | 0.0539 | 0.100 | 629 |
+| loan_loss_provision | RAS | exposure | -2.901e-06 | 0.791 | -0.0002464 | 0.000156 | 0.257 | 629 |
+| loan_written_off | W_hat | dose | -0.002157 | 0.198 | -0.008691 | 0.00501 | 0.135 | 649 |
+| loan_written_off | W_hat | exposure | 1.382e-06 | 0.058 | 3.504e-05 | 1.32e-05 | 0.016 | 649 |
+| loan_written_off | RAS | dose | -0.002149 | 0.199 | -0.005748 | 0.00527 | 0.411 | 649 |
+| loan_written_off | RAS | exposure | 1.916e-06 | 0.030 | 2.296e-05 | 1.12e-05 | 0.043 | 649 |
+| nim | W_hat | dose | -0.009635 | 0.805 | -0.4192 | 0.315 | 0.486 | 647 |
+| nim | W_hat | exposure | -2.562e-05 | 0.454 | 0.001908 | 0.000966 | 0.231 | 647 |
+| nim | RAS | dose | -0.008984 | 0.812 | -0.602 | 0.551 | 0.486 | 647 |
+| nim | RAS | exposure | -5.63e-05 | 0.156 | 0.004314 | 0.00132 | 0.018 | 647 |
+
+Quarterly DiD, unweighted (main = monthly outcome, unweighted):
+| outcome | network | coef | main beta | main p | alt beta | alt SE | alt p | alt n_obs |
+|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | W_hat | dose | -0.02061 | 0.342 | 0.03797 | 0.0522 | 0.582 | 649 |
+| net_profit_loss | W_hat | exposure | -3.41e-05 | 0.078 | -0.0003601 | 0.000197 | 0.228 | 649 |
+| net_profit_loss | RAS | dose | -0.02076 | 0.325 | 0.02495 | 0.0567 | 0.696 | 649 |
+| net_profit_loss | RAS | exposure | -4.989e-05 | 0.125 | -0.0002966 | 0.000159 | 0.206 | 649 |
+| loan_loss_provision | W_hat | dose | 0.01371 | 0.424 | 0.08272 | 0.0103 | 0.026 | 629 |
+| loan_loss_provision | W_hat | exposure | 5.215e-06 | 0.642 | -0.0003532 | 3.3e-05 | 0.002 | 629 |
+| loan_loss_provision | RAS | dose | 0.01324 | 0.408 | 0.0844 | 0.00925 | 0.033 | 629 |
+| loan_loss_provision | RAS | exposure | -2.901e-06 | 0.791 | -0.0003294 | 3.56e-05 | 0.003 | 629 |
+| loan_written_off | W_hat | dose | -0.002157 | 0.198 | -0.01198 | 0.00468 | 0.053 | 649 |
+| loan_written_off | W_hat | exposure | 1.382e-06 | 0.058 | 3.902e-05 | 1.53e-05 | 0.018 | 649 |
+| loan_written_off | RAS | dose | -0.002149 | 0.199 | -0.009424 | 0.0048 | 0.138 | 649 |
+| loan_written_off | RAS | exposure | 1.916e-06 | 0.030 | 2.397e-05 | 1.4e-05 | 0.139 | 649 |
+| nim | W_hat | dose | -0.009635 | 0.805 | -0.06299 | 0.102 | 0.710 | 647 |
+| nim | W_hat | exposure | -2.562e-05 | 0.454 | 8.595e-05 | 0.000295 | 0.824 | 647 |
+| nim | RAS | dose | -0.008984 | 0.812 | -0.0854 | 0.116 | 0.718 | 647 |
+| nim | RAS | exposure | -5.63e-05 | 0.156 | 0.0001085 | 0.000294 | 0.795 | 647 |
+
+Quarterly DiD, period-effects GPS weights (main = monthly outcome, unweighted):
+| outcome | network | coef | main beta | main p | alt beta | alt SE | alt p | alt n_obs |
+|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | W_hat | dose | -0.02061 | 0.342 | 0.08313 | 0.0504 | 0.107 | 649 |
+| net_profit_loss | W_hat | exposure | -3.41e-05 | 0.078 | -0.0004126 | 0.000231 | 0.185 | 649 |
+| net_profit_loss | RAS | dose | -0.02076 | 0.325 | 0.1902 | 0.0545 | 0.004 | 649 |
+| net_profit_loss | RAS | exposure | -4.989e-05 | 0.125 | -0.0005746 | 0.000211 | 0.006 | 649 |
+| loan_loss_provision | W_hat | dose | 0.01371 | 0.424 | 0.06931 | 0.0292 | 0.085 | 629 |
+| loan_loss_provision | W_hat | exposure | 5.215e-06 | 0.642 | -0.0001625 | 0.000111 | 0.156 | 629 |
+| loan_loss_provision | RAS | dose | 0.01324 | 0.408 | 0.052 | 0.0329 | 0.221 | 629 |
+| loan_loss_provision | RAS | exposure | -2.901e-06 | 0.791 | 2.627e-05 | 0.000209 | 0.931 | 629 |
+| loan_written_off | W_hat | dose | -0.002157 | 0.198 | -0.004841 | 0.0027 | 0.116 | 649 |
+| loan_written_off | W_hat | exposure | 1.382e-06 | 0.058 | 1.738e-05 | 8.42e-06 | 0.063 | 649 |
+| loan_written_off | RAS | dose | -0.002149 | 0.199 | -0.003832 | 0.00391 | 0.447 | 649 |
+| loan_written_off | RAS | exposure | 1.916e-06 | 0.030 | 8.192e-06 | 1.19e-05 | 0.564 | 649 |
+| nim | W_hat | dose | -0.009635 | 0.805 | -0.5501 | 0.26 | 0.198 | 647 |
+| nim | W_hat | exposure | -2.562e-05 | 0.454 | 0.001729 | 0.000644 | 0.045 | 647 |
+| nim | RAS | dose | -0.008984 | 0.812 | -0.4168 | 0.248 | 0.394 | 647 |
+| nim | RAS | exposure | -5.63e-05 | 0.156 | 0.001359 | 0.000599 | 0.130 | 647 |
+
+## Same-quarter DiD: Ashwin (Q1) quarterly cells only (item 11a remedy, seasonality)
+The quarterly pre window holds only Ashwin 2072 (Q1), while post cells span all four quarters, so a dose-related seasonal pattern would load onto dose x post. Keeping Q1 only compares like with like (one pre and a few post cells per bank).
+Q1 columns: Ashwin 2072, Ashwin 2073, Ashwin 2074, Ashwin 2075, Ashwin 2076, Ashwin 2077, Ashwin 2078, Ashwin 2079, Ashwin 2080, Ashwin 2081, Ashwin 2082
+
+Q1-only DiD, unweighted:
+| outcome | network | coef | main beta | main p | alt beta | alt SE | alt p | alt n_obs |
+|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | W_hat | dose | -0.02061 | 0.342 | 0.02056 | 0.0309 | 0.470 | 175 |
+| net_profit_loss | W_hat | exposure | -3.41e-05 | 0.078 | -0.0001582 | 0.000162 | 0.485 | 175 |
+| net_profit_loss | RAS | dose | -0.02076 | 0.325 | 0.03731 | 0.0467 | 0.472 | 175 |
+| net_profit_loss | RAS | exposure | -4.989e-05 | 0.125 | -0.0002526 | 0.000175 | 0.342 | 175 |
+| loan_loss_provision | W_hat | dose | 0.01371 | 0.424 | 0.07832 | 0.0451 | 0.152 | 168 |
+| loan_loss_provision | W_hat | exposure | 5.215e-06 | 0.642 | -0.0002644 | 0.000134 | 0.105 | 168 |
+| loan_loss_provision | RAS | dose | 0.01324 | 0.408 | 0.07174 | 0.0471 | 0.222 | 168 |
+| loan_loss_provision | RAS | exposure | -2.901e-06 | 0.791 | -0.0002201 | 0.000132 | 0.167 | 168 |
+| loan_written_off | W_hat | dose | -0.002157 | 0.198 | -0.005423 | 0.0033 | 0.186 | 175 |
+| loan_written_off | W_hat | exposure | 1.382e-06 | 0.058 | 1.556e-05 | 1.12e-05 | 0.263 | 175 |
+| loan_written_off | RAS | dose | -0.002149 | 0.199 | -0.004241 | 0.00316 | 0.265 | 175 |
+| loan_written_off | RAS | exposure | 1.916e-06 | 0.030 | 8.484e-06 | 9.54e-06 | 0.460 | 175 |
+| nim | W_hat | dose | -0.009635 | 0.805 | 0.1233 | 0.101 | 0.348 | 173 |
+| nim | W_hat | exposure | -2.562e-05 | 0.454 | -0.0007841 | 0.00032 | 0.087 | 173 |
+| nim | RAS | dose | -0.008984 | 0.812 | 0.1102 | 0.109 | 0.465 | 173 |
+| nim | RAS | exposure | -5.63e-05 | 0.156 | -0.0006988 | 0.000268 | 0.081 | 173 |
+
+Q1-only DiD, period-effects GPS weights:
+| outcome | network | coef | main beta | main p | alt beta | alt SE | alt p | alt n_obs |
+|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | W_hat | dose | -0.02061 | 0.342 | 0.1035 | 0.0514 | 0.061 | 175 |
+| net_profit_loss | W_hat | exposure | -3.41e-05 | 0.078 | -0.0003361 | 0.000244 | 0.255 | 175 |
+| net_profit_loss | RAS | dose | -0.02076 | 0.325 | 0.1252 | 0.0868 | 0.176 | 175 |
+| net_profit_loss | RAS | exposure | -4.989e-05 | 0.125 | -0.0003713 | 0.000356 | 0.457 | 175 |
+| loan_loss_provision | W_hat | dose | 0.01371 | 0.424 | 0.01638 | 0.0368 | 0.708 | 168 |
+| loan_loss_provision | W_hat | exposure | 5.215e-06 | 0.642 | -4.03e-05 | 0.000113 | 0.734 | 168 |
+| loan_loss_provision | RAS | dose | 0.01324 | 0.408 | 0.005527 | 0.0491 | 0.940 | 168 |
+| loan_loss_provision | RAS | exposure | -2.901e-06 | 0.791 | -1.643e-05 | 0.000129 | 0.898 | 168 |
+| loan_written_off | W_hat | dose | -0.002157 | 0.198 | -0.002785 | 0.00157 | 0.173 | 175 |
+| loan_written_off | W_hat | exposure | 1.382e-06 | 0.058 | 6.121e-06 | 5.53e-06 | 0.391 | 175 |
+| loan_written_off | RAS | dose | -0.002149 | 0.199 | -0.002817 | 0.00182 | 0.228 | 175 |
+| loan_written_off | RAS | exposure | 1.916e-06 | 0.030 | 4.396e-06 | 6.06e-06 | 0.522 | 175 |
+| nim | W_hat | dose | -0.009635 | 0.805 | 0.0007622 | 0.114 | 0.995 | 173 |
+| nim | W_hat | exposure | -2.562e-05 | 0.454 | -0.000134 | 0.000451 | 0.816 | 173 |
+| nim | RAS | dose | -0.008984 | 0.812 | -0.1115 | 0.169 | 0.597 | 173 |
+| nim | RAS | exposure | -5.63e-05 | 0.156 | 0.0003996 | 0.000571 | 0.581 | 173 |
+
+## Dose-only quarterly pre-trend from the clean 2070-2072 bulletins (item 3)
+W_hat starts at Asar 2072, so exposure can't be built earlier; this is the dose-only event study on quarterly outcomes from Baisakh 2070. Same 16 banks, same frozen dose_pre (Asar-Mangsir 2072 mean) and Z_pre x post controls as the main run; bank + period FE, unweighted. Reference bin -1 = the pre-window fiscal year.
+Extended panel (2070, 'Baisakh') .. (2083, 'Shrawan'), T=156; months absent from the extraction: Chaitra 2071, Baisakh 2072, Jestha 2072, Kartik 2078. A quarter whose own or previous quarter-end month is absent is NaN.
+
+Finite pre-mandate quarterly cells per bank (bins <= -1):
+| bank | net_profit_loss | loan_loss_provision | loan_written_off | nim |
+|---|---|---|---|---|
+| ADBNL | 7 | 7 | 7 | 7 |
+| EBL | 7 | 6 | 7 | 7 |
+| Global | 0 | 0 | 0 | 0 |
+| HBL | 7 | 7 | 7 | 7 |
+| Kumari | 7 | 7 | 7 | 7 |
+| Laxmi | 7 | 5 | 7 | 7 |
+| MBL | 7 | 6 | 7 | 7 |
+| NABIL | 7 | 7 | 7 | 7 |
+| NBL | 7 | 7 | 7 | 7 |
+| NIC | 7 | 4 | 7 | 7 |
+| NMB | 2 | 0 | 2 | 0 |
+| NSBI | 7 | 7 | 7 | 7 |
+| Prime | 2 | 2 | 2 | 0 |
+| RBB | 7 | 7 | 7 | 7 |
+| SBL | 7 | 7 | 7 | 7 |
+| SCBNL | 7 | 7 | 7 | 7 |
+
+### net_profit_loss
+n_obs=770, clusters=16
+| bin | quarters | cells | dose beta | SE | wild p |
+|---|---|---|---|---|---|
+| -3 | Ash 2070, Pou 2070, Cha 2070, Asa 2071 | 52 | -0.02205 | 0.0171 | 0.234 |
+| -2 | Ash 2071, Pou 2071 | 28 | 0.05582 | 0.0698 | 0.582 |
+| -1 (ref) | Ash 2072 | 15 | 0 | - | - |
+| transition | Pou 2072, Cha 2072, Asa 2073 | 41 | -0.007511 | 0.0197 | 0.726 |
+| 0 | Ash 2073, Pou 2073, Cha 2073, Asa 2074 | 58 | 0.02273 | 0.0612 | 0.740 |
+| 1 | Ash 2074, Pou 2074, Cha 2074, Asa 2075 | 64 | 0.03244 | 0.0623 | 0.662 |
+| 2 | Ash 2075, Pou 2075, Cha 2075, Asa 2076 | 64 | 0.1094 | 0.0793 | 0.184 |
+| 3 | Ash 2076, Pou 2076, Cha 2076, Asa 2077 | 64 | 0.01619 | 0.0578 | 0.806 |
+| 4 | Ash 2077, Pou 2077, Cha 2077, Asa 2078 | 64 | 0.003243 | 0.0593 | 0.961 |
+| 5 | Ash 2078, Pou 2078, Cha 2078, Asa 2079 | 64 | 0.03861 | 0.0533 | 0.507 |
+| 6 | Ash 2079, Pou 2079, Cha 2079, Asa 2080 | 64 | -0.008193 | 0.058 | 0.897 |
+| 7 | Ash 2080, Pou 2080, Cha 2080, Asa 2081 | 64 | -0.222 | 0.0999 | 0.048 |
+| 8 | Ash 2081, Pou 2081, Cha 2081, Asa 2082 | 64 | -0.275 | 0.107 | 0.040 |
+| 9 | Ash 2082, Pou 2082, Cha 2082, Asa 2083 | 64 | -0.08739 | 0.0772 | 0.288 |
+
+### loan_loss_provision
+n_obs=741, clusters=16
+| bin | quarters | cells | dose beta | SE | wild p |
+|---|---|---|---|---|---|
+| -3 | Ash 2070, Pou 2070, Cha 2070, Asa 2071 | 51 | 0.006207 | 0.00785 | 0.639 |
+| -2 | Ash 2071, Pou 2071 | 23 | -0.006156 | 0.00573 | 0.352 |
+| -1 (ref) | Ash 2072 | 12 | 0 | - | - |
+| transition | Pou 2072, Cha 2072, Asa 2073 | 38 | 0.01987 | 0.00651 | 0.086 |
+| 0 | Ash 2073, Pou 2073, Cha 2073, Asa 2074 | 54 | 0.05481 | 0.0374 | 0.220 |
+| 1 | Ash 2074, Pou 2074, Cha 2074, Asa 2075 | 62 | 0.0636 | 0.0384 | 0.153 |
+| 2 | Ash 2075, Pou 2075, Cha 2075, Asa 2076 | 53 | 0.05833 | 0.0379 | 0.208 |
+| 3 | Ash 2076, Pou 2076, Cha 2076, Asa 2077 | 64 | 0.0334 | 0.0297 | 0.327 |
+| 4 | Ash 2077, Pou 2077, Cha 2077, Asa 2078 | 64 | 0.0587 | 0.0274 | 0.085 |
+| 5 | Ash 2078, Pou 2078, Cha 2078, Asa 2079 | 64 | 0.08224 | 0.0363 | 0.064 |
+| 6 | Ash 2079, Pou 2079, Cha 2079, Asa 2080 | 64 | -0.04716 | 0.0966 | 0.654 |
+| 7 | Ash 2080, Pou 2080, Cha 2080, Asa 2081 | 64 | 0.009729 | 0.0429 | 0.844 |
+| 8 | Ash 2081, Pou 2081, Cha 2081, Asa 2082 | 64 | -0.1016 | 0.0791 | 0.393 |
+| 9 | Ash 2082, Pou 2082, Cha 2082, Asa 2083 | 64 | -0.05932 | 0.0563 | 0.468 |
+
+### loan_written_off
+n_obs=770, clusters=16
+| bin | quarters | cells | dose beta | SE | wild p |
+|---|---|---|---|---|---|
+| -3 | Ash 2070, Pou 2070, Cha 2070, Asa 2071 | 52 | -0.002086 | 0.00184 | 0.289 |
+| -2 | Ash 2071, Pou 2071 | 28 | -0.0009411 | 0.000685 | 0.174 |
+| -1 (ref) | Ash 2072 | 15 | 0 | - | - |
+| transition | Pou 2072, Cha 2072, Asa 2073 | 41 | -0.0006007 | 0.000859 | 0.506 |
+| 0 | Ash 2073, Pou 2073, Cha 2073, Asa 2074 | 58 | -0.006343 | 0.00361 | 0.108 |
+| 1 | Ash 2074, Pou 2074, Cha 2074, Asa 2075 | 64 | -0.005528 | 0.00371 | 0.168 |
+| 2 | Ash 2075, Pou 2075, Cha 2075, Asa 2076 | 64 | -0.005469 | 0.00368 | 0.174 |
+| 3 | Ash 2076, Pou 2076, Cha 2076, Asa 2077 | 64 | -0.005809 | 0.00385 | 0.168 |
+| 4 | Ash 2077, Pou 2077, Cha 2077, Asa 2078 | 64 | -0.005483 | 0.00371 | 0.168 |
+| 5 | Ash 2078, Pou 2078, Cha 2078, Asa 2079 | 64 | -0.005645 | 0.00379 | 0.176 |
+| 6 | Ash 2079, Pou 2079, Cha 2079, Asa 2080 | 64 | -0.006048 | 0.00426 | 0.188 |
+| 7 | Ash 2080, Pou 2080, Cha 2080, Asa 2081 | 64 | -0.007989 | 0.00426 | 0.098 |
+| 8 | Ash 2081, Pou 2081, Cha 2081, Asa 2082 | 64 | -0.01656 | 0.0113 | 0.203 |
+| 9 | Ash 2082, Pou 2082, Cha 2082, Asa 2083 | 64 | -0.01182 | 0.00655 | 0.097 |
+
+### nim
+n_obs=764, clusters=16
+| bin | quarters | cells | dose beta | SE | wild p |
+|---|---|---|---|---|---|
+| -3 | Ash 2070, Pou 2070, Cha 2070, Asa 2071 | 52 | -0.006975 | 0.0108 | 0.517 |
+| -2 | Ash 2071, Pou 2071 | 26 | -0.005957 | 0.00611 | 0.425 |
+| -1 (ref) | Ash 2072 | 13 | 0 | - | - |
+| transition | Pou 2072, Cha 2072, Asa 2073 | 39 | 0.006957 | 0.0311 | 0.738 |
+| 0 | Ash 2073, Pou 2073, Cha 2073, Asa 2074 | 58 | 0.09236 | 0.0791 | 0.310 |
+| 1 | Ash 2074, Pou 2074, Cha 2074, Asa 2075 | 64 | 0.1121 | 0.0788 | 0.229 |
+| 2 | Ash 2075, Pou 2075, Cha 2075, Asa 2076 | 64 | -0.7734 | 0.588 | 0.317 |
+| 3 | Ash 2076, Pou 2076, Cha 2076, Asa 2077 | 64 | 0.1009 | 0.0931 | 0.348 |
+| 4 | Ash 2077, Pou 2077, Cha 2077, Asa 2078 | 64 | 0.04692 | 0.0863 | 0.631 |
+| 5 | Ash 2078, Pou 2078, Cha 2078, Asa 2079 | 64 | 0.1048 | 0.086 | 0.311 |
+| 6 | Ash 2079, Pou 2079, Cha 2079, Asa 2080 | 64 | 0.0878 | 0.122 | 0.537 |
+| 7 | Ash 2080, Pou 2080, Cha 2080, Asa 2081 | 64 | 0.01536 | 0.213 | 0.942 |
+| 8 | Ash 2081, Pou 2081, Cha 2081, Asa 2082 | 64 | -0.6018 | 0.165 | 0.043 |
+| 9 | Ash 2082, Pou 2082, Cha 2082, Asa 2083 | 64 | -0.2196 | 0.133 | 0.126 |
+
+### Pooled: lead (bins < -1) and post, reference bin -1
+1-SD effect = post beta x SD(dose_pre); pre mean = mean quarterly outcome over pre cells.
+| outcome | sample | lead beta | lead SE | lead p | post beta | post SE | post p | 1-SD effect | pre mean | effect / pre mean | n_obs |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | all quarters | 0.004316 | 0.0315 | 0.806 | -0.03659 | 0.0568 | 0.598 | -0.000736 | 0.00417 | -0.18 | 770 |
+| net_profit_loss | Ashwin (Q1) only | -0.02603 | 0.0313 | 0.595 | -0.01767 | 0.0359 | 0.726 | -0.000355 | 0.00346 | -0.10 | 203 |
+| net_profit_loss | from Asar 2072, all quarters | n/a | n/a | n/a | -0.01916 | 0.0619 | 0.790 | -0.000385 | 0.00354 | -0.11 | 649 |
+| net_profit_loss | from Asar 2072, Q1 only | n/a | n/a | n/a | -0.008241 | 0.0337 | 0.844 | -0.000166 | 0.00354 | -0.05 | 175 |
+| net_profit_loss | from Asar 2072, all quarters, + exposure | n/a | n/a | n/a | 0.03797 | 0.0522 | 0.582 | 0.000764 | 0.00354 | 0.22 | 649 |
+| net_profit_loss | from Asar 2072, Q1 only, + exposure | n/a | n/a | n/a | 0.02056 | 0.0309 | 0.470 | 0.000414 | 0.00354 | 0.12 | 175 |
+| loan_loss_provision | all quarters | 0.002142 | 0.00619 | 0.759 | 0.01515 | 0.0304 | 0.684 | 0.000305 | 0.000911 | 0.33 | 741 |
+| loan_loss_provision | Ashwin (Q1) only | -0.01484 | 0.00881 | 0.192 | 0.03975 | 0.0461 | 0.526 | 0.0008 | 0.00143 | 0.56 | 193 |
+| loan_loss_provision | from Asar 2072, all quarters | n/a | n/a | n/a | 0.02914 | 0.0287 | 0.418 | 0.000586 | 0.0011 | 0.53 | 629 |
+| loan_loss_provision | from Asar 2072, Q1 only | n/a | n/a | n/a | 0.04129 | 0.0496 | 0.580 | 0.00083 | 0.0011 | 0.75 | 168 |
+| loan_loss_provision | from Asar 2072, all quarters, + exposure | n/a | n/a | n/a | 0.08272 | 0.0103 | 0.026 | 0.00166 | 0.0011 | 1.51 | 629 |
+| loan_loss_provision | from Asar 2072, Q1 only, + exposure | n/a | n/a | n/a | 0.07832 | 0.0451 | 0.152 | 0.00158 | 0.0011 | 1.43 | 168 |
+| loan_written_off | all quarters | -0.0017 | 0.00142 | 0.266 | -0.007665 | 0.00402 | 0.099 | -0.000154 | 3.08e-05 | -5.01 | 770 |
+| loan_written_off | Ashwin (Q1) only | -0.0007899 | 0.000545 | 0.149 | -0.00312 | 0.00231 | 0.228 | -6.28e-05 | 1.02e-05 | -6.16 | 203 |
+| loan_written_off | from Asar 2072, all quarters | n/a | n/a | n/a | -0.004982 | 0.00444 | 0.321 | -0.0001 | 3.64e-06 | -27.49 | 649 |
+| loan_written_off | from Asar 2072, Q1 only | n/a | n/a | n/a | -0.002673 | 0.00246 | 0.309 | -5.38e-05 | 3.64e-06 | -14.75 | 175 |
+| loan_written_off | from Asar 2072, all quarters, + exposure | n/a | n/a | n/a | -0.01198 | 0.00468 | 0.053 | -0.000241 | 3.64e-06 | -66.11 | 649 |
+| loan_written_off | from Asar 2072, Q1 only, + exposure | n/a | n/a | n/a | -0.005423 | 0.0033 | 0.186 | -0.000109 | 3.64e-06 | -29.93 | 175 |
+| nim | all quarters | -0.006636 | 0.00853 | 0.437 | -0.1035 | 0.0974 | 0.430 | -0.00208 | 0.00801 | -0.26 | 764 |
+| nim | Ashwin (Q1) only | -0.02456 | 0.0129 | 0.158 | -0.03305 | 0.126 | 0.839 | -0.000665 | 0.00721 | -0.09 | 199 |
+| nim | from Asar 2072, all quarters | n/a | n/a | n/a | -0.0802 | 0.0979 | 0.554 | -0.00161 | 0.00684 | -0.24 | 647 |
+| nim | from Asar 2072, Q1 only | n/a | n/a | n/a | -0.01707 | 0.125 | 0.910 | -0.000343 | 0.00684 | -0.05 | 173 |
+| nim | from Asar 2072, all quarters, + exposure | n/a | n/a | n/a | -0.06299 | 0.102 | 0.710 | -0.00127 | 0.00684 | -0.19 | 647 |
+| nim | from Asar 2072, Q1 only, + exposure | n/a | n/a | n/a | 0.1233 | 0.101 | 0.348 | 0.00248 | 0.00684 | 0.36 | 173 |
+SD(dose_pre) = 0.0201. A lead near 0 next to a post effect of similar size to the main run supports parallel pre-trends; a lead of the post's size and sign points to a pre-existing trend or mean reversion.
+
+## Frozen pre-window size as denominator (item 11c)
+| outcome | network | coef | main beta | main p | alt beta | alt SE | alt p | alt n_obs |
+|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | W_hat | dose | -0.02061 | 0.342 | -0.004872 | 0.017 | 0.794 | 1967 |
+| net_profit_loss | W_hat | exposure | -3.41e-05 | 0.078 | -4.886e-06 | 2.43e-05 | 0.869 | 1967 |
+| net_profit_loss | RAS | dose | -0.02076 | 0.325 | -0.004933 | 0.017 | 0.796 | 1967 |
+| net_profit_loss | RAS | exposure | -4.989e-05 | 0.125 | -9.575e-06 | 2.95e-05 | 0.754 | 1967 |
+| loan_loss_provision | W_hat | dose | 0.01371 | 0.424 | 0.006734 | 0.0252 | 0.820 | 1830 |
+| loan_loss_provision | W_hat | exposure | 5.215e-06 | 0.642 | -1.154e-05 | 1.79e-05 | 0.540 | 1830 |
+| loan_loss_provision | RAS | dose | 0.01324 | 0.408 | 0.006765 | 0.0256 | 0.823 | 1830 |
+| loan_loss_provision | RAS | exposure | -2.901e-06 | 0.791 | -1.509e-05 | 1.41e-05 | 0.376 | 1830 |
+| loan_written_off | W_hat | dose | -0.002157 | 0.198 | -0.006769 | 0.00343 | 0.101 | 1967 |
+| loan_written_off | W_hat | exposure | 1.382e-06 | 0.058 | 1.033e-06 | 1.99e-06 | 0.694 | 1967 |
+| loan_written_off | RAS | dose | -0.002149 | 0.199 | -0.006777 | 0.00334 | 0.091 | 1967 |
+| loan_written_off | RAS | exposure | 1.916e-06 | 0.030 | 3.316e-06 | 2.16e-06 | 0.138 | 1967 |
+| nim | W_hat | dose | -0.009635 | 0.805 | -0.005372 | 0.0351 | 0.913 | 1955 |
+| nim | W_hat | exposure | -2.562e-05 | 0.454 | -7.831e-06 | 4.42e-05 | 0.879 | 1955 |
+| nim | RAS | dose | -0.008984 | 0.812 | -0.005476 | 0.0346 | 0.907 | 1955 |
+| nim | RAS | exposure | -5.63e-05 | 0.156 | 3.995e-06 | 5.7e-05 | 0.955 | 1955 |
+
+## Leave-one-bank-out (item 6), CR1 only; design and weights held fixed
+| outcome | network | coef | full beta | LOO min | LOO max | sign flips | max abs t | most influential bank |
+|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | W_hat | dose | -0.02061 | -0.03306 | 0.00821 | 1/16 | 1.95 | ADBNL (0.00821) |
+| net_profit_loss | W_hat | exposure | -3.41e-05 | -4.095e-05 | -1.117e-05 | 0/16 | 2.87 | ADBNL (-1.117e-05) |
+| net_profit_loss | RAS | dose | -0.02076 | -0.03425 | 0.008618 | 1/16 | 2.27 | ADBNL (0.008618) |
+| net_profit_loss | RAS | exposure | -4.989e-05 | -7.014e-05 | -4.537e-06 | 0/16 | 3.44 | ADBNL (-4.537e-06) |
+| loan_loss_provision | W_hat | dose | 0.01371 | 0.001313 | 0.02239 | 0/16 | 3.23 | HBL (0.001313) |
+| loan_loss_provision | W_hat | exposure | 5.215e-06 | -1.936e-06 | 1.886e-05 | 2/16 | 2.61 | NBL (1.886e-05) |
+| loan_loss_provision | RAS | dose | 0.01324 | 0.001276 | 0.02154 | 0/16 | 2.93 | HBL (0.001276) |
+| loan_loss_provision | RAS | exposure | -2.901e-06 | -8.912e-06 | 9.066e-06 | 4/16 | 1.07 | NBL (9.066e-06) |
+| loan_written_off | W_hat | dose | -0.002157 | -0.003883 | -0.001161 | 0/16 | 2.43 | ADBNL (-0.003883) |
+| loan_written_off | W_hat | exposure | 1.382e-06 | 2.908e-07 | 1.689e-06 | 0/16 | 2.52 | ADBNL (2.908e-07) |
+| loan_written_off | RAS | dose | -0.002149 | -0.003874 | -0.001163 | 0/16 | 2.37 | ADBNL (-0.003874) |
+| loan_written_off | RAS | exposure | 1.916e-06 | 1.632e-07 | 2.429e-06 | 0/16 | 2.64 | ADBNL (1.632e-07) |
+| nim | W_hat | dose | -0.009635 | -0.02847 | 0.02862 | 4/16 | 1.22 | RBB (0.02862) |
+| nim | W_hat | exposure | -2.562e-05 | -5.219e-05 | -6.878e-06 | 0/16 | 1.84 | NBL (-5.219e-05) |
+| nim | RAS | dose | -0.008984 | -0.02989 | 0.02669 | 3/16 | 1.16 | RBB (0.02669) |
+| nim | RAS | exposure | -5.63e-05 | -8.517e-05 | -3.582e-05 | 0/16 | 2.33 | NBL (-8.517e-05) |
+
+## Marginal balance (Sec 8 follow-up): can any matrix match both published marginals?
+Within the 16-bank closed system a matrix with zero diagonal can match r (lending) and c (borrowing) only if sum_i r_i = sum_j c_j in that month and no bank lends more than all others borrow (r_i <= sum_{j != i} c_j) or borrows more than all others lend. Where either fails, no reconstruction can be exact and a projection returns a compromise. The per-entry cap is a further constraint, not checked here.
+- months: 133; |sum r - sum c| / max > 1%: 130, > 10%: 121; median relative gap 0.500, max 0.997
+- sum r > sum c in 62 months, < in 71; max |gap| 24,591 (marginal units)
+- bank-months with r_i > sum_(j!=i) c_j: 65; with c_i > sum_(j!=i) r_j: 42
+- months failing at least one condition: 130 of 133
+- W_hat: max |marginal dev| per month, median in failing months 491.3 (n=130), in the others 30.47 (n=3); Spearman(|gap|, dev) = 0.755
+- RAS: max |marginal dev| per month, median in failing months 1,928 (n=130), in the others 15.63 (n=3); Spearman(|gap|, dev) = 0.936
+
+Ten months with the largest |gap|:
+| month | sum r | sum c | gap | rel | banks over | W_hat row dev | W_hat col dev | RAS row dev | RAS col dev |
+|---|---|---|---|---|---|---|---|---|---|
+| Bhadra 2078 | 24,992 | 49,583 | -24,591 | 0.496 | 0 | 1,620 | 70.21 | 0.0004883 | 9,273 |
+| Shrawan 2079 | 11,478 | 33,632 | -22,154 | 0.659 | 1 | 1,482 | 68.29 | 0.0004883 | 1.291e+04 |
+| Falgun 2081 | 6,929 | 28,722 | -21,793 | 0.759 | 2 | 2,468 | 5,563 | 0.0002441 | 8,134 |
+| Jestha 2079 | 16,756 | 37,871 | -21,115 | 0.558 | 0 | 1,458 | 195.5 | 0.0004883 | 6,187 |
+| Mangsir 2078 | 11,195 | 30,691 | -19,496 | 0.635 | 0 | 1,221 | 4.729 | 0.0001221 | 6,988 |
+| Bhadra 2079 | 12,411 | 31,696 | -19,285 | 0.608 | 0 | 1,207 | 2.824 | 0.0004883 | 4,017 |
+| Kartik 2080 | 7,952 | 27,156 | -19,203 | 0.707 | 2 | 1,382 | 3,717 | 0.0004883 | 6,258 |
+| Baisakh 2079 | 10,089 | 28,509 | -18,421 | 0.646 | 1 | 1,170 | 26.68 | 0.0001221 | 7,086 |
+| Poush 2081 | 4,577 | 21,991 | -17,414 | 0.792 | 2 | 1,285 | 3,183 | 0.0002441 | 6,533 |
+| Ashwin 2077 | 16,736 | 121 | +16,615 | 0.993 | 9 | 1,690 | 485.5 | 0.0004883 | 1.607e+04 |
+If the deviations sit in the failing months and track |gap|, the misfit is the data (an unbalanced closed system), not the projection; if not, look at the cap or the solver.
+
+## Row-normalised exposure mapping (item 12): exposure_i = sum_j (W_ij / sum_k W_ik) dose_pre_j
+Weights: unweighted (HT ones re-estimated from the row-normalised exposure); banks with no interbank row in a month get exposure 0.
+- published marginals: r <= 0 on 1321, c <= 0 on 1271 of 2128 bank-months; median r 0, median c 0
+| matrix | sum over | zero sums | max abs dev vs r | max abs dev vs c |
+|---|---|---|---|---|
+| W_hat | rows (j) | 401 | 8002 | 1.812e+04 |
+| W_hat | cols (i) | 0 | 1.953e+04 | 5677 |
+| RAS | rows (j) | 1321 | 41.35 | 1.96e+04 |
+| RAS | cols (i) | 1271 | 1.938e+04 | 1.633e+04 |
+- on the 1321 bank-months where the RAS row is 0: median r 0, median c 0, median W_hat row sum 200.8
+- rows set to 0 before row-normalising: those with r <= 0 (1321)
+| outcome | network | coef | main beta | main p | alt beta | alt SE | alt p | alt n_obs |
+|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | W_hat | dose | -0.02061 | 0.342 | -0.01986 | 0.016 | 0.304 | 1967 |
+| net_profit_loss | W_hat | exposure | -3.41e-05 | 0.078 | -0.04094 | 0.0273 | 0.180 | 1967 |
+| loan_loss_provision | W_hat | dose | 0.01371 | 0.424 | 0.01108 | 0.0104 | 0.431 | 1830 |
+| loan_loss_provision | W_hat | exposure | 5.215e-06 | 0.642 | -0.01061 | 0.00894 | 0.329 | 1830 |
+| loan_written_off | W_hat | dose | -0.002157 | 0.198 | -0.00218 | 0.00147 | 0.207 | 1967 |
+| loan_written_off | W_hat | exposure | 1.382e-06 | 0.058 | 0.001978 | 0.00108 | 0.078 | 1967 |
+| nim | W_hat | dose | -0.009635 | 0.805 | -0.01628 | 0.0353 | 0.706 | 1955 |
+| nim | W_hat | exposure | -2.562e-05 | 0.454 | 0.03208 | 0.0584 | 0.613 | 1955 |
+| net_profit_loss | RAS | dose | -0.02076 | 0.325 | -0.01916 | 0.0161 | 0.343 | 1967 |
+| net_profit_loss | RAS | exposure | -4.989e-05 | 0.125 | -0.02284 | 0.023 | 0.385 | 1967 |
+| loan_loss_provision | RAS | dose | 0.01324 | 0.408 | 0.009078 | 0.00783 | 0.404 | 1830 |
+| loan_loss_provision | RAS | exposure | -2.901e-06 | 0.791 | -0.02531 | 0.0109 | 0.145 | 1830 |
+| loan_written_off | RAS | dose | -0.002149 | 0.199 | -0.002187 | 0.00149 | 0.222 | 1967 |
+| loan_written_off | RAS | exposure | 1.916e-06 | 0.030 | -0.000405 | 0.00164 | 0.830 | 1967 |
+| nim | RAS | dose | -0.008984 | 0.812 | -0.01528 | 0.0345 | 0.724 | 1955 |
+| nim | RAS | exposure | -5.63e-05 | 0.156 | 0.005132 | 0.0455 | 0.914 | 1955 |
+
+## Centrality-based exposure (item 12b, exploratory): exposure_i = [W~ (I - 0.5 W~)^-1 dose_pre]_i, W~ row-normalised
+Katz-Bonacich exposure, alpha = 0.5 fixed in advance. Leverage dose, Eq. (2), weights unweighted. Not part of any main-run test family; Holm below is within this check's exposure coefficients only.
+- published marginals: r <= 0 on 1321, c <= 0 on 1271 of 2128 bank-months; median r 0, median c 0
+| matrix | sum over | zero sums | max abs dev vs r | max abs dev vs c |
+|---|---|---|---|---|
+| W_hat | rows (j) | 401 | 8002 | 1.812e+04 |
+| W_hat | cols (i) | 0 | 1.953e+04 | 5677 |
+| RAS | rows (j) | 1321 | 41.35 | 1.96e+04 |
+| RAS | cols (i) | 1271 | 1.938e+04 | 1.633e+04 |
+- on the 1321 bank-months where the RAS row is 0: median r 0, median c 0, median W_hat row sum 200.8
+- rows set to 0 before row-normalising: those with r <= 0 (1321)
+- W_hat: corr(centrality exposure, direct exposure) on post cells = 0.431 (1920 cells)
+- W_hat: corr(centrality exposure, row-normalised direct exposure) on post cells = 0.975 (1920 cells)
+- RAS: corr(centrality exposure, direct exposure) on post cells = 0.520 (1920 cells)
+- RAS: corr(centrality exposure, row-normalised direct exposure) on post cells = 0.971 (1920 cells)
+
+| outcome | network | coef | main beta | main p | alt beta | alt SE | alt p | alt n_obs |
+|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | W_hat | dose | -0.02061 | 0.342 | -0.02049 | 0.0164 | 0.310 | 1967 |
+| net_profit_loss | W_hat | exposure | -3.41e-05 | 0.078 | -0.03306 | 0.0232 | 0.205 | 1967 |
+| loan_loss_provision | W_hat | dose | 0.01371 | 0.424 | 0.01131 | 0.0105 | 0.432 | 1830 |
+| loan_loss_provision | W_hat | exposure | 5.215e-06 | 0.642 | -0.007351 | 0.00722 | 0.411 | 1830 |
+| loan_written_off | W_hat | dose | -0.002157 | 0.198 | -0.002157 | 0.00146 | 0.210 | 1967 |
+| loan_written_off | W_hat | exposure | 1.382e-06 | 0.058 | 0.001626 | 0.000875 | 0.085 | 1967 |
+| nim | W_hat | dose | -0.009635 | 0.805 | -0.01465 | 0.0345 | 0.728 | 1955 |
+| nim | W_hat | exposure | -2.562e-05 | 0.454 | 0.009212 | 0.0472 | 0.862 | 1955 |
+| net_profit_loss | RAS | dose | -0.02076 | 0.325 | -0.01961 | 0.0164 | 0.341 | 1967 |
+| net_profit_loss | RAS | exposure | -4.989e-05 | 0.125 | -0.01865 | 0.0201 | 0.414 | 1967 |
+| loan_loss_provision | RAS | dose | 0.01324 | 0.408 | 0.008919 | 0.00788 | 0.415 | 1830 |
+| loan_loss_provision | RAS | exposure | -2.901e-06 | 0.791 | -0.02204 | 0.00962 | 0.157 | 1830 |
+| loan_written_off | RAS | dose | -0.002149 | 0.199 | -0.002177 | 0.00149 | 0.223 | 1967 |
+| loan_written_off | RAS | exposure | 1.916e-06 | 0.030 | -0.0004942 | 0.00149 | 0.774 | 1967 |
+| nim | RAS | dose | -0.008984 | 0.812 | -0.01308 | 0.034 | 0.755 | 1955 |
+| nim | RAS | exposure | -5.63e-05 | 0.156 | -0.01447 | 0.035 | 0.691 | 1955 |
+
+| outcome | network | exposure wild p | Holm p |
+|---|---|---|---|
+| net_profit_loss | W_hat | 0.205 | 1.000 |
+| loan_loss_provision | W_hat | 0.411 | 1.000 |
+| loan_written_off | W_hat | 0.085 | 0.677 |
+| nim | W_hat | 0.862 | 1.000 |
+| net_profit_loss | RAS | 0.414 | 1.000 |
+| loan_loss_provision | RAS | 0.157 | 1.000 |
+| loan_written_off | RAS | 0.774 | 1.000 |
+| nim | RAS | 0.691 | 1.000 |
+
+## Loans written off: blank read as missing vs blank read as 0 (item 11b)
+The bulletin often prints no written-off row. 'Blank = missing' leaves it NaN; 'blank = 0' reads it as 0 wherever the bank reported some other P&L line that month (nothing written off yet this fiscal year); with no P&L row at all it stays missing. Zero-filling happens on the extracted (fiscal-YTD) figure, before differencing; a 0 after a positive YTD in the same fiscal year then shows up as a negative flow. This config's main version (blank_as_zero): blank = 0 (user decision 2026-11-04).
+
+| bank | written-off reported | of which exactly 0 | blank, other P&L present (-> 0) | no P&L row (stays missing) |
+|---|---|---|---|---|
+| ADBNL | 108 | 92 | 25 | 0 |
+| EBL | 87 | 84 | 46 | 0 |
+| Global | 85 | 81 | 36 | 12 |
+| HBL | 85 | 47 | 48 | 0 |
+| Kumari | 88 | 86 | 45 | 0 |
+| Laxmi | 116 | 27 | 17 | 0 |
+| MBL | 70 | 8 | 63 | 0 |
+| NABIL | 130 | 14 | 3 | 0 |
+| NBL | 88 | 88 | 45 | 0 |
+| NIC | 89 | 24 | 44 | 0 |
+| NMB | 96 | 33 | 26 | 11 |
+| NSBI | 85 | 80 | 48 | 0 |
+| Prime | 88 | 70 | 34 | 11 |
+| RBB | 88 | 86 | 45 | 0 |
+| SBL | 85 | 31 | 48 | 0 |
+| SCBNL | 132 | 5 | 1 | 0 |
+| total | 1520 | 856 | 574 | 34 |
+Explicit zeros in the extraction would suggest a blank means 'not reported', not 0.
+
+Regression outcome (monthly, / size):
+| version | finite cells | banks with any | negative share |
+|---|---|---|---|
+| blank = missing | 1472 | 16 | 0.046 |
+| blank = 0 | 2060 | 16 | 0.035 |
+
+Eq. A' (unweighted); 'main' columns = blank as missing, 'alt' = blank as 0:
+| outcome | network | coef | main beta | main p | alt beta | alt SE | alt p | alt n_obs |
+|---|---|---|---|---|---|---|---|---|
+| loan_written_off | W_hat | dose | 3.193e-06 | 0.655 | -0.002157 | 0.00142 | 0.198 | 1967 |
+| loan_written_off | W_hat | exposure | 1.138e-06 | 0.518 | 1.382e-06 | 6.73e-07 | 0.058 | 1967 |
+| loan_written_off | RAS | dose | 2.924e-06 | 0.627 | -0.002149 | 0.00141 | 0.199 | 1967 |
+| loan_written_off | RAS | exposure | 4.083e-06 | 0.607 | 1.916e-06 | 9.22e-07 | 0.030 | 1967 |
+Clusters (missing -> 0): W_hat 16 -> 16, RAS 16 -> 16
+
+Headline total effect (dose-only, quarterly, from Baisakh 2070):
+| version | post beta | SE | wild p | lead beta | lead p | 1-SD effect | pre mean | n_obs | clusters | note |
+|---|---|---|---|---|---|---|---|---|---|---|
+| blank = missing | -0.0933 | 2.34 | 0.968 | 0.008362 | 0.094 | -0.00188 | 6.54e-05 | 513 | 16 | - |
+| blank = 0 | -0.007665 | 0.00402 | 0.099 | -0.0017 | 0.266 | -0.000154 | 3.08e-05 | 770 | 16 | - |
+
+## Paid-up capital as an alternative dose
+dose_pu = (required paid-up capital - paid-up capital) / size, frozen at its pre-window mean like the main dose; same pre window, transition and post as the leverage dose (if the paid-up directive has its own dates, that needs its own timing). The balance-sheet row is matched on keywords 'PAID' + 'CAPITAL', not confirmed against a printed bulletin: check the matched labels below.
+
+Matched labels (panel cells filled): 'A. PAID-UP CAPITAL' (2128)
+Cells with a second, different matched value (ignored, first kept): 0
+Other labels containing CAPITAL (not used): 1 CAPITAL FUND
+
+Per bank, pre window Asar 2072 .. Mangsir 2072 (NPR mn):
+| bank | pre cells | paid-up (pre mean) | size (pre mean) | paid-up / size | last paid-up / pre | main dose_pre |
+|---|---|---|---|---|---|---|
+| ADBNL | 6 | 9,861 | 120,083 | 0.0821 | 0.99 | -0.0809 |
+| EBL | 6 | 2,137 | 91,391 | 0.0234 | 1.74 | -0.0344 |
+| Global | 6 | 5,204 | 73,660 | 0.0706 | 1.56 | -0.0573 |
+| HBL | 6 | 3,333 | 89,690 | 0.0372 | 0.77 | -0.0400 |
+| Kumari | 6 | 2,432 | 41,610 | 0.0584 | 2.56 | -0.0405 |
+| Laxmi | 6 | 2,777 | 49,876 | 0.0557 | 2.44 | -0.0443 |
+| MBL | 6 | 2,776 | 51,715 | 0.0537 | 1.83 | -0.0394 |
+| NABIL | 6 | 3,658 | 130,822 | 0.0280 | 0.56 | -0.0203 |
+| NBL | 6 | 6,465 | 90,513 | 0.0714 | 0.73 | 0.0003 |
+| NIC | 6 | 2,658 | 64,001 | 0.0415 | 1.85 | -0.0484 |
+| NMB | 6 | 2,985 | 47,823 | 0.0624 | 0.77 | -0.0493 |
+| NSBI | 6 | 3,058 | 64,912 | 0.0471 | 0.44 | -0.0438 |
+| Prime | 6 | 3,140 | 49,098 | 0.0640 | 0.30 | -0.0492 |
+| RBB | 6 | 8,589 | 152,077 | 0.0565 | 0.66 | -0.0008 |
+| SBL | 6 | 2,031 | 56,342 | 0.0361 | 4.08 | -0.0281 |
+| SCBNL | 6 | 2,248 | 68,359 | 0.0329 | 0.02 | -0.0501 |
+Pre-window paid-up capital: median 2,985, min 2,031, max 9,861 (n=16); corr(paid-up / size, main dose_pre) = -0.261
+'last paid-up / pre' uses the last month in this run's window (Shrawan 2083).
+
+Requirement 8,000 NPR mn: 14/16 banks below it pre-mandate, dose_pu_pre range [-0.0155, 0.1339], SD 0.0438 (main dose SD 0.0201). Betas are per unit of each dose; compare the 1-SD effects.
+
+Eq. A' (unweighted); main = leverage dose, alt = paid-up dose (exposure rebuilt from it):
+| outcome | network | coef | main beta | main p | alt beta | alt SE | alt p | alt n_obs |
+|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | W_hat | dose | -0.02061 | 0.342 | -0.0146 | 0.016 | 0.449 | 1967 |
+| net_profit_loss | W_hat | exposure | -3.41e-05 | 0.078 | 1.715e-05 | 8.43e-06 | 0.184 | 1967 |
+| loan_loss_provision | W_hat | dose | 0.01371 | 0.424 | -0.02788 | 0.00503 | 0.019 | 1830 |
+| loan_loss_provision | W_hat | exposure | 5.215e-06 | 0.642 | -1.077e-05 | 4.17e-06 | 0.128 | 1830 |
+| loan_written_off | W_hat | dose | -0.002157 | 0.198 | 0.0002751 | 0.00119 | 0.846 | 1967 |
+| loan_written_off | W_hat | exposure | 1.382e-06 | 0.058 | -6.563e-07 | 3.92e-07 | 0.107 | 1967 |
+| nim | W_hat | dose | -0.009635 | 0.805 | -0.005008 | 0.0484 | 0.952 | 1955 |
+| nim | W_hat | exposure | -2.562e-05 | 0.454 | 1.262e-05 | 2.65e-05 | 0.717 | 1955 |
+| net_profit_loss | RAS | dose | -0.02076 | 0.325 | -0.01141 | 0.0151 | 0.574 | 1967 |
+| net_profit_loss | RAS | exposure | -4.989e-05 | 0.125 | 1.917e-05 | 1.11e-05 | 0.303 | 1967 |
+| loan_loss_provision | RAS | dose | 0.01324 | 0.408 | -0.02555 | 0.0049 | 0.023 | 1830 |
+| loan_loss_provision | RAS | exposure | -2.901e-06 | 0.791 | -6.27e-06 | 3.99e-06 | 0.265 | 1830 |
+| loan_written_off | RAS | dose | -0.002149 | 0.199 | 0.000117 | 0.00122 | 0.938 | 1967 |
+| loan_written_off | RAS | exposure | 1.916e-06 | 0.030 | -7.175e-07 | 4.97e-07 | 0.087 | 1967 |
+| nim | RAS | dose | -0.008984 | 0.812 | 0.01103 | 0.0353 | 0.808 | 1955 |
+| nim | RAS | exposure | -5.63e-05 | 0.156 | 2.693e-05 | 1.64e-05 | 0.234 | 1955 |
+
+Headline total effect (dose-only, quarterly), leverage dose vs paid-up dose:
+
+net_profit_loss:
+| version | post beta | SE | wild p | lead beta | lead p | 1-SD effect | pre mean | n_obs | clusters | note |
+|---|---|---|---|---|---|---|---|---|---|---|
+| leverage dose | -0.03659 | 0.0568 | 0.598 | 0.004316 | 0.806 | -0.000736 | 0.00417 | 770 | 16 | - |
+| paid-up dose | -0.06796 | 0.0449 | 0.196 | -0.0005244 | 0.967 | -0.00298 | 0.00417 | 770 | 16 | - |
+
+loan_loss_provision:
+| version | post beta | SE | wild p | lead beta | lead p | 1-SD effect | pre mean | n_obs | clusters | note |
+|---|---|---|---|---|---|---|---|---|---|---|
+| leverage dose | 0.01515 | 0.0304 | 0.684 | 0.002142 | 0.759 | 0.000305 | 0.000911 | 741 | 16 | - |
+| paid-up dose | -0.06419 | 0.0114 | 0.014 | -0.0004979 | 0.871 | -0.00281 | 0.000911 | 741 | 16 | - |
+
+loan_written_off:
+| version | post beta | SE | wild p | lead beta | lead p | 1-SD effect | pre mean | n_obs | clusters | note |
+|---|---|---|---|---|---|---|---|---|---|---|
+| leverage dose | -0.007665 | 0.00402 | 0.099 | -0.0017 | 0.266 | -0.000154 | 3.08e-05 | 770 | 16 | - |
+| paid-up dose | 0.002559 | 0.00241 | 0.456 | 0.001241 | 0.088 | 0.000112 | 3.08e-05 | 770 | 16 | - |
+
+nim:
+| version | post beta | SE | wild p | lead beta | lead p | 1-SD effect | pre mean | n_obs | clusters | note |
+|---|---|---|---|---|---|---|---|---|---|---|
+| leverage dose | -0.1035 | 0.0974 | 0.430 | -0.006636 | 0.437 | -0.00208 | 0.00801 | 764 | 16 | - |
+| paid-up dose | 0.1299 | 0.0861 | 0.475 | 0.0008399 | 0.839 | 0.00569 | 0.00801 | 764 | 16 | - |
+
+### Paid-up dose robustness (total effect)
+dose_pu_pre = size term (req / size, frozen) + paid-up term (-paid-up / size, frozen); max |sum - dose_pu_pre| = 2.98e-08. Size term range [0.0526, 0.1923], paid-up term [-0.0821, -0.0234]; corr(size term, dose_pu) = 0.924, corr(paid-up term, dose_pu) = 0.263, corr(size term, log size_pre) = -0.984. Every fit below already has log size_pre x post among its controls.
+
+(a) Decomposition: both terms entered together (each with its own lead / transition / post). A binding paid-up floor predicts the same post beta on both (same units); a pure size effect puts it on the size term only. The size term is close to a function of log size_pre, so expect it to be imprecise.
+| outcome | combined beta (p) | size term beta | SE | wild p | 1-SD | paid-up term beta | SE | wild p | 1-SD |
+|---|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | -0.06796 (0.196) | -0.05031 | 0.0718 | 0.521 | -0.00214 | -0.07437 | 0.0481 | 0.253 | -0.00126 |
+| loan_loss_provision | -0.06419 (0.014) | -0.04245 | 0.0319 | 0.229 | -0.00181 | -0.04705 | 0.0157 | 0.065 | -0.000797 |
+| loan_written_off | 0.002559 (0.456) | -0.001531 | 0.01 | 0.899 | -6.52e-05 | 0.0005249 | 0.00335 | 0.895 | 8.89e-06 |
+| nim | 0.1299 (0.475) | 0.5533 | 0.121 | 0.038 | 0.0236 | 0.1035 | 0.0484 | 0.237 | 0.00175 |
+
+(c) Outcomes divided by the frozen pre-window size (item 11c) instead of current size, so asset growth from capital raising can't shrink the ratio:
+
+net_profit_loss:
+| version | post beta | SE | wild p | lead beta | lead p | 1-SD effect | pre mean | n_obs | clusters | note |
+|---|---|---|---|---|---|---|---|---|---|---|
+| current size | -0.06796 | 0.0449 | 0.196 | -0.0005244 | 0.967 | -0.00298 | 0.00417 | 770 | 16 | - |
+| frozen pre size | 0.02662 | 0.0212 | 0.272 | 0.00628 | 0.634 | 0.00117 | 0.00351 | 770 | 16 | - |
+
+loan_loss_provision:
+| version | post beta | SE | wild p | lead beta | lead p | 1-SD effect | pre mean | n_obs | clusters | note |
+|---|---|---|---|---|---|---|---|---|---|---|
+| current size | -0.06419 | 0.0114 | 0.014 | -0.0004979 | 0.871 | -0.00281 | 0.000911 | 741 | 16 | - |
+| frozen pre size | -0.08543 | 0.0191 | 0.002 | -0.001821 | 0.533 | -0.00374 | 0.000767 | 741 | 16 | - |
+
+loan_written_off:
+| version | post beta | SE | wild p | lead beta | lead p | 1-SD effect | pre mean | n_obs | clusters | note |
+|---|---|---|---|---|---|---|---|---|---|---|
+| current size | 0.002559 | 0.00241 | 0.456 | 0.001241 | 0.088 | 0.000112 | 3.08e-05 | 770 | 16 | - |
+| frozen pre size | 0.006572 | 0.00723 | 0.498 | 0.0009068 | 0.157 | 0.000288 | 2.49e-05 | 770 | 16 | - |
+
+nim:
+| version | post beta | SE | wild p | lead beta | lead p | 1-SD effect | pre mean | n_obs | clusters | note |
+|---|---|---|---|---|---|---|---|---|---|---|
+| current size | 0.1299 | 0.0861 | 0.475 | 0.0008399 | 0.839 | 0.00569 | 0.00801 | 764 | 16 | - |
+| frozen pre size | 0.2047 | 0.0384 | 0.007 | -0.0005472 | 0.888 | 0.00897 | 0.00675 | 764 | 16 | - |
+
+(d) Leave-one-bank-out, CR1 only: post beta (t) with that bank's outcomes dropped.
+| dropped | net_profit_loss | loan_loss_provision | loan_written_off | nim |
+|---|---|---|---|---|
+| none | -0.06796 (-1.52) | -0.06419 (-5.61) | 0.002559 (1.06) | 0.1299 (1.51) |
+| ADBNL | 0.006664 (0.20) | -0.04526 (-3.01) | 0.0008566 (0.29) | 0.2326 (3.48) |
+| EBL | -0.02714 (-0.81) | -0.05838 (-4.58) | 0.003282 (1.11) | 0.1981 (3.95) |
+| Global | -0.06796 (-1.51) | -0.06404 (-5.60) | 0.002559 (1.06) | 0.1299 (1.51) |
+| HBL | -0.06901 (-1.48) | -0.06094 (-5.39) | 0.001393 (0.90) | 0.1309 (1.49) |
+| Kumari | -0.07402 (-1.70) | -0.06721 (-11.95) | 0.002829 (1.16) | 0.1259 (1.45) |
+| Laxmi | -0.0658 (-1.47) | -0.06181 (-5.28) | 0.00269 (1.12) | 0.1367 (1.67) |
+| MBL | -0.06506 (-1.46) | -0.06383 (-6.09) | 0.002532 (0.97) | 0.1273 (1.50) |
+| NABIL | -0.09623 (-1.82) | -0.06461 (-3.91) | 0.003659 (1.00) | 0.08539 (0.89) |
+| NBL | -0.08484 (-0.99) | -0.06865 (-2.89) | -0.000965 (-0.29) | -0.05799 (-0.95) |
+| NIC | -0.06494 (-1.41) | -0.06397 (-5.47) | 0.00229 (0.95) | 0.1419 (1.60) |
+| NMB | -0.06896 (-1.53) | -0.06422 (-5.61) | 0.002505 (1.04) | 0.1299 (1.51) |
+| NSBI | -0.07026 (-1.58) | -0.06356 (-5.61) | 0.002185 (0.82) | 0.1381 (1.67) |
+| Prime | -0.06837 (-1.52) | -0.06544 (-6.02) | 0.002678 (1.22) | 0.1299 (1.51) |
+| RBB | -0.06212 (-1.34) | -0.06393 (-5.74) | 0.00255 (0.99) | 0.1303 (1.62) |
+| SBL | -0.1045 (-2.47) | -0.07847 (-9.92) | 0.004552 (2.05) | 0.1369 (1.41) |
+| SCBNL | -0.00164 (-0.08) | -0.05055 (-3.84) | 0.002467 (0.71) | 0.1655 (2.07) |
+net_profit_loss: LOO range [-0.1045, 0.006664], sign flips 1/16, most influential ADBNL (0.006664)
+loan_loss_provision: LOO range [-0.07847, -0.04526], sign flips 0/16, most influential ADBNL (-0.04526)
+loan_written_off: LOO range [-0.000965, 0.004552], sign flips 1/16, most influential NBL (-0.000965)
+nim: LOO range [-0.05799, 0.2326], sign flips 1/16, most influential NBL (-0.05799)
+
+(f) First stage and (g) asset growth: the same total-effect regression on balance-sheet stocks at quarter-end months (no differencing, no size scaling). 'paid_up / size_pre' is in the dose's units: beta = post-period paid-up raised per unit of pre-window shortfall, averaged over all post quarters (so below 1 even under full compliance, since post starts a year before the deadline). 'log size' tests the denominator channel behind (c).
+| version | post beta | SE | wild p | lead beta | lead p | 1-SD effect | pre mean | n_obs | clusters | note |
+|---|---|---|---|---|---|---|---|---|---|---|
+| paid_up / size_pre | 0.2661 | 0.362 | 0.627 | -0.03744 | 0.279 | 0.0117 | 0.0444 | 832 | 16 | - |
+| log paid_up | 9.397 | 9.06 | 0.548 | -0.8303 | 0.252 | 0.412 | 8.01 | 832 | 16 | - |
+| log size | 9.5 | 2.65 | 0.016 | -0.8168 | 0.088 | 0.416 | 11 | 832 | 16 | - |
+
+(h) Horse race: paid-up dose and leverage dose entered together (each with its own lead / transition / post).
+| outcome | paid-up beta | SE | wild p | 1-SD | leverage beta | SE | wild p | 1-SD |
+|---|---|---|---|---|---|---|---|---|
+| net_profit_loss | -0.06964 | 0.0456 | 0.349 | -0.00305 | -0.04022 | 0.0609 | 0.641 | -0.000809 |
+| loan_loss_provision | -0.06337 | 0.0122 | 0.017 | -0.00278 | 0.01009 | 0.0206 | 0.705 | 0.000203 |
+| loan_written_off | 0.002203 | 0.0019 | 0.339 | 9.65e-05 | -0.007201 | 0.00385 | 0.138 | -0.000145 |
+| nim | 0.1256 | 0.0644 | 0.397 | 0.0055 | -0.09643 | 0.0735 | 0.398 | -0.00194 |
+corr(dose_pu_pre, leverage dose_pre) = -0.180
+
+## Paid-up capital path: when each bank reaches the requirement
+Requirement 8,000 NPR mn, deadline Asar end 2074 (Unified Directive 2073, dir. 23 pt. 4). Panel (2070, 'Baisakh') .. (2083, 'Shrawan') (paid-up after Falgun 2075 is in the corrupted bulletins, Sec 5a). 'first month >=' is the first bulletin month at or above the requirement; 'vs deadline' = months after the deadline (negative = early); 'months below after' counts later months back under it.
+
+| bank | Asar 2070 | Asar 2071 | Asar 2072 | Mangsir 2072 | Asar 2073 | Asar 2074 | Asar 2075 | Asar 2076 | Asar 2077 | Asar 2078 | Asar 2079 | Asar 2080 | Asar 2081 | Asar 2082 | Asar 2083 | Shrawan 2083 | first month >= | vs deadline | months below after |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| ADBNL | 9,637 | 9,637 | 9,861 | 9,861 | 10,374 | 12,520 | 13,938 | 14,448 | 4,989 | 16,423 | 18,621 | 8,884 | 8,884 | 9,288 | 9,738 | 9,738 | Baisakh 2070 | -50 | 11 |
+| EBL | 1,761 | 1,921 | 2,137 | 2,137 | 2,743 | 4,606 | 8,107 | 8 | 8 | 8,934 | 9,467 | 698 | 1,768 | 2,945 | 3,721 | 3,721 | Poush 2074 | +6 | 64 |
+| Global | 2,418 | 4,107 | 5,012 | 6,164 | 6,164 | 8,080 | 8,888 | 10,311 | 8,976 | 21,632 | 23,796 | 5,771 | 6,129 | 8,116 | 8,116 | 8,116 | Asar 2074 | +0 | 20 |
+| HBL | 2,760 | 2,898 | 3,333 | 3,333 | 4,499 | 6,492 | 8,115 | 8 | 9 | 10,684 | 12,969 | 1,657 | 1,657 | 1,657 | 2,582 | 2,582 | Poush 2074 | +6 | 62 |
+| Kumari | 1,604 | 1,828 | 2,432 | 2,432 | 2,699 | 6,208 | 7,163 | 8 | 2,520 | 13,878 | 14,711 | 6,226 | 6,226 | 6,226 | 6,226 | 6,226 | Shrawan 2076 | +25 | 58 |
+| Laxmi | 1,694 | 1,948 | 2,338 | 3,039 | 3,039 | 6,318 | 8,222 | 8 | 9,813 | 10,696 | 11,551 | 1,670 | 3,187 | 4,347 | 6,781 | 6,781 | Kartik 2074 | +4 | 56 |
+| MBL | 2,479 | 2,479 | 2,776 | 2,776 | 3,865 | 6,599 | 8,056 | 8 | 8,458 | 9,053 | 10,257 | 10,257 | 11,621 | 11,621 | 5,086 | 5,086 | Mangsir 2074 | +5 | 17 |
+| NABIL | 2,437 | 3,047 | 3,658 | 3,658 | 4,757 | 6,186 | 8,043 | 9 | 10,098 | 13,844 | 22,833 | 7,057 | 7,057 | 7,057 | 2,057 | 2,057 | Ashwin 2074 | +3 | 50 |
+| NBL | 3,716 | 6,465 | 6,465 | 6,465 | 6,465 | 8,043 | 8,043 | 9,811 | 11,283 | 12,637 | 14,406 | 4,694 | 4,694 | 4,694 | 4,694 | 4,694 | Asar 2074 | +0 | 52 |
+| NIC | 2,312 | 2,312 | 2,658 | 2,658 | 4,575 | 6,693 | 8,031 | 8 | 9 | 11,564 | 11,564 | 1,564 | 4,918 | 4,918 | 4,918 | 4,918 | Bhadra 2074 | +2 | 60 |
+| NMB | 2,000 | 2,000 | 2,400 | 4,155 | 4,487 | 6,462 | 7,603 | 9 | 3,951 | 16,326 | 18,367 | 8,367 | 8,367 | 8,367 | 2,285 | 2,285 | Ashwin 2075 | +15 | 23 |
+| NSBI | 2,356 | 2,650 | 3,058 | 3,058 | 3,884 | 6,925 | 8,047 | 8 | 8 | 9,494 | 9,826 | 121 | 500 | 899 | 1,335 | 1,335 | Poush 2074 | +6 | 65 |
+| Prime | 2,340 | 2,639 | 3,140 | 3,140 | 3,705 | 6,325 | 8,033 | 9 | 3,985 | 16,083 | 18,656 | 9,403 | 9,403 | 9,403 | 955 | 955 | Chaitra 2074 | +9 | 23 |
+| RBB | 8,589 | 8,589 | 8,589 | 8,589 | 8,589 | 8,589 | 9,005 | 9 | 9 | 9,185 | 13,940 | 5,637 | 5,637 | 5,637 | 5,637 | 5,637 | Baisakh 2070 | -50 | 63 |
+| SBL | 1,619 | 1,814 | 2,031 | 2,031 | 3,022 | 5,251 | 8,464 | 8 | 9,788 | 10,962 | 12,524 | 4,090 | 4,090 | 4,090 | 8,294 | 8,294 | Baisakh 2075 | +10 | 41 |
+| SCBNL | 1,854 | 2,042 | 2,248 | 2,248 | 2,812 | 4,006 | 8,011 | 8,011 | 8 | 8,572 | 9,429 | 9 | 9 | 42 | 42 | 42 | Poush 2074 | +6 | 59 |
+Reached 8,000 by the deadline: 4/16; within the panel at all: 16/16.
+Anticipation (Sec 4a timing caveat): share of each bank's Asar 2072 .. Shrawan 2083 paid-up increase already in place by Mangsir 2072: median 0.00, range [0.00, 0.37] (n=7); banks with any increase inside the pre window: Global, Laxmi, NMB.
+
+## Threats to the paid-up result (Sec 5b item 1): pre-trend, mergers, catch-up
+
+### 1. Pre-trend in the balance-sheet stocks
+dose_pu x fiscal-year bin on quarter-end stocks; reference bin -1 = the pre-window fiscal year (its quarter-ends up to Mangsir 2072); Z_pre x post controls, bank + period FE, unweighted. A negative pre bin means high-dose banks were lower then relative to the reference, i.e. they were growing faster into it. Cells: beta (SE, wild p).
+| bin | months | paid_up / size_pre | log paid_up | log size |
+|---|---|---|---|---|
+| -4 | Bai 2070 - Asa 2070 | -0.0256 (0.064, p 0.696) | -0.58 (1.3, p 0.669) | -0.716 (0.63, p 0.267) |
+| -3 | Shr 2070 - Asa 2071 | -0.0462 (0.045, p 0.334) | -1.07 (0.85, p 0.268) | -1.12 (0.5, p 0.081) |
+| -2 | Shr 2071 - Asa 2072 | -0.0297 (0.021, p 0.151) | -0.592 (0.41, p 0.156) | -0.448 (0.22, p 0.061) |
+| -1 | Shr 2072 - Man 2072 | 0 (ref, 16 cells) | 0 (ref, 16 cells) | 0 (ref, 16 cells) |
+| transition | Pou 2072 - Asa 2073 | 0.0859 (0.054, p 0.146) | 1.29 (0.88, p 0.186) | 0.598 (0.66, p 0.435) |
+| 0 | Shr 2073 - Asa 2074 | -0.189 (0.4, p 0.717) | 8.18 (10, p 0.613) | 7.14 (2.9, p 0.061) |
+| 1 | Shr 2074 - Asa 2075 | 0.195 (0.41, p 0.719) | 11.5 (10, p 0.443) | 8.65 (2.9, p 0.034) |
+| 2 | Shr 2075 - Asa 2076 | -0.401 (0.43, p 0.447) | -11.4 (13, p 0.484) | 11.2 (3.4, p 0.032) |
+| 3 | Shr 2076 - Asa 2077 | 0.0365 (0.42, p 0.952) | 11.3 (12, p 0.391) | 8.84 (3, p 0.030) |
+| 4 | Shr 2077 - Asa 2078 | 0.497 (0.37, p 0.337) | 17.9 (10, p 0.151) | 9.4 (3, p 0.015) |
+| 5 | Shr 2078 - Asa 2079 | 0.887 (0.43, p 0.099) | 13.9 (9.4, p 0.257) | 11.8 (3, p 0.005) |
+| 6 | Shr 2079 - Asa 2080 | 0.741 (0.45, p 0.199) | 11.5 (9, p 0.405) | 10.9 (2.8, p 0.004) |
+| 7 | Shr 2080 - Asa 2081 | 0.355 (0.36, p 0.470) | 10.1 (9.4, p 0.430) | 8.31 (4.9, p 0.147) |
+| 8 | Shr 2081 - Asa 2082 | 0.358 (0.37, p 0.474) | 11.1 (9.2, p 0.410) | 10.3 (6.2, p 0.185) |
+| 9 | Shr 2082 - Asa 2083 | 0.182 (0.41, p 0.728) | 9.93 (10, p 0.537) | 8.5 (3.9, p 0.077) |
+| 10 | Shr 2083 - Shr 2083 | no cells | no cells | no cells |
+
+Pooled total effect, without and with linear trends: dose_pu x trend and log size_pre x trend (years since the pre-window end, whole panel). With trends, post beta is the shift beyond each bank's dose- and size-predicted linear path. Conservative: a trend fitted on the whole panel also soaks up an effect that ramps up towards the deadline.
+| version | post beta | SE | wild p | lead beta | lead p | 1-SD effect | pre mean | n_obs | clusters | note |
+|---|---|---|---|---|---|---|---|---|---|---|
+| paid_up / size_pre | 0.2661 | 0.362 | 0.627 | -0.03744 | 0.279 | 0.0117 | 0.0444 | 832 | 16 | - |
+| paid_up / size_pre, + trends | 0.4042 | 0.271 | 0.153 | 0.04593 | 0.358 | 0.0177 | 0.0444 | 832 | 16 | - |
+| log paid_up | 9.397 | 9.06 | 0.548 | -0.8303 | 0.252 | 0.412 | 8.01 | 832 | 16 | - |
+| log paid_up, + trends | 9.057 | 12.6 | 0.537 | 0.008588 | 0.994 | 0.397 | 8.01 | 832 | 16 | - |
+| log size | 9.5 | 2.65 | 0.016 | -0.8168 | 0.088 | 0.416 | 11 | 832 | 16 | - |
+| log size, + trends | 3.668 | 9.11 | 0.711 | -0.6652 | 0.536 | 0.161 | 11 | 832 | 16 | - |
+| nim | 0.1299 | 0.0861 | 0.475 | 0.0008399 | 0.839 | 0.00569 | 0.00801 | 764 | 16 | - |
+| nim, + trends | 0.3887 | 0.125 | 0.085 | 0.00141 | 0.925 | 0.017 | 0.00801 | 764 | 16 | - |
+| net_profit_loss | -0.06796 | 0.0449 | 0.196 | -0.0005244 | 0.967 | -0.00298 | 0.00417 | 770 | 16 | - |
+| net_profit_loss, + trends | -0.05808 | 0.124 | 0.707 | 0.001402 | 0.918 | -0.00254 | 0.00417 | 770 | 16 | - |
+Not done here: a Rambachan-Roth sensitivity bound (how large a trend violation would explain the post beta); with about 7 pre quarters per bank the event study above is the input it needs.
+
+### 2. Mergers inside the window
+Hinted dates are approximate (NRB 'List of BFIs' '*' joint-operation dates, hand-converted AD -> BS). The tables date them from the bulletins: a merger shows as a size and paid-up jump beyond the 99th percentile of month-to-month |log size change| in the clean bulletins (up to Falgun 2075, adjacent panel months only).
+Clean-month |log size change|: median 0.021, 99th pct 0.146 (n=1679).
+
+SBL, hinted Asar 2073, absorbing Lumbini:
+| month | size | dlog size | paid-up | d paid-up | Lumbini size | Lumbini paid-up |
+|---|---|---|---|---|---|---|
+| Falgun 2072 | 59,952 | -0.012 | 2,437 | +0 | 25,965 | 2,001 |
+| Chaitra 2072 | 65,491 | +0.088 | 2,437 | +0 | 27,158 | 2,001 |
+| Baisakh 2073 | 67,725 | +0.034 | 2,437 | +0 | 27,485 | 2,301 |
+| Jestha 2073 | 69,966 | +0.033 | 2,437 | +0 | 27,817 | 2,301 |
+| Asar 2073 | 80,826 | +0.144 | 3,022 | +585 | n/a | n/a |
+| Shrawan 2073 | 80,126 | -0.009 | 3,022 | +0 | n/a | n/a |
+| Bhadra 2073 | 83,664 | +0.043 | 3,022 | +0 | n/a | n/a |
+| Ashwin 2073 | 85,344 | +0.020 | 3,022 | +0 | n/a | n/a |
+| Kartik 2073 | 86,435 | +0.013 | 3,022 | +0 | n/a | n/a |
+SBL: size jumps > p99 in the window: none
+Lumbini: last month with a finite size: Jestha 2073
+
+RBB, hinted Baisakh 2075:
+| month | size | dlog size | paid-up | d paid-up |
+|---|---|---|---|---|
+| Poush 2074 | 188,809 | +0.074 | 8,589 | +0 |
+| Magh 2074 | 185,365 | -0.018 | 8,589 | +0 |
+| Falgun 2074 | 179,574 | -0.032 | 8,589 | +0 |
+| Chaitra 2074 | 190,189 | +0.057 | 8,589 | +0 |
+| Baisakh 2075 | 184,527 | -0.030 | 9,005 | +416 |
+| Jestha 2075 | 203,775 | +0.099 | 9,005 | +0 |
+| Asar 2075 | 212,942 | +0.044 | 9,005 | +0 |
+| Shrawan 2075 | 203,620 | -0.045 | 9,005 | +0 |
+| Bhadra 2075 | 204,040 | +0.002 | 9,005 | +0 |
+RBB: size jumps > p99 in the window: none
+
+Total effect of dose_pu on the stocks and the NIM / net-profit horse race (paid-up and leverage dose jointly), all banks vs dropping a merging bank vs pro-forma. Pro-forma: before the absorbed bank's last bulletin month, its paid-up and size are added to the acquirer's (a cell where it is missing stays missing); the acquirer's dose_pu, log size control and size_pre are rebuilt from the sums. Its P&L outcomes and leverage dose are left as reported (the absorbed bank's P&L is not added).
+pro-forma SBL + Lumbini: added through Jestha 2073; SBL dose_pu_pre 0.1060 -> 0.0492, size_pre 56,342 -> 80,653; acquirer cells made missing by a missing partner cell: 0
+
+| version | post beta | SE | wild p | lead beta | lead p | 1-SD effect | pre mean | n_obs | clusters | note |
+|---|---|---|---|---|---|---|---|---|---|---|
+| all banks: paid_up / size_pre | 0.2661 | 0.362 | 0.627 | -0.03744 | 0.279 | 0.0117 | 0.0444 | 832 | 16 | - |
+| all banks: log paid_up | 9.397 | 9.06 | 0.548 | -0.8303 | 0.252 | 0.412 | 8.01 | 832 | 16 | - |
+| all banks: log size | 9.5 | 2.65 | 0.016 | -0.8168 | 0.088 | 0.416 | 11 | 832 | 16 | - |
+| drop SBL: paid_up / size_pre | 0.2568 | 0.4 | 0.691 | -0.04388 | 0.224 | 0.0112 | 0.0452 | 780 | 15 | - |
+| drop SBL: log paid_up | 8.268 | 9.96 | 0.717 | -0.923 | 0.219 | 0.362 | 8.04 | 780 | 15 | - |
+| drop SBL: log size | 12.04 | 2.19 | 0.001 | -0.7297 | 0.114 | 0.527 | 11 | 780 | 15 | - |
+| drop RBB: paid_up / size_pre | 0.273 | 0.36 | 0.632 | -0.02305 | 0.558 | 0.012 | 0.0436 | 780 | 15 | - |
+| drop RBB: log paid_up | 9.548 | 6.77 | 0.353 | -0.5074 | 0.541 | 0.418 | 7.94 | 780 | 15 | - |
+| drop RBB: log size | 9.527 | 2.73 | 0.021 | -0.8091 | 0.194 | 0.417 | 10.9 | 780 | 15 | - |
+| SBL pro-forma: paid_up / size_pre | 0.2333 | 0.404 | 0.727 | -0.04463 | 0.214 | 0.00999 | 0.0452 | 832 | 16 | - |
+| SBL pro-forma: log paid_up | 7.985 | 10 | 0.720 | -0.9405 | 0.208 | 0.342 | 8.05 | 832 | 16 | - |
+| SBL pro-forma: log size | 11.62 | 2.34 | 0.000 | -0.6739 | 0.156 | 0.497 | 11 | 832 | 16 | - |
+
+| version | outcome | paid-up beta | SE | wild p | leverage beta | SE | wild p |
+|---|---|---|---|---|---|---|---|
+| all banks | nim | 0.1256 | 0.0644 | 0.397 | -0.09643 | 0.0735 | 0.398 |
+| all banks | net_profit_loss | -0.06964 | 0.0456 | 0.349 | -0.04022 | 0.0609 | 0.641 |
+| drop SBL | nim | 0.1151 | 0.0818 | 0.437 | -0.1106 | 0.11 | 0.566 |
+| drop SBL | net_profit_loss | -0.1284 | 0.0178 | 0.016 | -0.123 | 0.0296 | 0.059 |
+| drop RBB | nim | 0.1259 | 0.0475 | 0.253 | -0.1382 | 0.0642 | 0.243 |
+| drop RBB | net_profit_loss | -0.063 | 0.0453 | 0.411 | -0.05059 | 0.0659 | 0.589 |
+| SBL pro-forma | nim | 0.121 | 0.0843 | 0.480 | -0.08575 | 0.0814 | 0.510 |
+| SBL pro-forma | net_profit_loss | -0.1153 | 0.0326 | 0.085 | -0.06504 | 0.0534 | 0.403 |
+A merger is also a way to comply with the floor, so dropping or pro-forma-ing the bank removes part of the effect as well as the mechanical jump; report both next to the main fit.
+
+### 3. Floor or catch-up?
+Plain catch-up (low-capital banks raising anyway) and an absolute floor both make high-dose banks raise more. They differ in where the banks end up: a floor piles them up just above 8,000 whatever their start, catch-up keeps their order and spread.
+
+(a) Bunching: banks with paid-up in [T, 1.05 T) / [T, 1.10 T), at each snapshot. A floor predicts a spike at T = 8,000 after the deadline and none at the placebo thresholds.
+| T | Mangsir 2072 | Asar 2074 | Asar 2075 |
+|---|---|---|---|
+| 4,000 | 1 / 1 | 1 / 1 | 0 / 0 |
+| 5,000 | 0 / 0 | 0 / 1 | 0 / 0 |
+| 6,000 | 1 / 2 | 2 / 7 | 0 / 0 |
+| 7,000 | 0 / 0 | 0 / 0 | 1 / 2 |
+| 8,000 (requirement) | 0 / 1 | 2 / 3 | 10 / 11 |
+| 9,000 | 0 / 1 | 0 / 0 | 1 / 1 |
+| 10,000 | 0 / 0 | 0 / 0 | 0 / 0 |
+| 12,000 | 0 / 0 | 1 / 1 | 0 / 0 |
+
+(b) Where the banks below 8,000 at Mangsir 2072 end up at Asar 2075 (n=14). Floor: rank correlation start vs end near 0 and a much smaller spread at the end; catch-up: rank correlation > 0.
+Spearman(start, end) = 0.011 (p 0.970); coefficient of variation 0.408 -> 0.047; end level median 8,043, range [7,163, 8,888]
+
+(c) Raise vs shortfall, cross-section: raise = paid-up Asar 2075 - Mangsir 2072; shortfall = max(0, 8,000 - paid-up at Mangsir 2072). A floor predicts slope near 1 and intercept near 0 (raise exactly to the floor, plus whatever overshoot); the slope's p is a permutation test (9999 draws), not a t-test.
+| bank | paid-up start | shortfall | raise | raise / shortfall | end - requirement |
+|---|---|---|---|---|---|
+| ADBNL | 9,861 | 0 | 4,077 | n/a | +5,938 |
+| EBL | 2,137 | 5,863 | 5,969 | 1.02 | +107 |
+| Global | 6,164 | 1,836 | 2,724 | 1.48 | +888 |
+| HBL | 3,333 | 4,667 | 4,782 | 1.02 | +115 |
+| Kumari | 2,432 | 5,568 | 4,731 | 0.85 | -837 |
+| Laxmi | 3,039 | 4,961 | 5,182 | 1.04 | +222 |
+| MBL | 2,776 | 5,224 | 5,279 | 1.01 | +56 |
+| NABIL | 3,658 | 4,342 | 4,386 | 1.01 | +43 |
+| NBL | 6,465 | 1,535 | 1,578 | 1.03 | +43 |
+| NIC | 2,658 | 5,342 | 5,373 | 1.01 | +31 |
+| NMB | 4,155 | 3,845 | 3,449 | 0.90 | -397 |
+| NSBI | 3,058 | 4,942 | 4,989 | 1.01 | +47 |
+| Prime | 3,140 | 4,860 | 4,893 | 1.01 | +33 |
+| RBB | 8,589 | 0 | 416 | n/a | +1,005 |
+| SBL | 2,031 | 5,969 | 6,433 | 1.08 | +464 |
+| SCBNL | 2,248 | 5,752 | 5,763 | 1.00 | +11 |
+OLS (n=16): raise = 1,627 + 0.680 x shortfall, R^2 0.730, permutation p (slope) 0.0004
+
+(d) Timing: paid-up increases by fiscal year (adjacent bulletin months only; bonus-share issues are annual, so every year has some). A floor concentrates them before and just after the deadline.
+| fiscal year | banks raising | total increase (NPR mn) |
+|---|---|---|
+| 2069/70 | 5 | 3,358 |
+| 2070/71 | 11 | 6,799 |
+| 2071/72 | 13 | 5,883 |
+| 2072/73 | 14 | 13,544 |
+| 2073/74 | 15 | 33,623 |
+| 2074/75 | 15 | 26,707 |
+| 2075/76 | 11 | 15,756 |
+| 2076/77 | 16 | 299,712 |
+| 2077/78 | 16 | 298,829 |
+| 2078/79 | 12 | 29,421 |
+| 2079/80 | 12 | 44,662 |
+| 2080/81 | 11 | 87,462 |
+| 2081/82 | 6 | 5,159 |
+| 2082/83 | 8 | 13,610 |
+Panel Baisakh 2070 .. Shrawan 2083, so the first and last fiscal years are partial.
+
+## Paid-up dose: pre-period trend extrapolation and a smoothness bound (Sec 5b item 1)
+whole-panel trend (paid_up_threats) = one dose slope over every quarter, so a post effect that ramps up also tilts the slope. Pre-only trend = the dose x trend and log size_pre x trend slopes are identified from the pre quarters (Baisakh 2070 - Mangsir 2072) only: the transition and post periods get their own level and slope, and dose_post is the deviation from the extrapolated pre line at the mean post date. Same cells, controls and FE as the headline total effect; unweighted.
+
+### Event study by fiscal-year bin, dose_pu coefficient: beta (SE, wild p)
+No trend: reference bin -1. Pre-only trend: the pre bins are the trend fit (no dummies); each later bin is that year's deviation from the extrapolated pre line at the bin's mid-date.
+
+paid_up / size_pre (n_obs 832 / 832):
+| bin | months | no trend | pre-only trend |
+|---|---|---|---|
+| -4 | Bai 2070 - Asa 2070 | -0.0256 (0.064, p 0.696) | trend fit |
+| -3 | Shr 2070 - Asa 2071 | -0.0462 (0.045, p 0.334) | trend fit |
+| -2 | Shr 2071 - Asa 2072 | -0.0297 (0.021, p 0.151) | trend fit |
+| -1 | Shr 2072 - Man 2072 | 0 (ref) | trend fit |
+| transition | Pou 2072 - Asa 2073 | 0.0859 (0.054, p 0.146) | 0.184 (0.12, p 0.155) |
+| 0 | Shr 2073 - Asa 2074 | -0.189 (0.4, p 0.717) | 0.957 (0.32, p 0.012) |
+| 1 | Shr 2074 - Asa 2075 | 0.195 (0.41, p 0.719) | 1.41 (0.46, p 0.005) |
+| 2 | Shr 2075 - Asa 2076 | -0.401 (0.43, p 0.447) | 0.939 (0.47, p 0.069) |
+| 3 | Shr 2076 - Asa 2077 | 0.0365 (0.42, p 0.952) | 1.02 (0.72, p 0.263) |
+| 4 | Shr 2077 - Asa 2078 | 0.497 (0.37, p 0.337) | 1.51 (0.5, p 0.033) |
+| 5 | Shr 2078 - Asa 2079 | 0.887 (0.43, p 0.099) | 0.86 (0.8, p 0.401) |
+| 6 | Shr 2079 - Asa 2080 | 0.741 (0.45, p 0.199) | 0.973 (1.1, p 0.475) |
+| 7 | Shr 2080 - Asa 2081 | 0.355 (0.36, p 0.470) | 2.12 (1.1, p 0.129) |
+| 8 | Shr 2081 - Asa 2082 | 0.358 (0.37, p 0.474) | 2.22 (1.1, p 0.112) |
+| 9 | Shr 2082 - Asa 2083 | 0.182 (0.41, p 0.728) | 2.51 (1.2, p 0.067) |
+| 10 | Shr 2083 - Shr 2083 | n/a (n/a, p n/a) | n/a (n/a, p n/a) |
+pre slope, dose x trend: -0.168 per year (SE 0.11); dropped: dose[10], size[10], dose[10]_slope, size[10]_slope
+
+log size (n_obs 832 / 832):
+| bin | months | no trend | pre-only trend |
+|---|---|---|---|
+| -4 | Bai 2070 - Asa 2070 | -0.716 (0.63, p 0.267) | trend fit |
+| -3 | Shr 2070 - Asa 2071 | -1.12 (0.5, p 0.081) | trend fit |
+| -2 | Shr 2071 - Asa 2072 | -0.448 (0.22, p 0.061) | trend fit |
+| -1 | Shr 2072 - Man 2072 | 0 (ref) | trend fit |
+| transition | Pou 2072 - Asa 2073 | 0.598 (0.66, p 0.435) | -0.253 (1.2, p 0.837) |
+| 0 | Shr 2073 - Asa 2074 | 7.14 (2.9, p 0.061) | 5.08 (5.5, p 0.404) |
+| 1 | Shr 2074 - Asa 2075 | 8.65 (2.9, p 0.034) | 4.59 (6.3, p 0.513) |
+| 2 | Shr 2075 - Asa 2076 | 11.2 (3.4, p 0.032) | 10 (8.3, p 0.324) |
+| 3 | Shr 2076 - Asa 2077 | 8.84 (3, p 0.030) | 3.58 (6.5, p 0.613) |
+| 4 | Shr 2077 - Asa 2078 | 9.4 (3, p 0.015) | 3.08 (6.8, p 0.679) |
+| 5 | Shr 2078 - Asa 2079 | 11.8 (3, p 0.005) | -3.73 (7.6, p 0.677) |
+| 6 | Shr 2079 - Asa 2080 | 10.9 (2.8, p 0.004) | -1.65 (8.3, p 0.851) |
+| 7 | Shr 2080 - Asa 2081 | 8.31 (4.9, p 0.147) | 8.91 (14, p 0.602) |
+| 8 | Shr 2081 - Asa 2082 | 10.3 (6.2, p 0.185) | 17.7 (18, p 0.400) |
+| 9 | Shr 2082 - Asa 2083 | 8.5 (3.9, p 0.077) | 6.3 (13, p 0.662) |
+| 10 | Shr 2083 - Shr 2083 | n/a (n/a, p n/a) | n/a (n/a, p n/a) |
+pre slope, dose x trend: 0.69 per year (SE 1.1); dropped: dose[10], size[10], dose[10]_slope, size[10]_slope
+
+nim (n_obs 764 / 764):
+| bin | months | no trend | pre-only trend |
+|---|---|---|---|
+| -4 | Bai 2070 - Asa 2070 | n/a (n/a, p n/a) | trend fit |
+| -3 | Shr 2070 - Asa 2071 | 0.00139 (0.005, p 0.779) | trend fit |
+| -2 | Shr 2071 - Asa 2072 | -0.000267 (0.0038, p 0.943) | trend fit |
+| -1 | Shr 2072 - Man 2072 | 0 (ref) | trend fit |
+| transition | Pou 2072 - Asa 2073 | -0.0108 (0.0098, p 0.375) | -0.0359 (0.014, p 0.252) |
+| 0 | Shr 2073 - Asa 2074 | 0.107 (0.07, p 0.364) | 0.202 (0.099, p 0.131) |
+| 1 | Shr 2074 - Asa 2075 | 0.114 (0.071, p 0.345) | 0.271 (0.1, p 0.041) |
+| 2 | Shr 2075 - Asa 2076 | 0.104 (0.26, p 0.891) | 0.517 (0.58, p 0.540) |
+| 3 | Shr 2076 - Asa 2077 | 0.163 (0.075, p 0.217) | 0.332 (0.11, p 0.018) |
+| 4 | Shr 2077 - Asa 2078 | 0.162 (0.072, p 0.253) | 0.34 (0.091, p 0.016) |
+| 5 | Shr 2078 - Asa 2079 | 0.136 (0.075, p 0.323) | 0.452 (0.09, p 0.009) |
+| 6 | Shr 2079 - Asa 2080 | 0.203 (0.11, p 0.231) | 0.643 (0.15, p 0.014) |
+| 7 | Shr 2080 - Asa 2081 | -0.0348 (0.12, p 0.788) | 0.225 (0.14, p 0.226) |
+| 8 | Shr 2081 - Asa 2082 | 0.134 (0.17, p 0.535) | 0.0407 (0.37, p 0.924) |
+| 9 | Shr 2082 - Asa 2083 | 0.21 (0.1, p 0.243) | 0.412 (0.28, p 0.209) |
+| 10 | Shr 2083 - Shr 2083 | n/a (n/a, p n/a) | n/a (n/a, p n/a) |
+pre slope, dose x trend: -0.0304 per year (SE 0.012); dropped: dose[10], size[10], dose[10]_slope, size[10]_slope
+
+net_profit_loss (n_obs 770 / 770):
+| bin | months | no trend | pre-only trend |
+|---|---|---|---|
+| -4 | Bai 2070 - Asa 2070 | n/a (n/a, p n/a) | trend fit |
+| -3 | Shr 2070 - Asa 2071 | 0.00897 (0.0066, p 0.173) | trend fit |
+| -2 | Shr 2071 - Asa 2072 | -0.0185 (0.028, p 0.832) | trend fit |
+| -1 | Shr 2072 - Man 2072 | 0 (ref) | trend fit |
+| transition | Pou 2072 - Asa 2073 | 0.0012 (0.01, p 0.910) | -0.0413 (0.037, p 0.494) |
+| 0 | Shr 2073 - Asa 2074 | -0.0783 (0.044, p 0.181) | -0.0504 (0.067, p 0.521) |
+| 1 | Shr 2074 - Asa 2075 | -0.0891 (0.044, p 0.147) | -0.012 (0.076, p 0.899) |
+| 2 | Shr 2075 - Asa 2076 | -0.0302 (0.059, p 0.654) | 0.0886 (0.11, p 0.498) |
+| 3 | Shr 2076 - Asa 2077 | -0.0757 (0.044, p 0.180) | 0.0332 (0.1, p 0.796) |
+| 4 | Shr 2077 - Asa 2078 | -0.0755 (0.045, p 0.177) | 0.0481 (0.13, p 0.782) |
+| 5 | Shr 2078 - Asa 2079 | -0.0756 (0.045, p 0.154) | 0.12 (0.13, p 0.455) |
+| 6 | Shr 2079 - Asa 2080 | -0.0915 (0.044, p 0.054) | 0.184 (0.17, p 0.363) |
+| 7 | Shr 2080 - Asa 2081 | -0.0378 (0.071, p 0.637) | 0.202 (0.26, p 0.476) |
+| 8 | Shr 2081 - Asa 2082 | -0.0837 (0.081, p 0.416) | 0.0489 (0.3, p 0.889) |
+| 9 | Shr 2082 - Asa 2083 | -0.0366 (0.045, p 0.460) | 0.256 (0.24, p 0.367) |
+| 10 | Shr 2083 - Shr 2083 | n/a (n/a, p n/a) | n/a (n/a, p n/a) |
+pre slope, dose x trend: -0.0249 per year (SE 0.019); dropped: dose[10], size[10], dose[10]_slope, size[10]_slope
+
+loan_loss_provision (n_obs 741 / 741):
+| bin | months | no trend | pre-only trend |
+|---|---|---|---|
+| -4 | Bai 2070 - Asa 2070 | n/a (n/a, p n/a) | trend fit |
+| -3 | Shr 2070 - Asa 2071 | 8.53e-05 (0.0037, p 0.978) | trend fit |
+| -2 | Shr 2071 - Asa 2072 | -0.00159 (0.0043, p 0.729) | trend fit |
+| -1 | Shr 2072 - Man 2072 | 0 (ref) | trend fit |
+| transition | Pou 2072 - Asa 2073 | -0.00204 (0.0067, p 0.744) | 0.0172 (0.013, p 0.349) |
+| 0 | Shr 2073 - Asa 2074 | -0.0264 (0.021, p 0.258) | 0.0449 (0.029, p 0.135) |
+| 1 | Shr 2074 - Asa 2075 | -0.0317 (0.022, p 0.212) | 0.0635 (0.032, p 0.064) |
+| 2 | Shr 2075 - Asa 2076 | -0.0285 (0.022, p 0.260) | 0.0668 (0.053, p 0.269) |
+| 3 | Shr 2076 - Asa 2077 | -0.0543 (0.021, p 0.074) | 0.0545 (0.046, p 0.266) |
+| 4 | Shr 2077 - Asa 2078 | -0.0476 (0.024, p 0.119) | 0.07 (0.049, p 0.152) |
+| 5 | Shr 2078 - Asa 2079 | -0.0409 (0.026, p 0.176) | 0.111 (0.057, p 0.109) |
+| 6 | Shr 2079 - Asa 2080 | -0.227 (0.16, p 0.237) | -0.215 (0.16, p 0.142) |
+| 7 | Shr 2080 - Asa 2081 | -0.0457 (0.025, p 0.148) | -0.0344 (0.087, p 0.703) |
+| 8 | Shr 2081 - Asa 2082 | -0.0896 (0.041, p 0.119) | -0.131 (0.13, p 0.473) |
+| 9 | Shr 2082 - Asa 2083 | -0.0597 (0.032, p 0.172) | -0.0695 (0.14, p 0.776) |
+| 10 | Shr 2083 - Shr 2083 | n/a (n/a, p n/a) | n/a (n/a, p n/a) |
+pre slope, dose x trend: -0.00683 per year (SE 0.0055); dropped: dose[10], size[10], dose[10]_slope, size[10]_slope
+
+### Pooled total effect: no trend vs whole-panel trend vs pre-only trend
+| version | post beta | SE | wild p | lead beta | lead p | 1-SD effect | pre mean | n_obs | clusters | note |
+|---|---|---|---|---|---|---|---|---|---|---|
+| paid_up / size_pre, no trend | 0.2661 | 0.362 | 0.627 | -0.03744 | 0.279 | 0.0117 | 0.0444 | 832 | 16 | - |
+| paid_up / size_pre, whole-panel trend | 0.4042 | 0.271 | 0.153 | 0.04593 | 0.358 | 0.0177 | 0.0444 | 832 | 16 | - |
+| paid_up / size_pre, pre-only trend | 1.425 | 0.611 | 0.073 | n/a | n/a | 0.0624 | 0.0444 | 832 | 16 | - |
+| log size, no trend | 9.5 | 2.65 | 0.016 | -0.8168 | 0.088 | 0.416 | 11 | 832 | 16 | - |
+| log size, whole-panel trend | 3.668 | 9.11 | 0.711 | -0.6652 | 0.536 | 0.161 | 11 | 832 | 16 | - |
+| log size, pre-only trend | 5.236 | 7.89 | 0.625 | n/a | n/a | 0.229 | 11 | 832 | 16 | - |
+| nim, no trend | 0.1299 | 0.0861 | 0.475 | 0.0008399 | 0.839 | 0.00569 | 0.00801 | 764 | 16 | - |
+| nim, whole-panel trend | 0.3887 | 0.125 | 0.085 | 0.00141 | 0.925 | 0.017 | 0.00801 | 764 | 16 | - |
+| nim, pre-only trend | 0.3214 | 0.119 | 0.115 | n/a | n/a | 0.0141 | 0.00801 | 764 | 16 | - |
+| net_profit_loss, no trend | -0.06796 | 0.0449 | 0.196 | -0.0005244 | 0.967 | -0.00298 | 0.00417 | 770 | 16 | - |
+| net_profit_loss, whole-panel trend | -0.05808 | 0.124 | 0.707 | 0.001402 | 0.918 | -0.00254 | 0.00417 | 770 | 16 | - |
+| net_profit_loss, pre-only trend | 0.08172 | 0.145 | 0.658 | n/a | n/a | 0.00358 | 0.00417 | 770 | 16 | - |
+| loan_loss_provision, no trend | -0.06419 | 0.0114 | 0.014 | -0.0004979 | 0.871 | -0.00281 | 0.000911 | 741 | 16 | - |
+| loan_loss_provision, whole-panel trend | 0.1355 | 0.0473 | 0.010 | -0.01125 | 0.344 | 0.00593 | 0.000911 | 741 | 16 | - |
+| loan_loss_provision, pre-only trend | -0.006678 | 0.0451 | 0.894 | n/a | n/a | -0.000293 | 0.000911 | 741 | 16 | - |
+lead = n/a under the pre-only trend by construction (the trend replaces the lead test).
+
+### Smoothness bound on the pre-only-trend estimate
+Suppose the dose slope changes by M per year right at the pre-window end (a trend break the pre data can't see). Post has its own level and slope, so dose_post, evaluated at the mean post date tau, is biased by exactly M x tau. CI(M) = beta +/- (c x SE + M x tau), c = t(0.975, G-1), CR1 SE. Breakdown M* = the smallest M whose CI includes 0, also shown as a multiple of the estimated pre slope |s|. A simplified version of Rambachan-Roth's smoothness restriction (one slope break, CR1), not their optimal FLCI.
+| outcome | beta | SE | pre slope s (SE) | tau (yr) | CI at M = 0 | CI at M = 0.25|s| | CI at M = 0.5|s| | CI at M = 1|s| | M* | M* / |s| |
+|---|---|---|---|---|---|---|---|---|---|---|
+| paid_up / size_pre | 1.425 | 0.611 | -0.168 (0.1) | 5.66 | [0.1221, 2.728] | [-0.1157, 2.965] | [-0.3535, 3.203] | [-0.8292, 3.679] | 0.0216 | 0.13 |
+| log size | 5.236 | 7.89 | 0.69 (1.1) | 5.66 | [-11.58, 22.05] | [-12.55, 23.03] | [-13.53, 24] | [-15.49, 25.96] | 0 | 0.00 |
+| nim | 0.3214 | 0.119 | -0.0304 (0.011) | 5.66 | [0.0674, 0.5754] | [0.02435, 0.6184] | [-0.01869, 0.6615] | [-0.1048, 0.7476] | 0.0119 | 0.39 |
+| net_profit_loss | 0.08172 | 0.145 | -0.0249 (0.019) | 5.66 | [-0.227, 0.3904] | [-0.2622, 0.4257] | [-0.2975, 0.4609] | [-0.368, 0.5314] | 0 | 0.00 |
+| loan_loss_provision | -0.006678 | 0.0451 | -0.00708 (0.0054) | 5.66 | [-0.1028, 0.08944] | [-0.1128, 0.09946] | [-0.1228, 0.1095] | [-0.1429, 0.1295] | 0 | 0.00 |
+M* = 0: the pre-only-trend CI already includes 0. M* / |s| > 1: only a slope change larger than the whole pre-period dose slope would explain the estimate away.
+
+## Bank label splits and exits (item 2 follow-up): continuity in the data only
+Checks whether two labels look like one bank renamed in the bulletin (never both present, short gap, size and capital fund carried over), and which banks' size jumps when another exits. This is NOT a verification of mergers or renames: that needs NRB's records.
+33 commercial-bank labels, Baisakh 2070 .. Shrawan 2083. Reference: |log size change| between a bank's consecutive complete months, median 0.026, 99th pct 2.170 (n=3713).
+
+| old label | new label | in estimation panel | old last | new first | overlap months | gap (panel cols) | size new/old | |log ratio| vs p99 | capital fund new/old |
+|---|---|---|---|---|---|---|---|---|---|
+| Citizens | Citizen | no/no | Poush 2075 | Magh 2075 | 0 | 1 | 1.033 | 0.032 <= 2.170 | 0.969 |
+| NBB | NBBL | no/no | Poush 2075 | Magh 2075 | 0 | 1 | 1.042 | 0.041 <= 2.170 | 1.000 |
+| PRABHU | Prabhu | no/no | Poush 2075 | Magh 2075 | 0 | 1 | 1.008 | 0.008 <= 2.170 | 0.971 |
+| Civil | CBL | no/no | Poush 2075 | Magh 2075 | 0 | 1 | 1.003 | 0.003 <= 2.170 | 1.000 |
+Consistent with a relabel: 0 overlap months, gap 1, size and capital-fund ratios near 1.
+
+Exits (last complete month before the panel end, not part of a label pair) and the banks whose size jumps most at the next month (|log change| > p99), as candidate absorbers:
+| bank | in estimation panel | last month | size then | next month | size jumps > p99 (bank: +NPR mn) |
+|---|---|---|---|---|---|
+| BOK | no | Mangsir 2079 | 147,631 | Poush 2079 | none |
+| Century | no | Mangsir 2079 | 118,512 | Poush 2079 | none |
+| Lumbini | no | Jestha 2073 | 27,817 | Asar 2073 | none |
+| Mega | no | Mangsir 2079 | 219,482 | Poush 2079 | none |
+| NCC | no | Mangsir 2079 | 159,690 | Poush 2079 | none |
+| NIBL | no | Poush 2079 | 501,325 | Magh 2079 | NABIL: -415,114 |
+| Sunrise | no | Jestha 2080 | 66,331 | Asar 2080 | NABIL: +350,310, Kumari: +282,706, HBL: +247,199, RBB: +228,264 |
+
+Entrants (first complete month after the panel start, not part of a label pair):
+| bank | first month | size then |
+|---|---|---|
+| Century | Chaitra 2070 | 19,803 |
+| NIMB | Magh 2079 | 51,629 |
+| Sanima | Kartik 2071 | 32,106 |
+Corrupted bulletins (Chaitra 2075 onward, Sec 5a) also move size, so a jump there is weak evidence.
+
+## Multiple testing (item 5), over the saved run JSON
+| family | tests | p<0.05 | expected under H0 | Holm rejections | BH (FDR 5%) rejections | smallest Holm p |
+|---|---|---|---|---|---|---|
+| pooled DiD (W_hat + RAS) | 16 | 1 | 0.8 | 0 | 0 | 0.482 (loan_written_off RAS exposure) |
+| event study (W_hat) | 96 | 14 | 4.8 | 0 | 0 | 0.346 (nim dose bin 6) |
+| event study joint, all post bins = 0 (W_hat) | 8 | 2 | 0.4 | 0 | 0 | 0.255 (net_profit_loss exposure_post) |
+| headline total effect (dose-only) | 0 | - | - | - | - | - |
+
+Joint wild-bootstrap Wald tests from the event study (estimator.fit_twfe `joint`; H0: every bin in the family = 0; the transition bin is in no family):
+| outcome | family | bins tested | Wald (CR1) | wild p |
+|---|---|---|---|---|
+| net_profit_loss | dose_post | 11 (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10) | 472 | 0.198 |
+| net_profit_loss | exposure_post | 11 (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10) | 512 | 0.032 |
+| loan_loss_provision | dose_post | 11 (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10) | 509 | 0.289 |
+| loan_loss_provision | exposure_post | 11 (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10) | 965 | 0.045 |
+| loan_written_off | dose_post | 11 (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10) | 6.33 | 0.984 |
+| loan_written_off | exposure_post | 11 (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10) | 96.6 | 0.658 |
+| nim | dose_post | 11 (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10) | 642 | 0.273 |
+| nim | exposure_post | 11 (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10) | 150 | 0.643 |

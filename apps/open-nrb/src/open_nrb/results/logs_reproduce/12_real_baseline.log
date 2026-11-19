@@ -1,0 +1,73 @@
+device: cuda
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/models/data_loader.py:481: UserWarning: 1844 rows dropped: belong to a source_file superseded by a '-NEW' resubmission of the same bulletin
+  rows = read_rows(csv_path)
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/models/run_real_experiment.py:297: UserWarning: 22 (bfi, period) cells missing a required field were left as NaN, e.g.: Karnali @ (2081, 'Mangsir'): missing '1 CAPITAL FUND'; Karnali @ (2081, 'Poush'): missing '1 CAPITAL FUND'; Karnali @ (2081, 'Magh'): missing '1 CAPITAL FUND'; Karnali @ (2081, 'Falgun'): missing '1 CAPITAL FUND'; Karnali @ (2081, 'Chaitra'): missing '1 CAPITAL FUND'
+  panel = load_panel(args.csv)
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/models/run_real_experiment.py:298: UserWarning: 9/42 banks excluded as non-commercial (no match in COMMERCIAL_BANK_PREFIXES): ['CTBNL', 'Excel', 'Janata', 'Karnali', 'Kist', 'Mahalaxmi', 'Miteri', 'Narayani', 'Shangrila']
+  panel = filter_commercial_banks(panel)
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/models/run_real_experiment.py:299: UserWarning: 23/156 periods excluded as before (2072, 'Asar'): [(2070, 'Baisakh'), (2070, 'Jestha'), (2070, 'Asar'), (2070, 'Shrawan'), (2070, 'Bhadra'), (2070, 'Ashwin'), (2070, 'Kartik'), (2070, 'Mangsir'), (2070, 'Poush'), (2070, 'Magh'), (2070, 'Falgun'), (2070, 'Chaitra'), (2071, 'Baisakh'), (2071, 'Jestha'), (2071, 'Asar'), (2071, 'Shrawan'), (2071, 'Bhadra'), (2071, 'Ashwin'), (2071, 'Kartik'), (2071, 'Mangsir'), (2071, 'Poush'), (2071, 'Magh'), (2071, 'Falgun')]
+  panel = filter_from_period(panel)
+
+=== missingness diagnostics (period window: 133 periods) ===
+banks total: 33  complete (no NaN in window): 16
+periods with most missing banks (top 5): (2080, 'Asar')=0.39, (2080, 'Shrawan')=0.39, (2080, 'Bhadra')=0.39, (2080, 'Ashwin')=0.39, (2080, 'Kartik')=0.39
+
+training panel: N=16 banks, T=133 periods
+rescaling r/c/K by SCALE=601.3054 (real NPR-million magnitudes -> training scale)
+epoch     0  loss=   116.832  kl_beta=0.000  kl=   0.050  mi_reg_w=  -0.000  smooth_w=  87.951
+epoch    25  loss=    86.653  kl_beta=0.013  kl=   0.687  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch    50  loss=    86.661  kl_beta=0.025  kl=   0.690  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch    75  loss=    86.669  kl_beta=0.037  kl=   0.690  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   100  loss=    86.678  kl_beta=0.050  kl=   0.690  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   125  loss=    86.686  kl_beta=0.062  kl=   0.689  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   150  loss=    86.695  kl_beta=0.075  kl=   0.688  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   175  loss=    86.703  kl_beta=0.087  kl=   0.685  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   200  loss=    86.704  kl_beta=0.100  kl=   0.581  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   225  loss=    86.649  kl_beta=0.113  kl=   0.050  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   250  loss=    86.649  kl_beta=0.125  kl=   0.050  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   275  loss=    86.650  kl_beta=0.138  kl=   0.050  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   300  loss=    86.651  kl_beta=0.150  kl=   0.050  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   325  loss=    86.651  kl_beta=0.150  kl=   0.050  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   350  loss=    86.651  kl_beta=0.150  kl=   0.050  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   375  loss=    86.651  kl_beta=0.150  kl=   0.050  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   400  loss=    86.651  kl_beta=0.150  kl=   0.050  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   425  loss=    86.651  kl_beta=0.150  kl=   0.050  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   450  loss=    86.651  kl_beta=0.150  kl=   0.050  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   475  loss=    86.651  kl_beta=0.150  kl=   0.050  mi_reg_w=  -0.000  smooth_w=  86.643
+epoch   499  loss=    86.651  kl_beta=0.150  kl=   0.050  mi_reg_w=  -0.000  smooth_w=  86.643
+
+=== REAL-DATA VALIDATION (Sec 8/12) ===
+loss: first=116.832 last=86.651
+non-finite model periods: 0/133 (excluded from aggregates below, NaN-filled)
+degenerate-marginal periods (~zero interbank activity): 0/133 (W_hat NaN-filled for these too, excluded from model/baseline stability comparisons)
+model temporal stability (mean rel. change, lower=more stable): 1.1612 (0/132 periods skipped, NaN)
+baseline temporal stability (mean rel. change, lower=more stable): 2.3196 (0/132 periods skipped, NaN)
+model is MORE temporally stable than classical baseline
+mean relative difference from classical baseline (descriptive, no ground truth): 1.5208 (0/133 periods skipped, NaN)
+
+top banks, block 0 (mean posterior over all periods):
+  EBL                                      0.4578
+  NSBI                                     0.4565
+  SBL                                      0.4541
+  MBL                                      0.4532
+  HBL                                      0.4522
+  SCBNL                                    0.4494
+  NIC                                      0.4488
+  Laxmi                                    0.4469
+  Kumari                                   0.4468
+  NABIL                                    0.4445
+
+top banks, block 1 (mean posterior over all periods):
+  Global                                   0.5664
+  NMB                                      0.5620
+  ADBNL                                    0.5608
+  NBL                                      0.5587
+  RBB                                      0.5560
+  Prime                                    0.5556
+  NABIL                                    0.5555
+  Kumari                                   0.5532
+  Laxmi                                    0.5531
+  NIC                                      0.5512
+
+saved: /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/results/baseline/real_run_seed0.pt
+saved: /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/results/baseline/real_run_summary_seed0.json

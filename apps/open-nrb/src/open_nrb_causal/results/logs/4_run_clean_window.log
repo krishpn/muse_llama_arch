@@ -1,0 +1,55 @@
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/models/data_loader.py:481: UserWarning: 1844 rows dropped: belong to a source_file superseded by a '-NEW' resubmission of the same bulletin
+  rows = read_rows(csv_path)
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/models/panel_alignment.py:63: UserWarning: 22 (bfi, period) cells missing a required field were left as NaN, e.g.: Karnali @ (2081, 'Mangsir'): missing '1 CAPITAL FUND'; Karnali @ (2081, 'Poush'): missing '1 CAPITAL FUND'; Karnali @ (2081, 'Magh'): missing '1 CAPITAL FUND'; Karnali @ (2081, 'Falgun'): missing '1 CAPITAL FUND'; Karnali @ (2081, 'Chaitra'): missing '1 CAPITAL FUND'
+  panel = load_panel(csv_path)
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/models/panel_alignment.py:64: UserWarning: 9/42 banks excluded as non-commercial (no match in COMMERCIAL_BANK_PREFIXES): ['CTBNL', 'Excel', 'Janata', 'Karnali', 'Kist', 'Mahalaxmi', 'Miteri', 'Narayani', 'Shangrila']
+  panel = filter_commercial_banks(panel)
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/models/panel_alignment.py:65: UserWarning: 23/156 periods excluded as before (2072, 'Asar'): [(2070, 'Baisakh'), (2070, 'Jestha'), (2070, 'Asar'), (2070, 'Shrawan'), (2070, 'Bhadra'), (2070, 'Ashwin'), (2070, 'Kartik'), (2070, 'Mangsir'), (2070, 'Poush'), (2070, 'Magh'), (2070, 'Falgun'), (2070, 'Chaitra'), (2071, 'Baisakh'), (2071, 'Jestha'), (2071, 'Asar'), (2071, 'Shrawan'), (2071, 'Bhadra'), (2071, 'Ashwin'), (2071, 'Kartik'), (2071, 'Mangsir'), (2071, 'Poush'), (2071, 'Magh'), (2071, 'Falgun')]
+  panel = filter_from_period(panel, start)
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/models/variables.py:160: UserWarning: 1064 rows dropped: belong to a source_file superseded by a '-NEW' resubmission of the same bulletin
+  for row in read_rows(pnl_csv_path):
+panel: N=16 banks x T=45 periods ((2072, 'Asar') .. (2075, 'Falgun')); pre window (2072, 'Asar')..(2072, 'Mangsir') (6 months), transition to (2073, 'Asar'), post 32 months (truncated at post_window_end (2075, 'Falgun'))
+outcomes: monthly; estimator weights: unweighted; blank read as 0 (other P&L reported): ['loan_written_off']
+cells below the floor by fiscal year: FY2071: 2/16, FY2072: 11/192, FY2073: 0/192, FY2074: 0/192, FY2075: 0/128
+dose_pre: 1/16 banks below the floor pre-mandate, range [-0.0809, 0.0003]
+corr(dose_pre x post, exposure x post) over post cells: 0.099
+YTD diagnostic (median |NIM Shrawan| / |NIM prior Asar|): 0.084 (~0.08 => fiscal-YTD cumulative, ~1 => monthly); pnl_ytd_cumulative=True
+total effect (dose-only from Baisakh 2070): not computed: needs outcome_construction quarterly
+
+[net_profit_loss] (outcome / size) missing=52/720, DiD n_obs=575, clusters=16
+  DiD  W_hat: dose -0.004075 (0.00859) p=0.664  exposure -2.603e-05 (1.67e-05) p=0.240
+  DiD  RAS  : dose -0.004035 (0.00917) p=0.692  exposure -3.178e-05 (2.62e-05) p=0.291
+  event study dose: transition: 0.003772 (0.0106) p=0.781, 0: 0.001079 (0.00819) p=0.905, 1: 0.0002499 (0.00615) p=0.968, 2: -0.002604 (0.00954) p=0.823
+  event study exposure: transition: -4.544e-05 (1.85e-05) p=0.098, 0: -4.059e-05 (1.66e-05) p=0.116, 1: -3.109e-05 (1.83e-05) p=0.276, 2: -2.957e-05 (1.8e-05) p=0.326
+  event study joint Wald (H0: all bins in family = 0): dose_post q=3 W=0.918 p=0.952, exposure_post q=3 W=15.1 p=0.290
+  event study bins dropped (no valid outcome cell): ['-2']
+  RDD: discontinuity=nan  cells L/R=25/0  banks L/R=3/0
+
+[loan_loss_provision] (outcome / size) missing=177/720, DiD n_obs=452, clusters=16
+  DiD  W_hat: dose 0.004903 (0.00534) p=0.442  exposure 4.15e-06 (4.64e-06) p=0.508
+  DiD  RAS  : dose 0.004453 (0.00516) p=0.475  exposure -2.326e-06 (5.17e-06) p=0.662
+  event study dose: transition: 0.009274 (0.00203) p=0.031, 0: -0.0004361 (0.00316) p=0.920, 1: 0.001215 (0.00264) p=0.634, 2: 0.00317 (0.00226) p=0.163
+  event study exposure: transition: 3.087e-06 (5.99e-06) p=0.784, 0: -8.065e-07 (3.99e-06) p=0.847, 1: -1.393e-06 (3.55e-06) p=0.760, 2: -1.654e-06 (3.27e-06) p=0.752
+  event study joint Wald (H0: all bins in family = 0): dose_post q=3 W=3.53 p=0.463, exposure_post q=3 W=0.372 p=0.981
+  event study bins dropped (no valid outcome cell): ['-2']
+  RDD: discontinuity=nan  cells L/R=25/0  banks L/R=3/0
+
+[loan_written_off] (outcome / size) missing=52/720, DiD n_obs=575, clusters=16
+  DiD  W_hat: dose -0.0001309 (0.000283) p=0.679  exposure 4.147e-07 (3.88e-07) p=0.569
+  DiD  RAS  : dose -0.0001221 (0.000275) p=0.684  exposure 2.134e-07 (3.23e-07) p=0.741
+  event study dose: transition: 8.447e-05 (0.000183) p=0.659, 0: 2.851e-05 (0.000321) p=0.937, 1: 0.000125 (0.00034) p=0.763, 2: 9.576e-05 (0.000344) p=0.820
+  event study exposure: transition: 1.585e-07 (1.95e-07) p=0.498, 0: -4.305e-08 (1.8e-07) p=0.816, 1: 1.233e-07 (1.99e-07) p=0.605, 2: 2.562e-07 (2.88e-07) p=0.497
+  event study joint Wald (H0: all bins in family = 0): dose_post q=3 W=0.862 p=0.891, exposure_post q=3 W=1.36 p=0.824
+  event study bins dropped (no valid outcome cell): ['-2']
+  RDD: discontinuity=nan  cells L/R=25/0  banks L/R=3/0
+
+[nim] (outcome / size) missing=66/720, DiD n_obs=563, clusters=16
+  DiD  W_hat: dose 0.003059 (0.0078) p=0.708  exposure -3.96e-05 (2.56e-05) p=0.259
+  DiD  RAS  : dose 0.003376 (0.00805) p=0.694  exposure -5.018e-05 (3.55e-05) p=0.224
+  event study dose: transition: 0.002736 (0.0122) p=0.909, 0: 0.002866 (0.00741) p=0.749, 1: 0.009129 (0.00689) p=0.184, 2: -0.002516 (0.00979) p=0.830
+  event study exposure: transition: -4.799e-05 (2.62e-05) p=0.242, 0: -4.59e-05 (2.14e-05) p=0.187, 1: -3.599e-05 (2.21e-05) p=0.338, 2: -3.201e-05 (2.23e-05) p=0.420
+  event study joint Wald (H0: all bins in family = 0): dose_post q=3 W=8.44 p=0.398, exposure_post q=3 W=34.1 p=0.144
+  event study bins dropped (no valid outcome cell): ['-2']
+  RDD: discontinuity=nan  cells L/R=25/0  banks L/R=3/0
+
+saved /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/results/clean_window_seed0.json

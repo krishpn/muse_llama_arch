@@ -1,0 +1,825 @@
+{
+  "config": "src/open_nrb_causal/experiments/configs/clean_window.yaml",
+  "capital_floor": 0.04,
+  "n_banks": 16,
+  "periods": [
+    [
+      2072,
+      "Asar"
+    ],
+    [
+      2072,
+      "Shrawan"
+    ],
+    [
+      2072,
+      "Bhadra"
+    ],
+    [
+      2072,
+      "Ashwin"
+    ],
+    [
+      2072,
+      "Kartik"
+    ],
+    [
+      2072,
+      "Mangsir"
+    ],
+    [
+      2072,
+      "Poush"
+    ],
+    [
+      2072,
+      "Magh"
+    ],
+    [
+      2072,
+      "Falgun"
+    ],
+    [
+      2072,
+      "Chaitra"
+    ],
+    [
+      2073,
+      "Baisakh"
+    ],
+    [
+      2073,
+      "Jestha"
+    ],
+    [
+      2073,
+      "Asar"
+    ],
+    [
+      2073,
+      "Shrawan"
+    ],
+    [
+      2073,
+      "Bhadra"
+    ],
+    [
+      2073,
+      "Ashwin"
+    ],
+    [
+      2073,
+      "Kartik"
+    ],
+    [
+      2073,
+      "Mangsir"
+    ],
+    [
+      2073,
+      "Poush"
+    ],
+    [
+      2073,
+      "Magh"
+    ],
+    [
+      2073,
+      "Falgun"
+    ],
+    [
+      2073,
+      "Chaitra"
+    ],
+    [
+      2074,
+      "Baisakh"
+    ],
+    [
+      2074,
+      "Jestha"
+    ],
+    [
+      2074,
+      "Asar"
+    ],
+    [
+      2074,
+      "Shrawan"
+    ],
+    [
+      2074,
+      "Bhadra"
+    ],
+    [
+      2074,
+      "Ashwin"
+    ],
+    [
+      2074,
+      "Kartik"
+    ],
+    [
+      2074,
+      "Mangsir"
+    ],
+    [
+      2074,
+      "Poush"
+    ],
+    [
+      2074,
+      "Magh"
+    ],
+    [
+      2074,
+      "Falgun"
+    ],
+    [
+      2074,
+      "Chaitra"
+    ],
+    [
+      2075,
+      "Baisakh"
+    ],
+    [
+      2075,
+      "Jestha"
+    ],
+    [
+      2075,
+      "Asar"
+    ],
+    [
+      2075,
+      "Shrawan"
+    ],
+    [
+      2075,
+      "Bhadra"
+    ],
+    [
+      2075,
+      "Ashwin"
+    ],
+    [
+      2075,
+      "Kartik"
+    ],
+    [
+      2075,
+      "Mangsir"
+    ],
+    [
+      2075,
+      "Poush"
+    ],
+    [
+      2075,
+      "Magh"
+    ],
+    [
+      2075,
+      "Falgun"
+    ]
+  ],
+  "pre_window_end": [
+    2072,
+    "Mangsir"
+  ],
+  "effective_period": [
+    2073,
+    "Asar"
+  ],
+  "post_window_end": [
+    2075,
+    "Falgun"
+  ],
+  "event_bins": [
+    "-2",
+    "-1",
+    "-1",
+    "-1",
+    "-1",
+    "-1",
+    "transition",
+    "transition",
+    "transition",
+    "transition",
+    "transition",
+    "transition",
+    "transition",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "1",
+    "2",
+    "2",
+    "2",
+    "2",
+    "2",
+    "2",
+    "2",
+    "2"
+  ],
+  "pnl_ytd_cumulative": true,
+  "outcome_construction": "monthly",
+  "blank_as_zero": [
+    "loan_written_off"
+  ],
+  "weighting": "unweighted",
+  "total_effect_panel": null,
+  "total_effect_note": "not computed: needs outcome_construction quarterly",
+  "ytd_diagnostic": 0.08408539742231369,
+  "outcome_scaling": "divided by size (sum of top-level assets)",
+  "dose_pre": {
+    "ADBNL": -0.08094046264886856,
+    "EBL": -0.03436848148703575,
+    "Global": -0.05734787881374359,
+    "HBL": -0.040004879236221313,
+    "Kumari": -0.04049163684248924,
+    "Laxmi": -0.04430748149752617,
+    "MBL": -0.039397530257701874,
+    "NABIL": -0.020348282530903816,
+    "NBL": 0.0003131050616502762,
+    "NIC": -0.04838692024350166,
+    "NMB": -0.04930565878748894,
+    "NSBI": -0.04375820979475975,
+    "Prime": -0.04923953488469124,
+    "RBB": -0.0007697933469898999,
+    "SBL": -0.028077445924282074,
+    "SCBNL": -0.050106167793273926
+  },
+  "n_bootstrap": 9999,
+  "outcomes": {
+    "net_profit_loss": {
+      "n_missing_outcome": 52,
+      "did": {
+        "beta_dose": -0.004074741988033374,
+        "beta_exposure": -2.603119121281634e-05,
+        "beta_controls": {
+          "exposure_level": 2.582758656135368e-05,
+          "liquidity_ratio_pre_x_post": -0.0032168146090966153,
+          "ldr_pre_x_post": -0.002774185911896605,
+          "nrb_dependence_pre_x_post": 0.0006586778508688992,
+          "log_size_pre_x_post": -4.239183988309432e-06
+        },
+        "n_obs": 575,
+        "residual_std": 0.0021070501351948406,
+        "se_dose": 0.008589940176804195,
+        "se_exposure": 1.668245061620629e-05,
+        "p_dose": 0.663966396639664,
+        "p_exposure": 0.23982398239823982,
+        "n_clusters": 16,
+        "dropped_regressors": [],
+        "n_cells_nonfinite_regressor": 0
+      },
+      "did_ras_baseline": {
+        "beta_dose": -0.004035437647149933,
+        "beta_exposure": -3.177503677000842e-05,
+        "beta_controls": {
+          "exposure_level": 3.1871016708561096e-05,
+          "liquidity_ratio_pre_x_post": -0.003376750210232612,
+          "ldr_pre_x_post": -0.002923176749373488,
+          "nrb_dependence_pre_x_post": 0.0008592621114411293,
+          "log_size_pre_x_post": -2.6921074077332764e-05
+        },
+        "n_obs": 575,
+        "residual_std": 0.0021073137982312445,
+        "se_dose": 0.009174112684043943,
+        "se_exposure": 2.624264249267177e-05,
+        "p_dose": 0.6922692269226922,
+        "p_exposure": 0.29102910291029105,
+        "n_clusters": 16,
+        "dropped_regressors": [],
+        "n_cells_nonfinite_regressor": 0
+      },
+      "beta_dose_diff": -3.930434088344082e-05,
+      "beta_exposure_diff": 5.7438455571920765e-06,
+      "event_study": {
+        "reference_bin": -1,
+        "bins": [
+          "transition",
+          "0",
+          "1",
+          "2"
+        ],
+        "dose": {
+          "transition": {
+            "beta": 0.003772385847170169,
+            "se": 0.010569822185451504,
+            "p": 0.7813781378137814
+          },
+          "0": {
+            "beta": 0.0010787869080299767,
+            "se": 0.008194169931477329,
+            "p": 0.9054905490549054
+          },
+          "1": {
+            "beta": 0.00024994053999305,
+            "se": 0.0061505420095070195,
+            "p": 0.967996799679968
+          },
+          "2": {
+            "beta": -0.0026044676851810196,
+            "se": 0.009535243725615844,
+            "p": 0.8229822982298229
+          }
+        },
+        "exposure": {
+          "transition": {
+            "beta": -4.544006160754983e-05,
+            "se": 1.8511538989506e-05,
+            "p": 0.09810981098109811
+          },
+          "0": {
+            "beta": -4.058652509035475e-05,
+            "se": 1.6556410407618075e-05,
+            "p": 0.11571157115711571
+          },
+          "1": {
+            "beta": -3.10871070872443e-05,
+            "se": 1.8252645068274608e-05,
+            "p": 0.2761276127612761
+          },
+          "2": {
+            "beta": -2.9571154372438954e-05,
+            "se": 1.8007336677835305e-05,
+            "p": 0.32633263326332634
+          }
+        },
+        "n_obs": 668,
+        "n_clusters": 16,
+        "dropped_bins": [
+          "-2"
+        ],
+        "dropped_regressors": [],
+        "note": "",
+        "joint": {
+          "dose_post": {
+            "wald": 0.9180393152282559,
+            "p": 0.9521952195219522,
+            "q": 3,
+            "names": [
+              "dose[0]",
+              "dose[1]",
+              "dose[2]"
+            ]
+          },
+          "exposure_post": {
+            "wald": 15.083919991193344,
+            "p": 0.2895289528952895,
+            "q": 3,
+            "names": [
+              "exposure[0]",
+              "exposure[1]",
+              "exposure[2]"
+            ]
+          }
+        }
+      },
+      "rdd": {
+        "beta_left": 0.0018500892911106348,
+        "beta_right": NaN,
+        "discontinuity": NaN,
+        "bandwidth": 0.02,
+        "n_left": 25,
+        "n_right": 0,
+        "n_banks_left": 3,
+        "n_banks_right": 0
+      }
+    },
+    "loan_loss_provision": {
+      "n_missing_outcome": 177,
+      "did": {
+        "beta_dose": 0.004902905568956906,
+        "beta_exposure": 4.149756366951528e-06,
+        "beta_controls": {
+          "exposure_level": -5.0106748822396615e-06,
+          "liquidity_ratio_pre_x_post": 0.0001357995271060561,
+          "ldr_pre_x_post": -0.0003661363049582764,
+          "nrb_dependence_pre_x_post": 0.00128169758947257,
+          "log_size_pre_x_post": 1.327893189316277e-06
+        },
+        "n_obs": 452,
+        "residual_std": 0.0008305229465750257,
+        "se_dose": 0.005343136753552126,
+        "se_exposure": 4.641864895088407e-06,
+        "p_dose": 0.44204420442044207,
+        "p_exposure": 0.508050805080508,
+        "n_clusters": 16,
+        "dropped_regressors": [],
+        "n_cells_nonfinite_regressor": 0
+      },
+      "did_ras_baseline": {
+        "beta_dose": 0.004453073490676358,
+        "beta_exposure": -2.325705176841786e-06,
+        "beta_controls": {
+          "exposure_level": 1.5749707953248162e-06,
+          "liquidity_ratio_pre_x_post": -0.0006817063825428015,
+          "ldr_pre_x_post": -0.000988082283971698,
+          "nrb_dependence_pre_x_post": 0.0007319510853247528,
+          "log_size_pre_x_post": -9.348714554546406e-05
+        },
+        "n_obs": 452,
+        "residual_std": 0.0008306182591317383,
+        "se_dose": 0.005161971605297269,
+        "se_exposure": 5.173266587378035e-06,
+        "p_dose": 0.47494749474947495,
+        "p_exposure": 0.6620662066206621,
+        "n_clusters": 16,
+        "dropped_regressors": [],
+        "n_cells_nonfinite_regressor": 0
+      },
+      "beta_dose_diff": 0.0004498320782805477,
+      "beta_exposure_diff": 6.475461543793314e-06,
+      "event_study": {
+        "reference_bin": -1,
+        "bins": [
+          "transition",
+          "0",
+          "1",
+          "2"
+        ],
+        "dose": {
+          "transition": {
+            "beta": 0.009274090613872112,
+            "se": 0.002032549079405143,
+            "p": 0.030503050305030505
+          },
+          "0": {
+            "beta": -0.0004361181869175757,
+            "se": 0.003159831588241105,
+            "p": 0.9201920192019202
+          },
+          "1": {
+            "beta": 0.0012153051047138295,
+            "se": 0.0026362397056446615,
+            "p": 0.6338633863386338
+          },
+          "2": {
+            "beta": 0.0031697238551066775,
+            "se": 0.0022588370531522526,
+            "p": 0.1629162916291629
+          }
+        },
+        "exposure": {
+          "transition": {
+            "beta": 3.0866760633533226e-06,
+            "se": 5.987008675997944e-06,
+            "p": 0.783978397839784
+          },
+          "0": {
+            "beta": -8.064886252288818e-07,
+            "se": 3.989532518406348e-06,
+            "p": 0.8467846784678468
+          },
+          "1": {
+            "beta": -1.3925538042296312e-06,
+            "se": 3.5539493383609927e-06,
+            "p": 0.7604760476047605
+          },
+          "2": {
+            "beta": -1.6538738348568853e-06,
+            "se": 3.2664607868182896e-06,
+            "p": 0.7524752475247525
+          }
+        },
+        "n_obs": 543,
+        "n_clusters": 16,
+        "dropped_bins": [
+          "-2"
+        ],
+        "dropped_regressors": [],
+        "note": "",
+        "joint": {
+          "dose_post": {
+            "wald": 3.52588186801107,
+            "p": 0.46314631463146316,
+            "q": 3,
+            "names": [
+              "dose[0]",
+              "dose[1]",
+              "dose[2]"
+            ]
+          },
+          "exposure_post": {
+            "wald": 0.371578006998224,
+            "p": 0.9805980598059806,
+            "q": 3,
+            "names": [
+              "exposure[0]",
+              "exposure[1]",
+              "exposure[2]"
+            ]
+          }
+        }
+      },
+      "rdd": {
+        "beta_left": 0.0010642664274200797,
+        "beta_right": NaN,
+        "discontinuity": NaN,
+        "bandwidth": 0.02,
+        "n_left": 25,
+        "n_right": 0,
+        "n_banks_left": 3,
+        "n_banks_right": 0
+      }
+    },
+    "loan_written_off": {
+      "n_missing_outcome": 52,
+      "did": {
+        "beta_dose": -0.00013094661298081674,
+        "beta_exposure": 4.1468743032343986e-07,
+        "beta_controls": {
+          "exposure_level": -3.094740975116516e-07,
+          "liquidity_ratio_pre_x_post": -7.842975789779952e-05,
+          "ldr_pre_x_post": 1.2346764730269889e-05,
+          "nrb_dependence_pre_x_post": 3.387563778836396e-05,
+          "log_size_pre_x_post": -8.850343515008165e-06
+        },
+        "n_obs": 575,
+        "residual_std": 6.136303798097297e-05,
+        "se_dose": 0.0002834493170993207,
+        "se_exposure": 3.8771221142983825e-07,
+        "p_dose": 0.6791679167916792,
+        "p_exposure": 0.568956895689569,
+        "n_clusters": 16,
+        "dropped_regressors": [],
+        "n_cells_nonfinite_regressor": 0
+      },
+      "did_ras_baseline": {
+        "beta_dose": -0.00012212282660310796,
+        "beta_exposure": 2.133956109671868e-07,
+        "beta_controls": {
+          "exposure_level": -1.064859181755231e-07,
+          "liquidity_ratio_pre_x_post": -9.06649420595303e-05,
+          "ldr_pre_x_post": -1.158514037443038e-06,
+          "nrb_dependence_pre_x_post": 2.094335729803918e-05,
+          "log_size_pre_x_post": -1.1421756024749125e-05
+        },
+        "n_obs": 575,
+        "residual_std": 6.136008898654144e-05,
+        "se_dose": 0.00027472623734780367,
+        "se_exposure": 3.23166701631067e-07,
+        "p_dose": 0.6842684268426843,
+        "p_exposure": 0.7408740874087408,
+        "n_clusters": 16,
+        "dropped_regressors": [],
+        "n_cells_nonfinite_regressor": 0
+      },
+      "beta_dose_diff": -8.82378637770878e-06,
+      "beta_exposure_diff": 2.0129181935625306e-07,
+      "event_study": {
+        "reference_bin": -1,
+        "bins": [
+          "transition",
+          "0",
+          "1",
+          "2"
+        ],
+        "dose": {
+          "transition": {
+            "beta": 8.447066185789805e-05,
+            "se": 0.00018270261234365088,
+            "p": 0.6592659265926593
+          },
+          "0": {
+            "beta": 2.8507042371928676e-05,
+            "se": 0.0003213748814225007,
+            "p": 0.9373937393739374
+          },
+          "1": {
+            "beta": 0.00012496968397407147,
+            "se": 0.00033994872912032495,
+            "p": 0.7630763076307631
+          },
+          "2": {
+            "beta": 9.575856956336449e-05,
+            "se": 0.0003438651258165149,
+            "p": 0.8196819681968197
+          }
+        },
+        "exposure": {
+          "transition": {
+            "beta": 1.585139100738925e-07,
+            "se": 1.9529346298019167e-07,
+            "p": 0.49784978497849786
+          },
+          "0": {
+            "beta": -4.304580205998842e-08,
+            "se": 1.803405024030748e-07,
+            "p": 0.8161816181618162
+          },
+          "1": {
+            "beta": 1.2327882727262857e-07,
+            "se": 1.9876691028679018e-07,
+            "p": 0.6047604760476047
+          },
+          "2": {
+            "beta": 2.562062266386986e-07,
+            "se": 2.8824640447900707e-07,
+            "p": 0.4967496749674967
+          }
+        },
+        "n_obs": 668,
+        "n_clusters": 16,
+        "dropped_bins": [
+          "-2"
+        ],
+        "dropped_regressors": [],
+        "note": "",
+        "joint": {
+          "dose_post": {
+            "wald": 0.8624704644322255,
+            "p": 0.8905890589058906,
+            "q": 3,
+            "names": [
+              "dose[0]",
+              "dose[1]",
+              "dose[2]"
+            ]
+          },
+          "exposure_post": {
+            "wald": 1.3594987329986286,
+            "p": 0.823982398239824,
+            "q": 3,
+            "names": [
+              "exposure[0]",
+              "exposure[1]",
+              "exposure[2]"
+            ]
+          }
+        }
+      },
+      "rdd": {
+        "beta_left": -0.0,
+        "beta_right": NaN,
+        "discontinuity": NaN,
+        "bandwidth": 0.02,
+        "n_left": 25,
+        "n_right": 0,
+        "n_banks_left": 3,
+        "n_banks_right": 0
+      }
+    },
+    "nim": {
+      "n_missing_outcome": 66,
+      "did": {
+        "beta_dose": 0.0030587536183967765,
+        "beta_exposure": -3.960185555356015e-05,
+        "beta_controls": {
+          "exposure_level": 3.881998472065316e-05,
+          "liquidity_ratio_pre_x_post": -0.004634658743156282,
+          "ldr_pre_x_post": -0.004036816101952086,
+          "nrb_dependence_pre_x_post": -0.001911047903355165,
+          "log_size_pre_x_post": -0.0008499452905652461
+        },
+        "n_obs": 563,
+        "residual_std": 0.00276103285556206,
+        "se_dose": 0.007800948370742347,
+        "se_exposure": 2.5599393640609617e-05,
+        "p_dose": 0.7076707670767076,
+        "p_exposure": 0.25862586258625864,
+        "n_clusters": 16,
+        "dropped_regressors": [],
+        "n_cells_nonfinite_regressor": 0
+      },
+      "did_ras_baseline": {
+        "beta_dose": 0.0033759503827876713,
+        "beta_exposure": -5.017607241701974e-05,
+        "beta_controls": {
+          "exposure_level": 4.9842255412389726e-05,
+          "liquidity_ratio_pre_x_post": -0.00469063085184068,
+          "ldr_pre_x_post": -0.004235334863666993,
+          "nrb_dependence_pre_x_post": -0.0015695855176286377,
+          "log_size_pre_x_post": -0.0009274960572353139
+        },
+        "n_obs": 563,
+        "residual_std": 0.0027609923137069474,
+        "se_dose": 0.008051027689464174,
+        "se_exposure": 3.552646976255869e-05,
+        "p_dose": 0.6943694369436944,
+        "p_exposure": 0.22422242224222422,
+        "n_clusters": 16,
+        "dropped_regressors": [],
+        "n_cells_nonfinite_regressor": 0
+      },
+      "beta_dose_diff": -0.0003171967643908948,
+      "beta_exposure_diff": 1.0574216863459588e-05,
+      "event_study": {
+        "reference_bin": -1,
+        "bins": [
+          "transition",
+          "0",
+          "1",
+          "2"
+        ],
+        "dose": {
+          "transition": {
+            "beta": 0.0027362918563556353,
+            "se": 0.012237152261462395,
+            "p": 0.9090909090909091
+          },
+          "0": {
+            "beta": 0.0028660126268837747,
+            "se": 0.007407978856553377,
+            "p": 0.7491749174917491
+          },
+          "1": {
+            "beta": 0.00912897276619382,
+            "se": 0.0068935218501509484,
+            "p": 0.18411841184118413
+          },
+          "2": {
+            "beta": -0.0025156809486025465,
+            "se": 0.009787656670369599,
+            "p": 0.8303830383038304
+          }
+        },
+        "exposure": {
+          "transition": {
+            "beta": -4.79911432936717e-05,
+            "se": 2.6157928197449227e-05,
+            "p": 0.24202420242024203
+          },
+          "0": {
+            "beta": -4.590090213407887e-05,
+            "se": 2.1390071705518578e-05,
+            "p": 0.18731873187318732
+          },
+          "1": {
+            "beta": -3.599226996010728e-05,
+            "se": 2.214628978124443e-05,
+            "p": 0.33763376337633766
+          },
+          "2": {
+            "beta": -3.20073931427959e-05,
+            "se": 2.2254119175338144e-05,
+            "p": 0.41974197419741976
+          }
+        },
+        "n_obs": 654,
+        "n_clusters": 16,
+        "dropped_bins": [
+          "-2"
+        ],
+        "dropped_regressors": [],
+        "note": "",
+        "joint": {
+          "dose_post": {
+            "wald": 8.440290872072772,
+            "p": 0.39753975397539754,
+            "q": 3,
+            "names": [
+              "dose[0]",
+              "dose[1]",
+              "dose[2]"
+            ]
+          },
+          "exposure_post": {
+            "wald": 34.108631205886944,
+            "p": 0.14411441144114412,
+            "q": 3,
+            "names": [
+              "exposure[0]",
+              "exposure[1]",
+              "exposure[2]"
+            ]
+          }
+        }
+      },
+      "rdd": {
+        "beta_left": 0.003537125885486603,
+        "beta_right": NaN,
+        "discontinuity": NaN,
+        "bandwidth": 0.02,
+        "n_left": 25,
+        "n_right": 0,
+        "n_banks_left": 3,
+        "n_banks_right": 0
+      }
+    }
+  }
+}

@@ -1,12 +1,17 @@
-% book.bib -- consolidated bibliography for paper1 (interbank network reconstruction) and paper2 (causal spillover).
-% Generated 2026-11-07 by merging paper1_network_reconstruction.bib + paper2_draft.bib (5 shared keys deduplicated, byte-identical).
 
-% Paper 2 bibliography.
-% Entries copied verbatim from paper1_network_reconstruction.bib are marked "reused from Paper 1".
-% Every other entry is written from recall and carries note = {TO VERIFY}: check authors, title,
-% volume, pages and year against the publisher record before submission.
+% --- background and introduction ------------------------------------------------------
 
-% --- reused from Paper 1 -------------------------------------------------------------------
+
+@article{sheldon1998interbank,
+  title={Interbank lending and systemic risk: An empirical analysis for Switzerland},
+  author={Sheldon, George and Maurer, Martin and others},
+  journal={Revue suisse d economie politique et de statistique},
+  volume={134},
+  pages={685--704},
+  year={1998},
+  publisher={SWISS ACADEMY OF HUMANITIES AND SOCIAL SCIENCES}
+}
+
 
 @article{upper2011simulation,
   author  = {Upper, Christian},
@@ -59,14 +64,6 @@
   year    = {1940}
 }
 
-% --- companion paper and institutional sources ---------------------------------------------
-
-@unpublished{paper1companion,
-  author = {{[Author(s)]}},
-  title  = {{Reconstructing Interbank Exposure Networks from Published Marginals: A Capped Projection Method and What Nepal's Bulletins Allow}},
-  note   = {Companion paper. TO FILL: authors, status},
-  year   = {2026}
-}
 
 @misc{nrb2015caf,
   author       = {{Nepal Rastra Bank}},
@@ -639,5 +636,36 @@
   pages     = {021051},
   year      = {2018},
   doi       = {10.1103/PhysRevX.8.021051}
+}
+
+
+@article{mistrulli2011assessing,
+  title={Assessing financial contagion in the interbank market: Maximum entropy versus observed interbank lending patterns},
+  author={Mistrulli, Paolo Emilio},
+  journal={Journal of Banking \& Finance},
+  volume={35},
+  number={5},
+  pages={1114--1127},
+  year={2011},
+  publisher={Elsevier}
+}
+
+
+% --- Dykstra Projection Algorithm and subequent work ------------------------------------------------------
+
+@inproceedings{boyle1986method,
+  title={A method for finding projections onto the intersection of convex sets in Hilbert spaces},
+  author={Boyle, James P and Dykstra, Richard L},
+  booktitle={Advances in Order Restricted Statistical Inference: Proceedings of the Symposium on Order Restricted Statistical Inference held in Iowa City, Iowa, September 11--13, 1985},
+  pages={28--47},
+  year={1986},
+  organization={Springer}
+}
+@article{tibshirani2017dykstra,
+  title={Dykstra's algorithm, admm, and coordinate descent: Connections, insights, and extensions},
+  author={Tibshirani, Ryan J},
+  journal={Advances in Neural Information Processing Systems},
+  volume={30},
+  year={2017}
 }
 

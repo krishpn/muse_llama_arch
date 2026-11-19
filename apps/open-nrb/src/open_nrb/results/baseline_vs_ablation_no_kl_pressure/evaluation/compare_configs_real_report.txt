@@ -1,0 +1,11 @@
+
+metric                                             baseline ablation_no_kl_pressure        delta     % change
+------------------------------------------------------------------------------------------------------
+lag1_autocorrelation (model)                         0.3419           0.3419       0.0000        0.00%
+cap_binding_fraction (model)                         0.0699           0.0699       0.0000        0.00%
+density (model)                                      0.2798           0.2798       0.0000        0.00%
+weighted_reciprocity (model)                         0.0853           0.0853      -0.0000       -0.00%
+debtrank mean_shock_impact (model)                   7.0013           7.0013       0.0000        0.00%
+marginal_preservation row err (model)      23110184960.0000 23110184960.0000       0.0000        0.00%
+marginal_preservation col err (model)      10953691136.0000 10953690112.0000    1024.0000        0.00%
+centrality_rank_agreement (model vs baseline)           0.8578           0.8586      -0.0009       -0.10%

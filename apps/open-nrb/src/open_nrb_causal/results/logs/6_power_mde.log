@@ -1,0 +1,122 @@
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/models/data_loader.py:481: UserWarning: 1844 rows dropped: belong to a source_file superseded by a '-NEW' resubmission of the same bulletin
+  rows = read_rows(csv_path)
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/models/panel_alignment.py:63: UserWarning: 22 (bfi, period) cells missing a required field were left as NaN, e.g.: Karnali @ (2081, 'Mangsir'): missing '1 CAPITAL FUND'; Karnali @ (2081, 'Poush'): missing '1 CAPITAL FUND'; Karnali @ (2081, 'Magh'): missing '1 CAPITAL FUND'; Karnali @ (2081, 'Falgun'): missing '1 CAPITAL FUND'; Karnali @ (2081, 'Chaitra'): missing '1 CAPITAL FUND'
+  panel = load_panel(csv_path)
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/models/panel_alignment.py:64: UserWarning: 9/42 banks excluded as non-commercial (no match in COMMERCIAL_BANK_PREFIXES): ['CTBNL', 'Excel', 'Janata', 'Karnali', 'Kist', 'Mahalaxmi', 'Miteri', 'Narayani', 'Shangrila']
+  panel = filter_commercial_banks(panel)
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/models/panel_alignment.py:65: UserWarning: 23/156 periods excluded as before (2072, 'Asar'): [(2070, 'Baisakh'), (2070, 'Jestha'), (2070, 'Asar'), (2070, 'Shrawan'), (2070, 'Bhadra'), (2070, 'Ashwin'), (2070, 'Kartik'), (2070, 'Mangsir'), (2070, 'Poush'), (2070, 'Magh'), (2070, 'Falgun'), (2070, 'Chaitra'), (2071, 'Baisakh'), (2071, 'Jestha'), (2071, 'Asar'), (2071, 'Shrawan'), (2071, 'Bhadra'), (2071, 'Ashwin'), (2071, 'Kartik'), (2071, 'Mangsir'), (2071, 'Poush'), (2071, 'Magh'), (2071, 'Falgun')]
+  panel = filter_from_period(panel, start)
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/models/variables.py:160: UserWarning: 1064 rows dropped: belong to a source_file superseded by a '-NEW' resubmission of the same bulletin
+  for row in read_rows(pnl_csv_path):
+
+== main: N=16 x T=45 ((2072, 'Asar') .. (2075, 'Falgun'))
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/models/variables.py:276: UserWarning: 1844 rows dropped: belong to a source_file superseded by a '-NEW' resubmission of the same bulletin
+  for row in read_rows(csv_path):
+  leverage dose: SD(dose_pre) across banks = 0.02011; SD(exposure x post) W_hat = 36.76, RAS = 38.98
+  [net_profit_loss] W_hat                 dose     beta=    0.0247 SE=   0.0197 G=16 MDE=    0.059 |b|/MDE= 0.42 std.MDE=0.868 std.MDE(resid)=0.104
+  [net_profit_loss] W_hat                 exposure beta=-9.359e-05 SE= 8.73e-05 G=16 MDE= 0.000262 |b|/MDE= 0.36 std.MDE=7.039 std.MDE(resid)=0.141
+  [net_profit_loss] RAS                   dose     beta=   0.02807 SE=   0.0224 G=16 MDE=    0.067 |b|/MDE= 0.42 std.MDE=0.986 std.MDE(resid)=0.121
+  [net_profit_loss] RAS                   exposure beta=-0.0001136 SE= 7.21e-05 G=16 MDE= 0.000216 |b|/MDE= 0.53 std.MDE=6.158 std.MDE(resid)=0.138
+  [loan_loss_provision] W_hat                 dose     beta=  0.007646 SE=   0.0199 G=16 MDE=   0.0595 |b|/MDE= 0.13 std.MDE=0.786 std.MDE(resid)=0.089
+  [loan_loss_provision] W_hat                 exposure beta= 1.749e-05 SE= 7.24e-05 G=16 MDE= 0.000217 |b|/MDE= 0.08 std.MDE=5.238 std.MDE(resid)=0.086
+  [loan_loss_provision] RAS                   dose     beta=  0.007518 SE=   0.0191 G=16 MDE=   0.0573 |b|/MDE= 0.13 std.MDE=0.757 std.MDE(resid)=0.086
+  [loan_loss_provision] RAS                   exposure beta= 2.327e-05 SE= 6.29e-05 G=16 MDE= 0.000189 |b|/MDE= 0.12 std.MDE=4.825 std.MDE(resid)=0.081
+  [loan_written_off] W_hat                 dose     beta=-0.0004529 SE= 0.000622 G=16 MDE=  0.00186 |b|/MDE= 0.24 std.MDE=0.422 std.MDE(resid)=0.050
+  [loan_written_off] W_hat                 exposure beta=-1.337e-06 SE= 3.11e-06 G=16 MDE= 9.31e-06 |b|/MDE= 0.14 std.MDE=3.854 std.MDE(resid)=0.077
+  [loan_written_off] RAS                   dose     beta=-0.0001336 SE= 0.000697 G=16 MDE=  0.00209 |b|/MDE= 0.06 std.MDE=0.473 std.MDE(resid)=0.058
+  [loan_written_off] RAS                   exposure beta=-2.828e-06 SE= 2.96e-06 G=16 MDE= 8.88e-06 |b|/MDE= 0.32 std.MDE=3.894 std.MDE(resid)=0.087
+  [nim] W_hat                 dose     beta=   0.08217 SE=   0.0237 G=16 MDE=   0.0709 |b|/MDE= 1.16 std.MDE=0.987 std.MDE(resid)=0.118
+  [nim] W_hat                 exposure beta=-0.0002041 SE= 0.000103 G=16 MDE= 0.000307 |b|/MDE= 0.66 std.MDE=7.826 std.MDE(resid)=0.157
+  [nim] RAS                   dose     beta=   0.08799 SE=   0.0219 G=16 MDE=   0.0657 |b|/MDE= 1.34 std.MDE=0.914 std.MDE(resid)=0.110
+  [nim] RAS                   exposure beta=-0.0002184 SE= 7.16e-05 G=16 MDE= 0.000215 |b|/MDE= 1.02 std.MDE=5.793 std.MDE(resid)=0.121
+  (paid-up dose): SD(dose_pre) across banks = 0.0438; SD(exposure x post) W_hat = 70.35, RAS = 74.76
+  [net_profit_loss] W_hat (paid-up dose)  dose     beta=  -0.02582 SE=   0.0207 G=16 MDE=    0.062 |b|/MDE= 0.42 std.MDE=1.987 std.MDE(resid)=0.129
+  [net_profit_loss] W_hat (paid-up dose)  exposure beta=-6.836e-06 SE= 3.27e-05 G=16 MDE= 9.81e-05 |b|/MDE= 0.07 std.MDE=5.046 std.MDE(resid)=0.173
+  [net_profit_loss] RAS (paid-up dose)    dose     beta=  -0.01134 SE=   0.0171 G=16 MDE=   0.0511 |b|/MDE= 0.22 std.MDE=1.638 std.MDE(resid)=0.106
+  [net_profit_loss] RAS (paid-up dose)    exposure beta= 1.359e-05 SE= 2.69e-05 G=16 MDE= 8.07e-05 |b|/MDE= 0.17 std.MDE=4.411 std.MDE(resid)=0.159
+  [loan_loss_provision] W_hat (paid-up dose)  dose     beta=   0.01285 SE=   0.0176 G=16 MDE=   0.0527 |b|/MDE= 0.24 std.MDE=1.516 std.MDE(resid)=0.100
+  [loan_loss_provision] W_hat (paid-up dose)  exposure beta=-1.378e-07 SE= 1.67e-05 G=16 MDE=    5e-05 |b|/MDE= 0.00 std.MDE=2.307 std.MDE(resid)=0.074
+  [loan_loss_provision] RAS (paid-up dose)    dose     beta=  0.007582 SE=   0.0134 G=16 MDE=   0.0402 |b|/MDE= 0.19 std.MDE=1.157 std.MDE(resid)=0.075
+  [loan_loss_provision] RAS (paid-up dose)    exposure beta=-5.436e-06 SE= 1.34e-05 G=16 MDE= 4.01e-05 |b|/MDE= 0.14 std.MDE=1.968 std.MDE(resid)=0.061
+  [loan_written_off] W_hat (paid-up dose)  dose     beta= 0.0003258 SE= 0.000473 G=16 MDE=  0.00142 |b|/MDE= 0.23 std.MDE=0.700 std.MDE(resid)=0.045
+  [loan_written_off] W_hat (paid-up dose)  exposure beta= 8.444e-07 SE=    1e-06 G=16 MDE=    3e-06 |b|/MDE= 0.28 std.MDE=2.379 std.MDE(resid)=0.081
+  [loan_written_off] RAS (paid-up dose)    dose     beta= 0.0006176 SE= 0.000424 G=16 MDE=  0.00127 |b|/MDE= 0.49 std.MDE=0.627 std.MDE(resid)=0.041
+  [loan_written_off] RAS (paid-up dose)    exposure beta= 1.317e-06 SE=    9e-07 G=16 MDE=  2.7e-06 |b|/MDE= 0.49 std.MDE=2.270 std.MDE(resid)=0.082
+  [nim] W_hat (paid-up dose)  dose     beta=   -0.0801 SE=   0.0174 G=16 MDE=    0.052 |b|/MDE= 1.54 std.MDE=1.578 std.MDE(resid)=0.100
+  [nim] W_hat (paid-up dose)  exposure beta=-4.587e-05 SE= 3.27e-05 G=16 MDE= 9.82e-05 |b|/MDE= 0.47 std.MDE=4.781 std.MDE(resid)=0.161
+  [nim] RAS (paid-up dose)    dose     beta=  -0.07409 SE=   0.0179 G=16 MDE=   0.0536 |b|/MDE= 1.38 std.MDE=1.627 std.MDE(resid)=0.101
+  [nim] RAS (paid-up dose)    exposure beta=-3.205e-05 SE= 2.94e-05 G=16 MDE= 8.81e-05 |b|/MDE= 0.36 std.MDE=4.561 std.MDE(resid)=0.151
+
+== baseline: N=16 x T=133 ((2072, 'Asar') .. (2083, 'Shrawan'))
+  leverage dose: SD(dose_pre) across banks = 0.02011; SD(exposure x post) W_hat = 46.85, RAS = 51.01
+  [net_profit_loss] W_hat                 dose     beta=  -0.02061 SE=   0.0172 G=16 MDE=   0.0516 |b|/MDE= 0.40 std.MDE=0.139 std.MDE(resid)=0.014
+  [net_profit_loss] W_hat                 exposure beta= -3.41e-05 SE= 1.42e-05 G=16 MDE= 4.25e-05 |b|/MDE= 0.80 std.MDE=0.267 std.MDE(resid)=0.011
+  [net_profit_loss] RAS                   dose     beta=  -0.02076 SE=   0.0165 G=16 MDE=   0.0494 |b|/MDE= 0.42 std.MDE=0.133 std.MDE(resid)=0.013
+  [net_profit_loss] RAS                   exposure beta=-4.989e-05 SE= 2.34e-05 G=16 MDE=    7e-05 |b|/MDE= 0.71 std.MDE=0.479 std.MDE(resid)=0.013
+  [loan_loss_provision] W_hat                 dose     beta=   0.01371 SE=   0.0124 G=16 MDE=   0.0373 |b|/MDE= 0.37 std.MDE=0.109 std.MDE(resid)=0.008
+  [loan_loss_provision] W_hat                 exposure beta= 5.215e-06 SE= 1.02e-05 G=16 MDE= 3.07e-05 |b|/MDE= 0.17 std.MDE=0.208 std.MDE(resid)=0.006
+  [loan_loss_provision] RAS                   dose     beta=   0.01324 SE=   0.0118 G=16 MDE=   0.0353 |b|/MDE= 0.38 std.MDE=0.103 std.MDE(resid)=0.008
+  [loan_loss_provision] RAS                   exposure beta=-2.901e-06 SE= 9.85e-06 G=16 MDE= 2.95e-05 |b|/MDE= 0.10 std.MDE=0.218 std.MDE(resid)=0.005
+  [loan_written_off] W_hat                 dose     beta= -0.002157 SE=  0.00142 G=16 MDE=  0.00424 |b|/MDE= 0.51 std.MDE=0.163 std.MDE(resid)=0.016
+  [loan_written_off] W_hat                 exposure beta= 1.382e-06 SE= 6.73e-07 G=16 MDE= 2.02e-06 |b|/MDE= 0.69 std.MDE=0.180 std.MDE(resid)=0.007
+  [loan_written_off] RAS                   dose     beta= -0.002149 SE=  0.00141 G=16 MDE=  0.00423 |b|/MDE= 0.51 std.MDE=0.162 std.MDE(resid)=0.016
+  [loan_written_off] RAS                   exposure beta= 1.916e-06 SE= 9.22e-07 G=16 MDE= 2.76e-06 |b|/MDE= 0.69 std.MDE=0.269 std.MDE(resid)=0.007
+  [nim] W_hat                 dose     beta= -0.009635 SE=   0.0351 G=16 MDE=    0.105 |b|/MDE= 0.09 std.MDE=0.069 std.MDE(resid)=0.007
+  [nim] W_hat                 exposure beta=-2.562e-05 SE= 3.18e-05 G=16 MDE= 9.53e-05 |b|/MDE= 0.27 std.MDE=0.146 std.MDE(resid)=0.005
+  [nim] RAS                   dose     beta= -0.008984 SE=    0.033 G=16 MDE=   0.0989 |b|/MDE= 0.09 std.MDE=0.065 std.MDE(resid)=0.006
+  [nim] RAS                   exposure beta= -5.63e-05 SE= 3.63e-05 G=16 MDE= 0.000109 |b|/MDE= 0.52 std.MDE=0.182 std.MDE(resid)=0.005
+  (paid-up dose): SD(dose_pre) across banks = 0.0438; SD(exposure x post) W_hat = 84.73, RAS = 106.9
+  [net_profit_loss] W_hat (paid-up dose)  dose     beta=   -0.0146 SE=    0.016 G=16 MDE=   0.0481 |b|/MDE= 0.30 std.MDE=0.283 std.MDE(resid)=0.015
+  [net_profit_loss] W_hat (paid-up dose)  exposure beta= 1.715e-05 SE= 8.43e-06 G=16 MDE= 2.53e-05 |b|/MDE= 0.68 std.MDE=0.288 std.MDE(resid)=0.011
+  [net_profit_loss] RAS (paid-up dose)    dose     beta=  -0.01141 SE=   0.0151 G=16 MDE=   0.0453 |b|/MDE= 0.25 std.MDE=0.266 std.MDE(resid)=0.014
+  [net_profit_loss] RAS (paid-up dose)    exposure beta= 1.917e-05 SE= 1.11e-05 G=16 MDE= 3.33e-05 |b|/MDE= 0.58 std.MDE=0.477 std.MDE(resid)=0.013
+  [loan_loss_provision] W_hat (paid-up dose)  dose     beta=  -0.02788 SE=  0.00503 G=16 MDE=   0.0151 |b|/MDE= 1.85 std.MDE=0.096 std.MDE(resid)=0.004
+  [loan_loss_provision] W_hat (paid-up dose)  exposure beta=-1.077e-05 SE= 4.17e-06 G=16 MDE= 1.25e-05 |b|/MDE= 0.86 std.MDE=0.153 std.MDE(resid)=0.004
+  [loan_loss_provision] RAS (paid-up dose)    dose     beta=  -0.02555 SE=   0.0049 G=16 MDE=   0.0147 |b|/MDE= 1.74 std.MDE=0.093 std.MDE(resid)=0.004
+  [loan_loss_provision] RAS (paid-up dose)    exposure beta= -6.27e-06 SE= 3.99e-06 G=16 MDE=  1.2e-05 |b|/MDE= 0.52 std.MDE=0.185 std.MDE(resid)=0.004
+  [loan_written_off] W_hat (paid-up dose)  dose     beta= 0.0002751 SE=  0.00119 G=16 MDE=  0.00357 |b|/MDE= 0.08 std.MDE=0.298 std.MDE(resid)=0.016
+  [loan_written_off] W_hat (paid-up dose)  exposure beta=-6.563e-07 SE= 3.92e-07 G=16 MDE= 1.18e-06 |b|/MDE= 0.56 std.MDE=0.190 std.MDE(resid)=0.007
+  [loan_written_off] RAS (paid-up dose)    dose     beta=  0.000117 SE=  0.00122 G=16 MDE=  0.00365 |b|/MDE= 0.03 std.MDE=0.305 std.MDE(resid)=0.016
+  [loan_written_off] RAS (paid-up dose)    exposure beta=-7.175e-07 SE= 4.97e-07 G=16 MDE= 1.49e-06 |b|/MDE= 0.48 std.MDE=0.303 std.MDE(resid)=0.008
+  [nim] W_hat (paid-up dose)  dose     beta= -0.005008 SE=   0.0484 G=16 MDE=    0.145 |b|/MDE= 0.03 std.MDE=0.209 std.MDE(resid)=0.011
+  [nim] W_hat (paid-up dose)  exposure beta= 1.262e-05 SE= 2.65e-05 G=16 MDE= 7.94e-05 |b|/MDE= 0.16 std.MDE=0.221 std.MDE(resid)=0.008
+  [nim] RAS (paid-up dose)    dose     beta=   0.01103 SE=   0.0353 G=16 MDE=    0.106 |b|/MDE= 0.10 std.MDE=0.152 std.MDE(resid)=0.008
+  [nim] RAS (paid-up dose)    exposure beta= 2.693e-05 SE= 1.64e-05 G=16 MDE= 4.92e-05 |b|/MDE= 0.55 std.MDE=0.173 std.MDE(resid)=0.004
+
+== clean_window: N=16 x T=45 ((2072, 'Asar') .. (2075, 'Falgun'))
+  leverage dose: SD(dose_pre) across banks = 0.02011; SD(exposure x post) W_hat = 36.76, RAS = 38.98
+  [net_profit_loss] W_hat                 dose     beta= -0.004075 SE=  0.00859 G=16 MDE=   0.0258 |b|/MDE= 0.16 std.MDE=0.189 std.MDE(resid)=0.033
+  [net_profit_loss] W_hat                 exposure beta=-2.603e-05 SE= 1.67e-05 G=16 MDE=    5e-05 |b|/MDE= 0.52 std.MDE=0.671 std.MDE(resid)=0.062
+  [net_profit_loss] RAS                   dose     beta= -0.004035 SE=  0.00917 G=16 MDE=   0.0275 |b|/MDE= 0.15 std.MDE=0.202 std.MDE(resid)=0.035
+  [net_profit_loss] RAS                   exposure beta=-3.178e-05 SE= 2.62e-05 G=16 MDE= 7.87e-05 |b|/MDE= 0.40 std.MDE=1.120 std.MDE(resid)=0.074
+  [loan_loss_provision] W_hat                 dose     beta=  0.004903 SE=  0.00534 G=16 MDE=    0.016 |b|/MDE= 0.31 std.MDE=0.364 std.MDE(resid)=0.053
+  [loan_loss_provision] W_hat                 exposure beta=  4.15e-06 SE= 4.64e-06 G=16 MDE= 1.39e-05 |b|/MDE= 0.30 std.MDE=0.578 std.MDE(resid)=0.042
+  [loan_loss_provision] RAS                   dose     beta=  0.004453 SE=  0.00516 G=16 MDE=   0.0155 |b|/MDE= 0.29 std.MDE=0.352 std.MDE(resid)=0.051
+  [loan_loss_provision] RAS                   exposure beta=-2.326e-06 SE= 5.17e-06 G=16 MDE= 1.55e-05 |b|/MDE= 0.15 std.MDE=0.683 std.MDE(resid)=0.044
+  [loan_written_off] W_hat                 dose     beta=-0.0001309 SE= 0.000283 G=16 MDE=  0.00085 |b|/MDE= 0.15 std.MDE=0.269 std.MDE(resid)=0.046
+  [loan_written_off] W_hat                 exposure beta= 4.147e-07 SE= 3.88e-07 G=16 MDE= 1.16e-06 |b|/MDE= 0.36 std.MDE=0.672 std.MDE(resid)=0.062
+  [loan_written_off] RAS                   dose     beta=-0.0001221 SE= 0.000275 G=16 MDE= 0.000824 |b|/MDE= 0.15 std.MDE=0.261 std.MDE(resid)=0.045
+  [loan_written_off] RAS                   exposure beta= 2.134e-07 SE= 3.23e-07 G=16 MDE= 9.69e-07 |b|/MDE= 0.22 std.MDE=0.594 std.MDE(resid)=0.039
+  [nim] W_hat                 dose     beta=  0.003059 SE=   0.0078 G=16 MDE=   0.0234 |b|/MDE= 0.13 std.MDE=0.125 std.MDE(resid)=0.022
+  [nim] W_hat                 exposure beta= -3.96e-05 SE= 2.56e-05 G=16 MDE= 7.67e-05 |b|/MDE= 0.52 std.MDE=0.748 std.MDE(resid)=0.064
+  [nim] RAS                   dose     beta=  0.003376 SE=  0.00805 G=16 MDE=   0.0241 |b|/MDE= 0.14 std.MDE=0.129 std.MDE(resid)=0.022
+  [nim] RAS                   exposure beta=-5.018e-05 SE= 3.55e-05 G=16 MDE= 0.000106 |b|/MDE= 0.47 std.MDE=1.101 std.MDE(resid)=0.070
+  (paid-up dose): SD(dose_pre) across banks = 0.0438; SD(exposure x post) W_hat = 70.35, RAS = 74.76
+  [net_profit_loss] W_hat (paid-up dose)  dose     beta=  0.002229 SE=  0.00772 G=16 MDE=   0.0232 |b|/MDE= 0.10 std.MDE=0.370 std.MDE(resid)=0.033
+  [net_profit_loss] W_hat (paid-up dose)  exposure beta= 1.579e-05 SE= 1.01e-05 G=16 MDE= 3.01e-05 |b|/MDE= 0.52 std.MDE=0.774 std.MDE(resid)=0.066
+  [net_profit_loss] RAS (paid-up dose)    dose     beta=  0.002966 SE=  0.00941 G=16 MDE=   0.0282 |b|/MDE= 0.11 std.MDE=0.451 std.MDE(resid)=0.040
+  [net_profit_loss] RAS (paid-up dose)    exposure beta= 1.458e-05 SE= 1.34e-05 G=16 MDE= 4.02e-05 |b|/MDE= 0.36 std.MDE=1.098 std.MDE(resid)=0.076
+  [loan_loss_provision] W_hat (paid-up dose)  dose     beta= -0.003724 SE=  0.00325 G=16 MDE=  0.00973 |b|/MDE= 0.38 std.MDE=0.482 std.MDE(resid)=0.037
+  [loan_loss_provision] W_hat (paid-up dose)  exposure beta=-4.692e-06 SE= 3.25e-06 G=16 MDE= 9.74e-06 |b|/MDE= 0.48 std.MDE=0.774 std.MDE(resid)=0.054
+  [loan_loss_provision] RAS (paid-up dose)    dose     beta= -0.002876 SE=  0.00323 G=16 MDE=   0.0097 |b|/MDE= 0.30 std.MDE=0.480 std.MDE(resid)=0.037
+  [loan_loss_provision] RAS (paid-up dose)    exposure beta=-1.876e-06 SE= 3.24e-06 G=16 MDE= 9.72e-06 |b|/MDE= 0.19 std.MDE=0.821 std.MDE(resid)=0.055
+  [loan_written_off] W_hat (paid-up dose)  dose     beta=-0.0003184 SE= 0.000308 G=16 MDE= 0.000924 |b|/MDE= 0.34 std.MDE=0.636 std.MDE(resid)=0.057
+  [loan_written_off] W_hat (paid-up dose)  exposure beta=-2.577e-07 SE= 2.23e-07 G=16 MDE=  6.7e-07 |b|/MDE= 0.38 std.MDE=0.741 std.MDE(resid)=0.063
+  [loan_written_off] RAS (paid-up dose)    dose     beta=-0.0002591 SE= 0.000275 G=16 MDE= 0.000825 |b|/MDE= 0.31 std.MDE=0.569 std.MDE(resid)=0.050
+  [loan_written_off] RAS (paid-up dose)    exposure beta=-1.091e-07 SE= 1.29e-07 G=16 MDE= 3.86e-07 |b|/MDE= 0.28 std.MDE=0.454 std.MDE(resid)=0.032
+  [nim] W_hat (paid-up dose)  dose     beta= -0.007422 SE=   0.0092 G=16 MDE=   0.0276 |b|/MDE= 0.27 std.MDE=0.320 std.MDE(resid)=0.028
+  [nim] W_hat (paid-up dose)  exposure beta= 1.858e-05 SE= 1.46e-05 G=16 MDE= 4.38e-05 |b|/MDE= 0.42 std.MDE=0.817 std.MDE(resid)=0.063
+  [nim] RAS (paid-up dose)    dose     beta= -0.007462 SE=  0.00876 G=16 MDE=   0.0263 |b|/MDE= 0.28 std.MDE=0.305 std.MDE(resid)=0.026
+  [nim] RAS (paid-up dose)    exposure beta= 1.773e-05 SE= 1.43e-05 G=16 MDE= 4.29e-05 |b|/MDE= 0.41 std.MDE=0.850 std.MDE(resid)=0.057
+
+saved /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/results/power_mde.md

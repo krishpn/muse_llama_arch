@@ -1,0 +1,74 @@
+
+=== Item 5: discard-sample bias (included vs. excluded, own-active-window basis) ===
+included (complete-case): 16   excluded: 17
+
+ covariate: size
+  included                     n=  16  mean= 162210.3438  std=  56507.8906  skew= 0.6130  excess_kurt= -0.2300
+  excluded                     n=  17  mean= 104967.4141  std=  76571.3984  skew= 2.5457  excess_kurt=  6.3550
+
+ covariate: capital_ratio
+  included                     n=  16  mean=      0.0983  std=      0.0337  skew= 1.8223  excess_kurt=  3.7578
+  excluded                     n=  17  mean=      0.1394  std=      0.0709  skew= 1.3367  excess_kurt=  1.7922
+
+=== Coverage-count time series (covariate-presence proxy) ===
+  banks present per period     n= 133  mean=     23.7068  std=      2.6209  skew=-0.4811  excess_kurt= -1.4259
+  min=20  max=27
+
+=== Aggregate marginal time series (complete-case banks only) ===
+  total r_t (lending)          n= 133  mean=   8581.4160  std=   5858.4634  skew= 1.0124  excess_kurt=  1.3254
+  total c_t (borrowing)        n= 133  mean=  10660.3535  std=   9876.3916  skew= 1.2787  excess_kurt=  1.5237
+
+=== Item 6: parameter count vs. effective real-data size ===
+trainable parameters: 2133
+N x T (effective real observations): 16 x 133 = 2128
+params / (N x T): 1.002
+
+saved: /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/results/baseline/evaluation/eda_model_checks_section_a.png
+
+=== Section B: trained-run checks (seed=0, 133/133 valid periods) ===
+
+=== Edge-weight moments over time: model (W_hat) ===
+  mean of per-period means:  48.2699
+  std-of-means (drift)         n= 133  mean=     48.2699  std=     37.7400  skew= 1.3015  excess_kurt=  1.9619
+  mean-of-stds                 n= 133  mean=    109.1291  std=     70.4233  skew= 1.1947  excess_kurt=  1.9105
+  mean-of-skews                n= 133  mean=      3.5538  std=      1.7426  skew= 1.4470  excess_kurt=  2.7026
+  mean-of-excess-kurt          n= 133  mean=     17.1688  std=     21.1025  skew= 2.7253  excess_kurt=  8.5582
+
+=== Edge-weight moments over time: classical baseline (RAS/Sinkhorn) ===
+  mean of per-period means:  35.5866
+  std-of-means (drift)         n= 133  mean=     35.5866  std=     24.5182  skew= 1.0074  excess_kurt=  1.2956
+  mean-of-stds                 n= 133  mean=    172.2015  std=     98.7301  skew= 0.8608  excess_kurt=  1.7221
+  mean-of-skews                n= 133  mean=      7.9595  std=      3.0100  skew= 0.7418  excess_kurt= -0.0760
+  mean-of-excess-kurt          n= 133  mean=     78.4574  std=     56.6302  skew= 1.2183  excess_kurt=  0.7895
+
+=== Item 1: smoothness-penalty circularity -- lag-1 autocorrelation of raw edges ===
+  model autocorrelation:    0.3419
+  baseline autocorrelation: 0.1465
+
+=== Item 2: cap-binding fraction ===
+  fraction of off-diagonal cells at/near the regulatory cap: 0.0699
+
+########## Section C: REAL DATA network-structure checks (config=baseline, seed=0) ##########
+
+=== Marginal preservation & density: model (W_hat) ===
+  row-sum rel. error           n=2128  mean=23110184960.0000  std=38161203200.0000  skew= 1.6645  excess_kurt=     nan
+  col-sum rel. error           n=2128  mean=10953691136.0000  std=15868791808.0000  skew= 1.7764  excess_kurt=     nan
+  density (frac. off-diag >= tol) n= 133  mean=      0.2798  std=      0.1100  skew= 0.0839  excess_kurt= -0.7763
+  weighted reciprocity         n= 133  mean=      0.0853  std=      0.0978  skew= 1.8620  excess_kurt=  4.5595
+
+=== Marginal preservation & density: classical baseline ===
+  row-sum rel. error           n=2128  mean=      0.0000  std=      0.0006  skew=18.8630  excess_kurt=355.1534
+  col-sum rel. error           n=2128  mean=      1.4288  std=     14.2821  skew=17.2375  excess_kurt=328.1968
+  density (frac. off-diag >= tol) n= 133  mean=      0.1501  std=      0.0845  skew= 0.5089  excess_kurt= -0.3956
+  weighted reciprocity         n= 133  mean=      0.0244  std=      0.0614  skew= 4.1660  excess_kurt= 21.7209
+
+=== Eigenvector-centrality rank agreement: model vs baseline ===
+  Spearman rank correlation    n= 133  mean=      0.8578  std=      0.1539  skew=-1.0560  excess_kurt= -0.0417
+
+=== DebtRank systemic impact: model (W_hat) ===
+  mean single-bank-shock impact n= 133  mean=      7.0013  std=      4.3448  skew= 1.2514  excess_kurt=  0.2491
+  worst single-bank-shock impact n= 133  mean=     13.1283  std=      4.5577  skew=-1.1545  excess_kurt= -0.3204
+
+=== DebtRank systemic impact: classical baseline ===
+  mean single-bank-shock impact n= 133  mean=      2.8665  std=      1.1996  skew= 0.6574  excess_kurt= -0.3024
+  worst single-bank-shock impact n= 133  mean=      6.3580  std=      2.2663  skew= 0.0331  excess_kurt= -0.8002

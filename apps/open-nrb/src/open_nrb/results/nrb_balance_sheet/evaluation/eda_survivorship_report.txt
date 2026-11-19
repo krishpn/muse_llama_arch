@@ -1,0 +1,40 @@
+=== survivorship/complete-case EDA (33 banks, 156 periods, full range) ===
+
+complete        :  16 banks
+late_entry      :   2 banks
+early_exit      :   7 banks
+internal_gap    :   8 banks
+zero_denom_only :   0 banks
+
+=== mean size / interbank activity, by bucket (descriptive, during each bank's OWN active window) ===
+complete          n= 16  mean_size=     147313.57  mean_interbank_activity=     1071.18
+late_entry        n=  2  mean_size=     242908.85  mean_interbank_activity=      943.69
+early_exit        n=  7  mean_size=      73985.35  mean_interbank_activity=      808.22
+internal_gap      n=  8  mean_size=      82289.05  mean_interbank_activity=      751.42
+
+=== dropped banks, by bucket (name: n_active_periods / total_periods) ===
+
+late_entry:
+  Citizen                                   90/156
+  NIMB                                      43/156
+
+early_exit:
+  BOK                                      112/156
+  Citizens                                  66/156
+  Lumbini                                   35/156
+  NBB                                       66/156
+  NCC                                      112/156
+  NIBL                                     113/156
+  Sunrise                                  118/156
+
+internal_gap:
+  CBL                                       43/156
+  Century                                   52/156
+  Civil                                     52/156
+  Mega                                     109/156
+  NBBL                                      40/156
+  PRABHU                                    50/156
+  Prabhu                                    88/156
+  Sanima                                    61/156
+
+saved: /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/results/nrb_balance_sheet/evaluation/eda_survivorship.png

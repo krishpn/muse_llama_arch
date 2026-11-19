@@ -1,0 +1,50 @@
+{
+  "lag1_autocorrelation (model)": {
+    "a": 0.34187567234039307,
+    "b": 0.34187567234039307,
+    "delta": 0.0,
+    "pct_change": 0.0
+  },
+  "cap_binding_fraction (model)": {
+    "a": 0.06989348370927319,
+    "b": 0.06989348370927319,
+    "delta": 0.0,
+    "pct_change": 0.0
+  },
+  "density (model)": {
+    "a": 0.27982455492019653,
+    "b": 0.27982455492019653,
+    "delta": 0.0,
+    "pct_change": 0.0
+  },
+  "weighted_reciprocity (model)": {
+    "a": 0.08533588796854019,
+    "b": 0.08533668518066406,
+    "delta": -7.972121238708496e-07,
+    "pct_change": -0.0009341962629355624
+  },
+  "debtrank mean_shock_impact (model)": {
+    "a": 7.0012946128845215,
+    "b": 7.0012946128845215,
+    "delta": 0.0,
+    "pct_change": 0.0
+  },
+  "marginal_preservation row err (model)": {
+    "a": 23110184960.0,
+    "b": 23110184960.0,
+    "delta": 0.0,
+    "pct_change": 0.0
+  },
+  "marginal_preservation col err (model)": {
+    "a": 10953691136.0,
+    "b": 10953690112.0,
+    "delta": 1024.0,
+    "pct_change": 9.348447779056541e-06
+  },
+  "centrality_rank_agreement (model vs baseline)": {
+    "a": 0.8577842116355896,
+    "b": 0.8586465716362,
+    "delta": -0.0008623600006103516,
+    "pct_change": -0.10043247467547392
+  }
+}

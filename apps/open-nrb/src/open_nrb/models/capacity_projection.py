@@ -33,8 +33,7 @@ def capacitated_projection(
     Projects raw/sampled edge weights onto the intersection of three convex sets via
     Dykstra's alternating-projections algorithm (Boyle & Dykstra, 1986), an ADMM-family
     method that provably converges to the exact Euclidean-nearest point in the
-    intersection -- not a heuristic, unlike the earlier Sinkhorn-clip draft (see Sec 5's
-    revision note), which collapsed the per-entry cap into a row-sum cap.
+    intersection.
 
         R = {W : row_sums(W) = r}              row marginal
         C = {W : col_sums(W) = c}              column marginal

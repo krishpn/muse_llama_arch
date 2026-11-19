@@ -92,6 +92,8 @@ processed/
 **/processed/
 **/design_docs
 design_docs/
+**/open_nrb_20261106/
+open_nrb_20261106
 .csv
 .json
 .pdf

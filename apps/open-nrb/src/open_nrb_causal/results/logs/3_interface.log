@@ -1,0 +1,79 @@
+# Paper 1 interface check: main
+
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/models/data_loader.py:481: UserWarning: 1844 rows dropped: belong to a source_file superseded by a '-NEW' resubmission of the same bulletin
+  rows = read_rows(csv_path)
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/models/panel_alignment.py:63: UserWarning: 22 (bfi, period) cells missing a required field were left as NaN, e.g.: Karnali @ (2081, 'Mangsir'): missing '1 CAPITAL FUND'; Karnali @ (2081, 'Poush'): missing '1 CAPITAL FUND'; Karnali @ (2081, 'Magh'): missing '1 CAPITAL FUND'; Karnali @ (2081, 'Falgun'): missing '1 CAPITAL FUND'; Karnali @ (2081, 'Chaitra'): missing '1 CAPITAL FUND'
+  panel = load_panel(csv_path)
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/models/panel_alignment.py:64: UserWarning: 9/42 banks excluded as non-commercial (no match in COMMERCIAL_BANK_PREFIXES): ['CTBNL', 'Excel', 'Janata', 'Karnali', 'Kist', 'Mahalaxmi', 'Miteri', 'Narayani', 'Shangrila']
+  panel = filter_commercial_banks(panel)
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/models/panel_alignment.py:65: UserWarning: 23/156 periods excluded as before (2072, 'Asar'): [(2070, 'Baisakh'), (2070, 'Jestha'), (2070, 'Asar'), (2070, 'Shrawan'), (2070, 'Bhadra'), (2070, 'Ashwin'), (2070, 'Kartik'), (2070, 'Mangsir'), (2070, 'Poush'), (2070, 'Magh'), (2070, 'Falgun'), (2070, 'Chaitra'), (2071, 'Baisakh'), (2071, 'Jestha'), (2071, 'Asar'), (2071, 'Shrawan'), (2071, 'Bhadra'), (2071, 'Ashwin'), (2071, 'Kartik'), (2071, 'Mangsir'), (2071, 'Poush'), (2071, 'Magh'), (2071, 'Falgun')]
+  panel = filter_from_period(panel, start)
+/home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/models/variables.py:160: UserWarning: 1064 rows dropped: belong to a source_file superseded by a '-NEW' resubmission of the same bulletin
+  for row in read_rows(pnl_csv_path):
+## Artifact
+- path: `src/open_nrb/results/baseline/real_run_seed0.pt` (mtime 2026-11-07T19:30:15)
+- keys: W_baseline, W_hat, baseline_diff, baseline_stability, bfi_names, c, cap, components_trend, degenerate_periods, losses, model_stability, non_finite_periods, periods, q, r, seed
+- W_hat (133, 16, 16), W_baseline (133, 16, 16); N=16 x T=133, Asar 2072 .. Shrawan 2083
+- NaN-filled by Paper 1: non-finite 0, degenerate 0 (none)
+- this config's window: Asar 2072 .. Falgun 2075 (T=45); NaN-filled months inside it: none (build_inputs passed)
+
+## Marginals (CSV vs artifact)
+- r, c match; cap / K constant, implied kappa = 0.05
+
+## Paper 1 provenance
+- config `src/open_nrb/experiments/configs/baseline.yaml` (mtime 2026-11-07T11:33:52)
+- kappa 0.05, lambda_mi 0.0, lambda_smooth 0.05, epochs 500, kl_beta_max 0.15, kl_free_bits 0.05, seed 0
+
+## Network properties used in the text
+- cap-binding share of off-diagonal W_hat cells, all valid months: 0.0699
+- same, inside this config's window: 0.0193
+- corr(exposure W_hat, exposure RAS), post cells (400): 0.968
+- corr(exposure W_hat, exposure RAS), all cells (720): 0.939
+
+saved /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/results/paper1_interface_main.md
+# Paper 1 interface check: baseline
+
+## Artifact
+- path: `src/open_nrb/results/baseline/real_run_seed0.pt` (mtime 2026-11-07T19:30:15)
+- keys: W_baseline, W_hat, baseline_diff, baseline_stability, bfi_names, c, cap, components_trend, degenerate_periods, losses, model_stability, non_finite_periods, periods, q, r, seed
+- W_hat (133, 16, 16), W_baseline (133, 16, 16); N=16 x T=133, Asar 2072 .. Shrawan 2083
+- NaN-filled by Paper 1: non-finite 0, degenerate 0 (none)
+- this config's window: Asar 2072 .. Shrawan 2083 (T=133); NaN-filled months inside it: none (build_inputs passed)
+
+## Marginals (CSV vs artifact)
+- r, c match; cap / K constant, implied kappa = 0.05
+
+## Paper 1 provenance
+- config `src/open_nrb/experiments/configs/baseline.yaml` (mtime 2026-11-07T11:33:52)
+- kappa 0.05, lambda_mi 0.0, lambda_smooth 0.05, epochs 500, kl_beta_max 0.15, kl_free_bits 0.05, seed 0
+
+## Network properties used in the text
+- cap-binding share of off-diagonal W_hat cells, all valid months: 0.0699
+- same, inside this config's window: 0.0699
+- corr(exposure W_hat, exposure RAS), post cells (1576): 0.849
+- corr(exposure W_hat, exposure RAS), all cells (2128): 0.851
+
+saved /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/results/paper1_interface_baseline.md
+# Paper 1 interface check: clean_window
+
+## Artifact
+- path: `src/open_nrb/results/baseline/real_run_seed0.pt` (mtime 2026-11-07T19:30:15)
+- keys: W_baseline, W_hat, baseline_diff, baseline_stability, bfi_names, c, cap, components_trend, degenerate_periods, losses, model_stability, non_finite_periods, periods, q, r, seed
+- W_hat (133, 16, 16), W_baseline (133, 16, 16); N=16 x T=133, Asar 2072 .. Shrawan 2083
+- NaN-filled by Paper 1: non-finite 0, degenerate 0 (none)
+- this config's window: Asar 2072 .. Falgun 2075 (T=45); NaN-filled months inside it: none (build_inputs passed)
+
+## Marginals (CSV vs artifact)
+- r, c match; cap / K constant, implied kappa = 0.05
+
+## Paper 1 provenance
+- config `src/open_nrb/experiments/configs/baseline.yaml` (mtime 2026-11-07T11:33:52)
+- kappa 0.05, lambda_mi 0.0, lambda_smooth 0.05, epochs 500, kl_beta_max 0.15, kl_free_bits 0.05, seed 0
+
+## Network properties used in the text
+- cap-binding share of off-diagonal W_hat cells, all valid months: 0.0699
+- same, inside this config's window: 0.0193
+- corr(exposure W_hat, exposure RAS), post cells (400): 0.968
+- corr(exposure W_hat, exposure RAS), all cells (720): 0.939
+
+saved /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb_causal/results/paper1_interface_clean_window.md

@@ -1,0 +1,14 @@
+
+########## Persistence baseline (real): baseline seed 0 (T=133 periods) ##########
+excluded periods (non-finite model output or ~zero interbank activity): []
+
+scored 132/132 consecutive-period transitions
+
+--- temporal stability (mean rel. change month-to-month, lower = more stable) ---
+  reprojected-persistence stability FLOOR : 1.1134
+  model stability (stored, Section 6.5)   : 1.1612
+  classical RAS stability (stored)        : 2.3196
+
+  model departure from persistence (||W_hat - W_persist|| / ||W_hat||): 0.1318
+
+verdict: model stability ~ persistence floor (within 15%) -- the stability edge over RAS is really 'RAS over-reacts to marginal noise', not 'the model adds smoothness'. State it that way in 6.5.

@@ -1,0 +1,32 @@
+
+########## Seed significance: sweep_lambda_mi_0 (n=5 seeds) ##########
+
+=== model_mean vs. baseline_mean (reconstruction error, lower is better) ===
+  n_seeds=5  mean paired difference (a - b): -0.136198
+  paired t-test:      statistic=-4.5933  p=0.0101
+  Wilcoxon signed-rank: statistic=0.0000  p=0.0625
+  NOTE: at n=5 seeds, Wilcoxon's minimum achievable two-sided p-value is 1/2^(n-1) = 0.0625 -- it structurally cannot reject at alpha=0.05 here. Judge the mean paired difference (effect size) above, not this p-value; running more seeds is the only way to get a p-value that can actually move.
+
+=== block_acc vs. trivial_baseline (block recovery accuracy, higher is better) ===
+  n_seeds=5  mean paired difference (a - b): 0.078125
+  paired t-test:      statistic=2.0194  p=0.1136
+  Wilcoxon signed-rank: statistic=1.0000  p=0.2500
+  NOTE: at n=5 seeds, Wilcoxon's minimum achievable two-sided p-value is 1/2^(n-1) = 0.0625 -- it structurally cannot reject at alpha=0.05 here. Judge the mean paired difference (effect size) above, not this p-value; running more seeds is the only way to get a p-value that can actually move.
+saved: /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/results/sweep_lambda_mi_0/evaluation/seed_significance_report.txt
+saved: /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/results/sweep_lambda_mi_0/evaluation/seed_significance_metrics.json
+
+########## Seed significance: sweep_lambda_mi_0 vs. synthetic_single_block (n=5 shared seeds) ##########
+
+=== model_mean: a vs. b ===
+  n_seeds=5  mean paired difference (a - b): 0.009085
+  paired t-test:      statistic=1.0277  p=0.3622
+  Wilcoxon signed-rank: statistic=4.0000  p=0.4375
+  NOTE: at n=5 seeds, Wilcoxon's minimum achievable two-sided p-value is 1/2^(n-1) = 0.0625 -- it structurally cannot reject at alpha=0.05 here. Judge the mean paired difference (effect size) above, not this p-value; running more seeds is the only way to get a p-value that can actually move.
+
+=== block_acc: a vs. b ===
+  n_seeds=5  mean paired difference (a - b): 0.461458
+  paired t-test:      statistic=12.6269  p=0.0002
+  Wilcoxon signed-rank: statistic=0.0000  p=0.0625
+  NOTE: at n=5 seeds, Wilcoxon's minimum achievable two-sided p-value is 1/2^(n-1) = 0.0625 -- it structurally cannot reject at alpha=0.05 here. Judge the mean paired difference (effect size) above, not this p-value; running more seeds is the only way to get a p-value that can actually move.
+saved: /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/results/sweep_lambda_mi_0_vs_synthetic_single_block/evaluation/seed_significance_report.txt
+saved: /home/krishna/Documents/personal/neupane_article/network_papers/00_llama_arch/muse_llama_arch/apps/open-nrb/src/open_nrb/results/sweep_lambda_mi_0_vs_synthetic_single_block/evaluation/seed_significance_metrics.json
