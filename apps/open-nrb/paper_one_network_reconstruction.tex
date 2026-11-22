@@ -288,7 +288,7 @@ algorithm, emerging markets, Nepal},
 \title{Who Lends to Whom? Reconstructing Interbank Exposures from Public
 Balance Sheets}
 \author{Krishna Neupane}
-\date{2026-11-12}
+\date{2026-11-22}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -324,7 +324,7 @@ need bilateral or large-exposure reporting.
 maximum entropy; RAS; stochastic blockmodel; capped matrix balancing;
 Dykstra's algorithm; emerging markets; Nepal. \vspace{1.5em}
 
-\section{1. Introduction}\label{introduction}
+\section{Introduction}\label{sec-introduction-network-reconstruction}
 
 Under Section 4 of the Nepal Rastra Bank Act, 2058, a primary mandate of
 the central bank is to maintain financial sector stability and build
@@ -358,10 +358,10 @@ observed. Central banks and researchers observe each bank's total
 interbank lending and total interbank borrowing, and must reconstruct
 the bilateral matrix whose row and column sums these are (Upper 2011;
 Squartini et al. 2018). The classical answer spreads the totals as
-evenly as possible (RAS or maximum entropy, Deming and Stephan (1940);
-Gandy and Veraart (2013)), which is known to produce networks that are
-too dense and to understate systemic risk where true bilateral data
-exist for comparison (Mistrulli 2011; Anand, Craig, and Peter 2018).
+evenly as possible (RAS or maximum entropy, Deming and Stephan (1940)),
+which is known to produce networks that are too dense and to understate
+systemic risk where true bilateral data exist for comparison (Mistrulli
+2011; Anand, Craig, and Peter 2018).
 
 This paper makes three contributions.
 
@@ -400,9 +400,8 @@ This paper makes three contributions.
 \end{enumerate}
 
 We report the third result as a finding, not a failure. Missing
-bilateral data is the norm among central banks (Upper 2011;
-\textbf{fsbimf2009infogaps?}), and data aggregation problems persist
-even inside large banks (\textbf{bcbs2013principles?}). A method paper
+bilateral data is the norm among central banks (Upper 2011), and data
+aggregation problems persist even inside large banks. A method paper
 that reports what real published data can and cannot support is useful
 to the many emerging-market regulators who publish similar aggregate
 returns. A companion paper (\textbf{paper2companion?}) uses the
@@ -414,27 +413,31 @@ projection. Section 4 describes the data. Section 5 reports the
 synthetic results and Section 6 the real-data results. Section 7
 discusses limitations and Section 8 concludes.
 
-\section{2. Related work}\label{related-work}
+\textbf{bilateral exposures and balance sheet data} In abseence of the
+direct bilateral exposures data, the literature relies on the maximum
+entropy to reconstruct the interbank networks, spreading the exposures
+as evenly as possible subject to the constraints (marginals). Originally
+Sheldon and Maurer (1998) borrowed the ME from physics to reconstruct
+the interbank linkage (Upper (2011)).
 
 \textbf{Matrix balancing and maximum entropy.} Iterative proportional
-fitting (Deming and Stephan 1940; Stone 1961) rescales a prior matrix
-until its margins match. Applied to interbank markets (Upper 2011; Gandy
-and Veraart 2013), it gives the RAS baseline we use. Squartini and
-Garlaschelli (2017) and Squartini et al. (2018) place these methods in a
-maximum-entropy ensemble framework. Anand, Craig, and Peter (2018) show
-that such ensembles spread exposures over too many links relative to
-observed networks, and Mistrulli (2011), with Italian bilateral data,
-shows how far maximum-entropy contagion estimates can be from those on
-the observed network.
+fitting (Deming and Stephan 1940) rescales a prior matrix until its
+margins match. Applied to interbank markets (Upper 2011), it gives the
+RAS baseline we use. Squartini and Garlaschelli (2017) and Squartini et
+al. (2018) place these methods in a maximum-entropy ensemble framework.
+Anand, Craig, and Peter (2018) show that such ensembles spread exposures
+over too many links relative to observed networks, and Mistrulli (2011),
+with Italian bilateral data, shows how far maximum-entropy contagion
+estimates can be from those on the observed network.
 
 \textbf{Block structure and learned inference.} Interbank markets are
-often tiered (Clementi, Gallegati, and Squartini 2019), which motivates
-a stochastic blockmodel (Holland, Laskey, and Leinhardt 1983; Nowicki
-and Snijders 2001). Amortized variational inference over interaction
-graphs (Kipf et al. 2018) and differentiable relaxations of discrete
-structure (Mena et al. 2018) make such models trainable by gradient
-descent. Our covariate term plays the role of degree correction or
-fitness, as in Peixoto (2020).
+often tiered (Craig and Peter (2014)), which motivates a stochastic
+blockmodel (Holland, Laskey, and Leinhardt 1983; Nowicki and Snijders
+2001). Amortized variational inference over interaction graphs (Kipf et
+al. 2018) and differentiable relaxations of discrete structure (Mena et
+al. 2018) make such models trainable by gradient descent. Our covariate
+term plays the role of degree correction or fitness, as in Peixoto
+(2020).
 
 \textbf{Reconstruction as Bayesian inference.} A separate line infers a
 network from noisy or partial reports of its edges (Guimerà and
@@ -447,86 +450,108 @@ adapting them to margin-only input is outside our scope.
 show that a model's own selection criterion and its link-recovery
 performance can disagree. Our real-data stability comparison has the
 same problem, since the model is trained to be smooth (Section 6.5).
-(\textbf{methodology-exposure-reconstruction?})
 
-\section{3. Method}\label{methodology-exposure-reconstruction}
+\section{Method}\label{sec-methodology-exposure-reconstruction}
 
-In the financial system with \(N\) commercial banks indexed by
+This section describes formal framework used to reconstruct sparse,
+weighted bilateral interbank networks - edge weights represent bilateral
+lending exposures constrained by publicly available aggregate
+balance-sheet totals. As noted in
+Section~\ref{sec-introduction-network-reconstruction}, network
+reconstruction has been widely studied problem using maximum entropy and
+RAS methods, which tend to produce dense networks that overlook
+bilateral concentration and misstate contagion risk. At the same time,
+research on latent network structure and reconstruction from
+partial/aggregate data shows that recovering latent group structure
+without direct edge observations introduces identification issues. To
+fill the gaps, this paper combines a covariate-informed stochastic
+blockmodel, an amortized recurrent inference network, and a
+differentiable projection onto the published totals and a per-pair
+regulatory exposure cap that enables to evaluate reconstruction
+performance and data-driven identifiability limits. This section is
+outlined as follows, first, notions used thorughout paper is presented,
+followed second by a generative model with accouting identities,
+followed by a constrained projection, inference and training pipeline.
+
+\subsection{Notations}\label{sec-methodology-notations}
+
+Consider a financial system of \(N\) commercial banks indexed by
 \(i, j \in \{1,\dots,N\}\) that operate over \(T\) months indexed by
-\(t \in \{1,\dots,T\}\), to recover the latent exposures, at each month
-\(t\), the bilateral exposures are captured by an unobserved matrix
+\(t \in \{1,\dots,T\}\). From the publicly available balance sheets, for
+the specific month \(t\), one can observe for each bank its total
+lending (\(r_{i,t}\)), total borrowing \(c_{i,t}\), capital fund
+\(K_{i,t}\), and other covariate vectors \(X_{i,t} \in \mathbb{R}^d\).
+At each month \(t\), for banks \(i\) and \(j\), bilateral exposures are
+captured by an unobserved matrix
 \(W_t \in \mathbb{R}^{N\times N}_{\ge 0}\) with a zero diagonal, where
-\(W_{ij,t}\) denotes bank \(i\)'s exposure to bank \(j\).
+\(W_{ij,t}\) denotes bank \(i\)'s exposure to bank \(j\). The diagonal
+entries of the matrix are zero, i.e., \(W_{ii,t} = 0\) for all \(i\).
 
-From public balance sheets, we observe each bank's total lending
-\(r_{i,t}\), total borrowing \(c_{i,t}\), capital fund \(K_{i,t}\), and
-covariate vector \(X_{i,t} \in \mathbb{R}^d\). Each bank also belongs to
-an unobserved structural block \(z_i \in \{1,\dots,K\}\).
+\subsection{Generative model and marginal
+identities}\label{sec-methodology-generative-model-marginal-identities}
 
-At each month \(t\), bilateral exposures are captured by an unobserved
-matrix \(W_t \in \mathbb{R}^{N\times N}_{\ge 0}\) with a zero diagonal,
-where \(W_{ij,t}\) denotes bank \(i\)'s exposure to bank \(j\). From
-public balance sheets, we observe each bank's total lending \(r_{i,t}\),
-total borrowing \(c_{i,t}\), capital fund \(K_{i,t}\), and covariate
-vector \(X_{i,t} \in \mathbb{R}^d\). Each bank also belongs to an
-unobserved structural block \(z_i \in \{1,\dots,K\}\).
-
-Consider a system of \(N\) banks indexed by \(i, j \in \{1,\dots,N\}\)
-observed over \(T\) months indexed by \(t \in \{1,\dots,T\}\). At each
-month \(t\), bilateral exposures are captured by an unobserved matrix
-\(W_t \in \mathbb{R}^{N\times N}_{\ge 0}\) with a zero diagonal, where
-\(W_{ij,t}\) denotes bank \(i\)'s exposure to bank \(j\). From public
-balance sheets, we observe each bank's total lending \(r_{i,t}\), total
-borrowing \(c_{i,t}\), capital fund \(K_{i,t}\), and covariate vector
-\(X_{i,t} \in \mathbb{R}^d\). Each bank also belongs to an unobserved
-structural block \(z_i \in \{1,\dots,K\}\).
-
-This section describes formal method adopted by the paper where there
-are \(N\) banks indexed by \(i \in \{1,\dots,N\}\) and \(T\) months
-indexed by \(t \in \{1,\dots,T\}\). Let, \(W_t\) be the latent exposure
-matrix of size \(N\times N\) where \(W_{ij,t}\) represents the exposure
-of bank \(i\) to bank \(j\) at time \(t\).
-
-Banks are \(i, j \in \{1,\dots,N\}\) and months \(t \in \{1,\dots,T\}\).
-\(W_t \in
-\mathbb{R}^{N\times N}_{\ge 0}\) is the latent exposure matrix, with
-\(W_{ij,t}\) the exposure of bank \(i\) to bank \(j\) and a zero
-diagonal. We observe the lending total \(r_{i,t}\), the borrowing total
-\(c_{i,t}\), the capital fund \(K_{i,t}\) and covariates
-\(X_{i,t} \in \mathbb{R}^d\); \(z_i \in
-\{1,\dots,K\}\) is a latent block.
-
-The diagonal entries of the matrix are zero, i.e., \(W_{ii,t} = 0\) for
-all \(i\). The observed data includes the lending total \(r_{i,t}\), the
-borrowing total \(c_{i,t}\), the capital fund \(K_{i,t}\), and
-covariates \(X_{i,t} \in \mathbb{R}^d\). Each bank is associated with a
-latent block denoted by \(z_i \in \{1,\dots,K\}\).
-
-The latent exposure matrix is denoted by
-\(W_t \in \mathbb{R}^{N\times N}_{\ge 0}\), where \(W_{ij,t}\)
-represents the exposure of bank \(i\) to bank \(j\), with a zero
-diagonal. The observed data includes the lending total \(r_{i,t}\), the
-borrowing total \(c_{i,t}\), the capital fund \(K_{i,t}\), and
-covariates \(X_{i,t} \in \mathbb{R}^d\). Each bank is associated with a
-latent block denoted by \(z_i \in \{1,\dots,K\}\).
-
-Banks are \(i, j \in \{1,\dots,N\}\) and months \(t \in \{1,\dots,T\}\).
-\(W_t \in
-\mathbb{R}^{N\times N}_{\ge 0}\) is the latent exposure matrix, with
-\(W_{ij,t}\) the exposure of bank \(i\) to bank \(j\) and a zero
-diagonal. We observe the lending total \(r_{i,t}\), the borrowing total
-\(c_{i,t}\), the capital fund \(K_{i,t}\) and covariates
-\(X_{i,t} \in \mathbb{R}^d\); \(z_i \in
-\{1,\dots,K\}\) is a latent block.
-
-\subsection{3.2 Generative model}\label{generative-model}
+Each bank belongs to an unobserved structural block
+\(z_i \in \{1,\dots,K\}\), drawn from a prior probability vector \(\pi\)
+over \(K\) structural roles. That is, specification \ref{eq:latent_z} is
+part of the generative model that when connected to balancesheet
+covariates to pairwaise exposure magnitudes and observed balance-sheet
+totals.
 
 \begin{flalign}
-    z_i &\sim \text{Categorical}(\pi) && \label{eq:latent_z} \\
-    \phi_{i,t} &= \exp(w^\top X_{i,t}) && \label{eq:latent_phi} \\
-    \lambda_{ij,t} &= \Lambda_{z_i z_j}\,\phi_{i,t}\,\phi_{j,t} && \label{eq:expected_flows} \\
+    z_i &\sim \text{Categorical}(\pi) && \label{eq:latent_z}
+\end{flalign}
+
+While \(z_i\) (see Equation \ref{eq:latent_z}) captures discrete
+structural group membership, bank \(i\)'s observed covariate vector
+\(X_{i,t} \in \mathbb{R}^d\) and weight vector \(w \in \mathbb{R}^d\)
+generate a strictly positive activity factor \(\phi_{i,t} > 0\) at month
+\(t\) as specified in Equation \ref{eq:latent_phi}. This acts as a
+covariate-based scale term (Peixoto 2020), allowing balance-sheet
+covariates to scale expected exposures smoothly alongside block
+structure.
+
+\begin{flalign}
+    \phi_{i,t} &= \exp(w^\top X_{i,t}) && \label{eq:latent_phi} 
+\end{flalign}
+
+An ordered pair of banks \((i, j)\) at month \(t\), the positive scale
+parameter \(\lambda_{ij,t}\) brings together the structural and
+covariate channels: it multiplies the block-to-block affinity
+\(\Lambda_{z_i z_j} > 0\) (linking bank \(i\)'s block \(z_i\) to bank
+\(j\)'s block \(z_j\)) by the activity factors \(\phi_{i,t}\) of the
+lender and \(\phi_{j,t}\) of the borrower.
+
+\begin{flalign}
+    \lambda_{ij,t} &= \Lambda_{z_i z_j}\,\phi_{i,t}\,\phi_{j,t} && \label{eq:expected_flows}
+\end{flalign}
+
+Because interbank networks are sparse and skewed---most bank pairs have
+zero exposure in a given month, while active exposures can be
+concentrated (Mistrulli 2011; Anand, Craig, and Peter 2018)---we
+separate link existence from positive magnitude. Using the logistic
+sigmoid \(\sigma(u) = (1 + e^{-u})^{-1}\), the logit \(\eta_{ij,t}\)
+determines the probability \(\sigma(-\eta_{ij,t})\) of a zero exposure,
+while conditional on \(\tilde W_{ij,t} > 0\), the raw exposure follows a
+log-normal distribution with log-scale \(\log \lambda_{ij,t}\) (fed from
+Eq. 3) and log-variance \(\sigma^2\), with \(\tilde W_{ii,t} = 0\) (no
+self-lending). In the synthetic generator,
+\((\pi, w, \Lambda, \eta, \sigma^2)\) generate raw matrices
+\(\tilde W_t\); in the learned model, a neural decoder produces the
+pairwise parameters.
+
+\begin{flalign}
     \Pr(\tilde W_{ij,t} = 0) &= \sigma(-\eta_{ij,t}), \quad \tilde W_{ij,t} \mid \tilde W_{ij,t} > 0 
-    \sim \text{LogNormal}(\log \lambda_{ij,t}, \sigma^2) && \label{eq:zero_inflated_lognormal} \\
+    \sim \text{LogNormal}(\log \lambda_{ij,t}, \sigma^2) && \label{eq:zero_inflated_lognormal}
+\end{flalign}
+
+These identities link bilateral exposures \(W_{ij,t}\) to observed
+lending totals \(r_{i,t}\) (row sums) and borrowing totals \(c_{i,t}\)
+(column sums). Because accounting identities are deterministic
+balance-sheet definitions rather than noisy observations, we enforce
+them through projection in Specified as Equation \ref{eq:marginal_sums}
+rather than placing them inside the likelihood.
+
+\begin{flalign}
     r_{i,t} &= \sum_j W_{ij,t}, \quad c_{j,t} = \sum_i W_{ij,t} && \label{eq:marginal_sums}
 \end{flalign}
 
@@ -540,7 +565,12 @@ only; the trained model replaces (Equation
 \ref{eq:expected_flows})--(Equation \ref{eq:zero_inflated_lognormal})
 with a learned decoder.
 
-\subsection{3.3 Capped projection}\label{capped-projection}
+Having defined how exposures arise in principle, we now connect raw or
+proposed matrices to regulatory limits, amortized inference over bank
+histories, and the training objective.
+
+\subsection{Constrained projection, inference, and training
+objective}\label{sec-methodology-constrained-projection-inference-training-objective}
 
 Given a raw matrix \(\tilde W_t\), the output is its Euclidean
 projection onto the intersection of the row-sum set \(\mathcal{R}\), the
@@ -548,15 +578,13 @@ column-sum set \(\mathcal{C}\) and the box \(\mathcal{B}\):
 
 \begin{flalign}
     W_t = \text{Proj}_{\mathcal{R}\cap\mathcal{C}\cap\mathcal{B}}(\tilde W_t), \quad
-    \mathcal{B} = \{W : 0 \le W_{ij} \le \kappa K_{i,t}\ \forall j\} && \tag{8} \label{eq:capped_projection}
+    \mathcal{B} = \{W : 0 \le W_{ij} \le \kappa K_{i,t}\ \forall j\} &&  \label{eq:capped_projection}
 \end{flalign}
 
 The box caps each bilateral exposure at a fraction \(\kappa\) of the
 lender's capital fund, the form of a single-obligor limit. We use
-\(\kappa = 0.05\) (TO VERIFY against \textbf{nrbunified?}) .
-
-We compute (Equation \ref{eq:capped_projection}) with Dykstra's
-alternating projections (Boyle and Dykstra 1986) (Algorithm
+\(\kappa = 0.05\). We compute (Equation \ref{eq:capped_projection}) with
+Dykstra's alternating projections (Boyle and Dykstra 1986) (Algorithm
 \ref{alg:capacitated_projection} )\footnote{For details refer Boyle and
   Dykstra (1986) and Tibshirani (2017)}. Each of the three set
 projections is closed form: a uniform shift of each row, a uniform shift
@@ -566,7 +594,7 @@ through it by automatic differentiation (the clip has the usual
 subgradient). When the intersection is empty the iteration returns a
 least-violation point that keeps the box but misses the margins. We
 treat that case as a property of the inputs to be reported, not as a
-solution; on real data it is the usual case (Section 6.2).
+solution; on real data it is the usual case.
 
 \begin{algorithm}[htbp]
   \caption{Capacitated Projection}
@@ -588,36 +616,64 @@ solution; on real data it is the usual case (Section 6.2).
   \end{algorithmic}
 \end{algorithm}
 
-\subsection{3.4 A pitfall: capping rows instead of
-entries}\label{a-pitfall-capping-rows-instead-of-entries}
+\subsection{Recurrent State Encoder and Inference
+network}\label{sec-methodology-recurrent-state-encoder-inference-network}
 
-A natural first attempt adds a cap to Sinkhorn scaling by clipping the
-row scalar \(u_i\). A row scalar rescales a whole row, so the clip
-enforces \(\sum_j W_{ij} \le \kappa K_{i,t}\), a limit on total
-interbank lending, instead of \(W_{ij} \le \kappa K_{i,t}\) for each
-counterparty, a limit on concentration. A unit test with a binding
-per-entry cap exposed the difference. Plain, uncapped Sinkhorn remains
-our RAS baseline (Cuturi 2013; Gandy and Veraart 2013).
+To amortize inference across banks and months without overfitting small
+panels (Kipf et al. 2018; Mena et al. 2018), a GRU updates bank \(i\)'s
+hidden state \(h_{i,t}\) from its covariates \(X_{i,t}\), observed
+marginals \((r_{i,t}, c_{i,t})\), and prior state \(h_{i,t-1}\).
+Including \((r_{i,t}, c_{i,t})\) alongside \(X_{i,t}\) is essential
+because covariates alone do not reveal latent block assignments \(z_i\)
+under the generative model. From \(h_{i,t}\), a small network produces
+approximate posterior block probabilities \(q_\psi(z_i)\), while a
+pairwise decoder maps bank representations to edge-existence and scale
+parameters; at evaluation time, we compute point estimates using
+posterior expectations before applying
+Algorithm\textasciitilde{}\ref{alg:capacitated_projection} to eliminate
+sampling noise. A GRU encodes each bank's history,
 
-\subsection{3.5 Inference network}\label{inference-network}
+\begin{flalign}
+  h_{i,t} = \text{GRU}_\theta([X_{i,t}; r_{i,t}; c_{i,t}], h_{i,t-1})\label{eq:recurrent_state_encoder}
+\end{flalign}
 
-A GRU encodes each bank's history,
-\(h_{i,t} = \text{GRU}_\theta([X_{i,t}; r_{i,t}; c_{i,t}],
-h_{i,t-1})\) (6). The marginals enter the encoder because in (1)--(2)
-the block is drawn independently of the covariates, so covariates alone
-carry no information about \(z\); the marginals do, through \(\Lambda\).
-A small network gives
-\(q_\psi(z_i) = \text{softmax}(\text{MLP}_\psi(h_{i,t}))\) (7), and a
-pairwise decoder maps \((h_{i,t}, h_{j,t}, z_i, z_j)\) to
-\((\eta_{ij,t}, \lambda_{ij,t})\). Training samples use the
-Gumbel-softmax, Gumbel-sigmoid and log-normal reparameterizations; the
-reported \(\hat W_t\) uses posterior means (\(q_\psi(z)\),
-\(\sigma(\eta)\) and \(\lambda e^{\sigma^2/2}\)) before projection,
-which removes sampling noise from the point estimate. We use a GRU
-rather than a temporal graph network because the panel is small (16
-banks).
+The marginals enter the encoder because in (1) (2) the block is drawn
+independently of the covariates, so covariates alone carry no
+information about \(z\); the marginals do, through \(\Lambda\).
 
-\subsection{3.6 Training objective}\label{training-objective}
+A small network gives:
+
+\begin{flalign}
+  q_\psi(z_i) = \text{softmax}(\text{MLP}_\psi(h_{i,t})) 
+\end{flalign}
+
+and a pairwise decoder maps \((h_{i,t}, h_{j,t}, z_i, z_j)\) to
+\((\eta_{ij,t}, \lambda_{ij,t})\).
+
+Training samples use the Gumbel-softmax, Gumbel-sigmoid and log-normal
+reparameterizations; the reported \(\hat W_t\) uses posterior means
+(\(q_\psi(z)\), \(\sigma(\eta)\) and \(\lambda e^{\sigma^2/2}\)) before
+projection, which removes sampling noise from the point estimate. We use
+a GRU rather than a temporal graph network because the panel is small
+(16 banks).
+
+\subsection{Training
+objective}\label{sec-methodology-training-objective}
+
+Finally, we train the model by minimizing \(\mathcal{L}\), which
+combines three terms: a supervised log-likelihood term over true
+bilateral exposures \(W_t^{\text{true}}\) (active only in synthetic
+experiments where ground truth is observed), a KL divergence term
+regularizing \(q_\psi(z)\) toward prior \(p(z)\) (annealed to
+\(\beta_{\max} = 0.15\) over 300 epochs with a \(0.05\) free-bits
+floor), and a temporal smoothness penalty
+(\(\lambda_{\text{smooth}} = 0.05\)) on consecutive projected matrices.
+When bilateral ground truth is unavailable on real balance sheets, the
+first term vanishes, clarifying why projection constraints and
+smoothness regularization drive \(\hat W_t\)---and why
+model-selection/regularization behavior and link recovery can diverge
+when edge-level data are absent (Vallès-Català et al. 2018; Peixoto
+2018).
 
 \begin{flalign}
     \mathcal{L} &= \underbrace{-\mathbb{E}_q[\log p(W_t^{\text{true}})]}_{\text{synthetic only}} +
@@ -635,16 +691,14 @@ On real data the first term of (Equation \ref{eq:loss_function}) is
 identically zero, because no bilateral ground truth exists. The KL term
 depends only on \(q_\psi(z)\) and gives the decoder no gradient. The
 only term that reaches the decoder is the smoothness penalty on the
-projected matrices. Real-data training is therefore a regularized fit to
-the margins, not likelihood estimation, and Section 6.4 shows its
-consequence.
+projected matrices.
 
-\section{4. Data}\label{data}
+\section{Data}\label{sec-data}
 
-\textbf{Source.} NRB's monthly \emph{Banking and Financial Statistics}
-bulletins, published as PDFs. We extract each commercial bank's balance
-sheet. The two margins are sub-items of the balance sheet: \(r_{i,t}\)
-is \texttt{a.\ Interbank\ Lending} under
+NRB's monthly \emph{Banking and Financial Statistics} bulletins,
+published as PDFs. We extract each commercial bank's balance sheet. The
+two margins are sub-items of the balance sheet: \(r_{i,t}\) is
+\texttt{a.\ Interbank\ Lending} under
 \texttt{3\ SHARE\ \&\ OTHER\ INVESTMENT} (assets), and \(c_{i,t}\) is
 \texttt{b.\ Interbank\ Borrowing} under \texttt{2\ BORROWINGS}
 (liabilities). \(K_{i,t}\) is \texttt{1\ CAPITAL\ FUND}. The five
@@ -667,15 +721,14 @@ rather than to the extraction.
 every field is present in every month of the modelling window.
 Missingness here has identifiable causes (an era's numbering, a bank
 absent from a page) and is not missing completely at random, so
-imputation would inject bias tied to the failure modes
-(\textbf{littlerubin2019missing?}). The rule leaves N = 16 of 33
-commercial-bank labels over T = 133 months, Asar 2072 -- Shrawan 2083.
-One calendar month, Kartik 2078, is absent. Section 6.1 reports who is
-excluded and why.
+imputation would inject bias tied to the failure modes (Little and Rubin
+2019). The rule leaves N = 16 of 33 commercial-bank labels over T = 133
+months, Asar 2072 -- Shrawan 2083. One calendar month, Kartik 2078, is
+absent. Section 6.1 reports who is excluded and why.
 
-\section{5. Synthetic results}\label{synthetic-results}
+\section{Results}\label{sec-results}
 
-\subsection{5.1 Design}\label{design}
+\subsection{Synthetic results}\label{sec-synthetic-results}
 
 The generator (Appendix A, Algorithm 2) draws 24 banks over 16 periods
 with \(K = 2\) blocks, \(\Lambda = ([2.5, 0.6], [0.6, 0.2])\) block
@@ -689,7 +742,8 @@ on seeds 0--4 and compare (i) the relative Frobenius error of
 \(\hat W_t\) against RAS on the same margins and (ii) block accuracy
 against the majority-class guess (0.70).
 
-\subsection{5.2 Reconstruction}\label{reconstruction}
+\subsubsection*{Reconstruction}\label{reconstruction}
+\addcontentsline{toc}{subsubsection}{Reconstruction}
 
 The model's mean relative error is lower than RAS's in 5/5 seeds (0.430
 ± 0.043 vs.~0.566 ± 0.026); a paired t-test across seeds gives p =
@@ -711,7 +765,8 @@ error statistically unchanged (0.420 vs.~0.430, paired p = 0.36; Section
 from the covariates, the temporal encoder and the learned decoder, not
 from the covariate-informed blockmodel.
 
-\subsection{5.3 Block recovery}\label{block-recovery}
+\subsubsection*{Block recovery}\label{block-recovery}
+\addcontentsline{toc}{subsubsection}{Block recovery}
 
 Block accuracy exceeds the majority guess by 0.0781 on average (sd
 0.0774), in 3 of 5 seeds (paired t-test p = 0.1136). The margin is
@@ -721,8 +776,10 @@ assignments. We therefore do not claim that the model identifies core
 and periphery banks. Table C1 shows that the mutual-information term
 does not change this at any weight tried.
 
-\subsection{5.4 What the synthetic win is and is
+\subsubsection*{What the synthetic win is and is
 not}\label{what-the-synthetic-win-is-and-is-not}
+\addcontentsline{toc}{subsubsection}{What the synthetic win is and is
+not}
 
 The synthetic ground truth comes from the same blockmodel the method
 assumes, which favours the method. The three checks this invites are now
@@ -754,10 +811,7 @@ the synthetic panel it is uninformative, because the generator redraws
 blocks and covariates independently each period, so consecutive \(W_t\)
 carry no temporal dependence for a persistence rule to exploit.
 
-\section{6. Real-data results}\label{real-data-results}
-
-\subsection{6.1 The panel and who is
-missing}\label{the-panel-and-who-is-missing}
+\subsection{Real-data results}\label{real-data-results}
 
 The 16 banks are ADBNL, EBL, Global, HBL, Kumari, Laxmi, MBL, NABIL,
 NBL, NIC, NMB, NSBI, Prime, RBB, SBL and SCBNL. Three facts limit what
@@ -778,8 +832,10 @@ complete-case rule. We have not checked these against NRB records, so
 ``33'' counts labels; there are at most 29 distinct banks if all four
 are relabels.
 
-\subsection{6.2 The published margins do not
+\subsubsection*{The published margins do not
 balance}\label{the-published-margins-do-not-balance}
+\addcontentsline{toc}{subsubsection}{The published margins do not
+balance}
 
 In the clean window (45 months, 720 bank-months), lending is zero in 398
 bank-months and borrowing in 465. Within the 16 banks, total lending and
@@ -802,8 +858,10 @@ the published aggregates how much of the gap is open-system leakage and
 how much, if any, is definitional; we have not checked the line
 definitions with NRB.
 
-\subsection{6.3 What the projection does with infeasible
+\subsubsection*{What the projection does with infeasible
 margins}\label{what-the-projection-does-with-infeasible-margins}
+\addcontentsline{toc}{subsubsection}{What the projection does with
+infeasible margins}
 
 With an empty intersection, Algorithm 1 returns its least-violation
 point, and that is the \(\hat W_t\) we report. Its worst monthly miss
@@ -829,8 +887,10 @@ The cap rarely binds: 7.0\% of entries over all 133 months and 1.9\% in
 the clean window (\(\kappa = 0.05\)). On real data the cap adds little
 information beyond the margins; its role rests on the synthetic results.
 
-\subsection{6.4 The model's latent structure does not reach the
+\subsubsection*{The model's latent structure does not reach the
 output}\label{the-models-latent-structure-does-not-reach-the-output}
+\addcontentsline{toc}{subsubsection}{The model's latent structure does
+not reach the output}
 
 We ran two fits that differ only in the KL weight. With
 \(\beta_{\max} = 0.15\) every bank's posterior is near uniform (about
@@ -850,7 +910,8 @@ data, \(\hat W_t\) is the projection of a smooth, nearly arbitrary raw
 matrix onto inconsistent margins, and the blockmodel and covariates do
 not detectably shape it.
 
-\subsection{6.5 Temporal stability}\label{temporal-stability}
+\subsubsection*{Temporal stability}\label{temporal-stability}
+\addcontentsline{toc}{subsubsection}{Temporal stability}
 
 \(\hat W_t\) changes less from month to month than RAS: the mean
 month-to-month change of \(\hat W_t\) is 1.16 against RAS's 2.32 (lower
@@ -868,8 +929,7 @@ smoothness prior or latent structure contributes stability of its own
 real data the decoder receives gradient only through the smoothness
 penalty.
 
-\section{7. Discussion and
-limitations}\label{discussion-and-limitations}
+\section{Discussion and limitations}\label{discussion-and-limitations}
 
 \textbf{What the method offers.} Where margins are consistent, the
 capped projection gives the nearest matrix that matches the totals and
@@ -892,7 +952,7 @@ latent structure has no detectable effect on its output. For NRB, the
 practical implication is that bilateral or large-exposure reporting,
 even at low frequency, would be needed to make interbank exposure maps
 informative; reconciling the definitions of the two published interbank
-lines would be a cheaper first step.
+lines would be a cheapder first step.
 
 \textbf{Limitations.} - \emph{Ground truth.} All accuracy evidence is
 synthetic and from the assumed model class. The capped-RAS decomposition
@@ -931,7 +991,7 @@ effective degrees of freedom. The binding constraint is not model
 capacity but identifiability of the bilateral matrix from its margins
 (Section 6.4), which no parameter budget resolves.
 
-\section{8. Conclusion}\label{conclusion}
+\section{Conclusion}\label{sec-conclusions}
 
 We give a differentiable, capped projection for interbank reconstruction
 and embed it in a covariate-informed blockmodel. On synthetic data the
@@ -943,7 +1003,9 @@ The result is a measured data limit: the published marginals cannot say
 who is exposed to whom, and we state what reporting would be needed to
 change that.
 
-\section{Data and code availability}\label{data-and-code-availability}
+\subsection*{Data and code
+availability}\label{data-and-code-availability}
+\addcontentsline{toc}{subsection}{Data and code availability}
 
 The bulletins are public on NRB's website. The extraction, model,
 synthetic generator, all configurations and the evaluation scripts are
@@ -958,7 +1020,8 @@ survivorship checks by the companion paper's \texttt{reviewer\_checks},
 \texttt{survivorship} scripts, which read the saved reconstruction
 without retraining.
 
-\section{Declarations}\label{declarations}
+\subsection*{Declarations}\label{declarations}
+\addcontentsline{toc}{subsection}{Declarations}
 
 Funding:
 
@@ -968,8 +1031,9 @@ Author contributions:
 
 Use of AI tools in preparation:
 
-\section{Appendix A --- Algorithms 2 and
+\subsection*{Appendix A --- Algorithms 2 and
 3}\label{appendix-a-algorithms-2-and-3}
+\addcontentsline{toc}{subsection}{Appendix A --- Algorithms 2 and 3}
 
 \begin{algorithm}[htbp]
 \caption{Sample Synthetic Network}
@@ -1013,7 +1077,8 @@ Use of AI tools in preparation:
 
 \pagebreak
 
-\section{Appendix B --- Variables}\label{appendix-b-variables}
+\subsection*{Appendix B --- Variables}\label{appendix-b-variables}
+\addcontentsline{toc}{subsection}{Appendix B --- Variables}
 
 \begin{table}[htbp]
   \centering
@@ -1035,9 +1100,11 @@ Use of AI tools in preparation:
   \end{tabular}
 \end{table}
 
-\section{Appendix C --- Mutual-information term sweep (synthetic, 5
+\subsection*{Appendix C --- Mutual-information term sweep (synthetic, 5
 seeds
 each)}\label{appendix-c-mutual-information-term-sweep-synthetic-5-seeds-each}
+\addcontentsline{toc}{subsection}{Appendix C --- Mutual-information term
+sweep (synthetic, 5 seeds each)}
 
 \begin{table}[htbp]
 \centering
@@ -1061,8 +1128,10 @@ Paired tests of \(0\) against each nonzero weight yield model error
 difference \(0.0125\)). No correction for three comparisons. We set the
 weight to \(0\).
 
-\section*{References}\label{references}
-\addcontentsline{toc}{section}{References}
+\pagebreak
+
+\subsection*{References}\label{references}
+\addcontentsline{toc}{subsection}{References}
 
 \phantomsection\label{refs}
 \begin{CSLReferences}{1}{0}
@@ -1072,33 +1141,21 @@ Blanks: Network Structure and Interbank Contagion.''} \emph{Quantitative
 Finance} 18 (4): 625--36.
 
 \bibitem[\citeproctext]{ref-boyle1986method}
-Boyle, James P, and Richard L Dykstra. 1986. {``A Method for Finding
-Projections onto the Intersection of Convex Sets in Hilbert Spaces.''}
-In \emph{Advances in Order Restricted Statistical Inference: Proceedings
-of the Symposium on Order Restricted Statistical Inference Held in Iowa
-City, Iowa, September 11--13, 1985}, 28--47. Springer.
+Boyle, James P., and Richard L. Dykstra. 1986. {``A Method for Finding
+Projections onto the Intersection of Convex Sets in {Hilbert} Spaces.''}
+In \emph{Advances in Order Restricted Statistical Inference}, 28--47.
+Springer.
 
-\bibitem[\citeproctext]{ref-clementi2019tiered}
-Clementi, Fabio, Mauro Gallegati, and Tiziano Squartini. 2019. {``The
-Tiered Structure of Interbank Networks: A Quantitative Framework.''}
-\emph{Journal of Economic Dynamics and Control} 103: 145--68.
-
-\bibitem[\citeproctext]{ref-cuturi2013sinkhorn}
-Cuturi, Marco. 2013. {``Sinkhorn Distances: Lightspeed Computation of
-Optimal Transport.''} In \emph{Advances in Neural Information Processing
-Systems (NeurIPS)}, 26:2292--2300.
-\url{https://doi.org/10.5555/2999792.2999888}.
+\bibitem[\citeproctext]{ref-craig2014interbank}
+Craig, Ben, and Goetz von Peter. 2014. {``Interbank Tiering and Money
+Center Banks.''} \emph{Journal of Financial Intermediation} 23 (3):
+322--47.
 
 \bibitem[\citeproctext]{ref-deming1940least}
-Deming, W Edwards, and Frederick F Stephan. 1940. {``On a Least Squares
-Adjustment of a Sampled Frequency Table When the Expected Marginal
-Totals Are Known.''} \emph{The Annals of Mathematical Statistics} 11
-(4): 427--44.
-
-\bibitem[\citeproctext]{ref-gandy2013financial}
-Gandy, Axel, and Silvia Veraart. 2013. {``A Graph-Theoretic Approach to
-the Generation of Realistic Interbank Networks.''} \emph{Computational
-Management Science} 10 (4): 315--43.
+Deming, W. Edwards, and Frederick F. Stephan. 1940. {``On a Least
+Squares Adjustment of a Sampled Frequency Table When the Expected
+Marginal Totals Are Known.''} \emph{The Annals of Mathematical
+Statistics} 11 (4): 427--44.
 
 \bibitem[\citeproctext]{ref-guimera2009missing}
 Guimerà, Roger, and Marta Sales-Pardo. 2009. {``Missing and Spurious
@@ -1107,7 +1164,7 @@ Interactions and the Reconstruction of Complex Networks.''}
 22073--78. \url{https://doi.org/10.1073/pnas.0908366106}.
 
 \bibitem[\citeproctext]{ref-holland1983stochastic}
-Holland, Paul W, Kathryn Blackmond Laskey, and Samuel Leinhardt. 1983.
+Holland, Paul W., Kathryn Blackmond Laskey, and Samuel Leinhardt. 1983.
 {``Stochastic Blockmodels: First Steps.''} \emph{Social Networks} 5 (2):
 109--37.
 
@@ -1117,6 +1174,10 @@ Zemel. 2018. {``Neural Relational Inference for Interacting Systems.''}
 In \emph{Proceedings of the 35th International Conference on Machine
 Learning (ICML)}, 80:2688--97.
 \url{https://doi.org/10.48550/arxiv.1802.04687}.
+
+\bibitem[\citeproctext]{ref-little2019statistical}
+Little, Roderick JA, and Donald B Rubin. 2019. \emph{Statistical
+Analysis with Missing Data}. John Wiley \& Sons.
 
 \bibitem[\citeproctext]{ref-martin2016structural}
 Martin, Travis, Brian Ball, and M. E. J. Newman. 2016. {``Structural
@@ -1135,7 +1196,7 @@ Interbank Market: Maximum Entropy Versus Observed Interbank Lending
 Patterns.''} \emph{Journal of Banking \& Finance} 35 (5): 1114--27.
 
 \bibitem[\citeproctext]{ref-nowicki2001estimation}
-Nowicki, Krzysztof, and Tom A B Snijders. 2001. {``Estimation and
+Nowicki, Krzysztof, and Tom A. B. Snijders. 2001. {``Estimation and
 Prediction for Stochastic Blockstructures.''} \emph{Journal of the
 American Statistical Association} 96 (455): 1077--87.
 
@@ -1154,6 +1215,11 @@ Dynamics.''} \emph{Physical Review Letters} 123 (12): 128301.
 Heterogeneous Density.''} \emph{Physical Review E} 102 (1): 012309.
 \url{https://doi.org/10.1103/PhysRevE.102.012309}.
 
+\bibitem[\citeproctext]{ref-sheldon1998interbank}
+Sheldon, George, and Martin Maurer. 1998. {``Interbank Lending and
+Systemic Risk: An Empirical Analysis for {Switzerland}.''} \emph{Swiss
+Journal of Economics and Statistics} 134 (4): 685--704.
+
 \bibitem[\citeproctext]{ref-squartini2018reconstruction}
 Squartini, Tiziano, Guido Caldarelli, Giulio Cimini, Andrea Gabrielli,
 and Diego Garlaschelli. 2018. {``Reconstruction Methods for Networks:
@@ -1165,14 +1231,10 @@ Squartini, Tiziano, and Diego Garlaschelli. 2017. {``Maximum-Entropy
 Networks: A Foundational Perspective.''} \emph{Physics Reports} 710:
 1--49.
 
-\bibitem[\citeproctext]{ref-stone1961input}
-Stone, Richard. 1961. \emph{Input-Output Relationships, 1954-1966}.
-Chapman; Hall.
-
 \bibitem[\citeproctext]{ref-tibshirani2017dykstra}
-Tibshirani, Ryan J. 2017. {``Dykstra's Algorithm, Admm, and Coordinate
-Descent: Connections, Insights, and Extensions.''} \emph{Advances in
-Neural Information Processing Systems} 30.
+Tibshirani, Ryan J. 2017. {``Dykstra's Algorithm, {ADMM}, and Coordinate
+Descent: Connections, Insights, and Extensions.''} In \emph{Advances in
+Neural Information Processing Systems (NeurIPS)}. Vol. 30.
 
 \bibitem[\citeproctext]{ref-upper2011simulation}
 Upper, Christian. 2011. {``Simulation Methods to Assess the Contagion

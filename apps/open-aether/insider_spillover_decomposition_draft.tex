@@ -285,7 +285,7 @@
 \title{Homophily or Contagion? Board-Interlock Diffusion of 10b5-1
 Cooling-Off Plans}
 \author{Krishna Neupane}
-\date{2026-11-17}
+\date{2026-11-20}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -379,36 +379,44 @@ observational social-network data; Aral, Muchnik, and Sundararajan
 (2009) decompose influence from homophily in an actual diffusion
 process; and Goldsmith-Pinkham and Imbens (2013) characterize when peer
 effects are identified once homophily is present. The decomposition in
-this paper is a response to this confounding. Third, the peer-effects
-literature formalizes why closing the gap is hard. Manski (1993) states
-the reflection problem: when peers are similar, endogenous influence
-cannot be separated from shared characteristics in the linear-in-means
-model (see also Manski (2013)). Bramoullé, Djebbari, and Fortin (2009),
-Bramoullé, Djebbari, and Fortin (2020) show that peer effects can be
-identified on networks that are sufficiently sparse and intransitive,
-using the outcomes of friends-of-friends as instruments --- a condition
-the interlock network violates (Section 5.1) --- and Angrist (2014)
-catalogs the ways naive peer-effect estimators overstate influence.
-Fourth, the design-based literature on causal inference under
-interference supplies the estimators used here. Building on the
-potential-outcomes framework (Imbens and Rubin (2015)) and randomization
-inference (Fisher et al. (1966); Rosenbaum (2002)), Hudgens and Halloran
-(2008) define treatment and spillover estimands under partial
-interference; Aronow and Samii (2017) develop exposure-mapping
-estimators and randomization inference for general interference; Sävje,
-Aronow, and Hudgens (2021) and Leung (2020) extend estimation and
-inference to unknown and networked interference; Athey, Eckles, and
-Imbens (2018) give exact tests of sharp nulls under network
-interference; Forastiere, Airoldi, and Mealli (2021) treat interference
-in observational network studies; and Eckles, Karrer, and Ugander (2017)
-show how interference biases naive estimators. Fifth, work on Rule
-10b5-1 examines how insiders use trading plans: Jagolinzer (2009) shows
-that plan-based sales are strategically timed, and Cohen, Malloy, and
-Pomorski (2012) distinguish routine from opportunistic insider trades,
-which informs the volume outcome in Section 6. The 2022 cooling-off
-amendment ((\textbf{securities2022insider2?})) is the governance shock
-this paper exploits. {[}TO-FILL: add a recent empirical study of the
-2022 cooling-off amendment --- do not cite from memory; verify first.{]}
+this paper is a response to this confounding. In a comment on
+Goldsmith-Pinkham and Imbens (2013), Bramoullé (2013) frames joint
+link-and-outcome modeling as a network analog to Heckman selection
+correction, underscores how homophily links selection to outcome
+unobservables and complicates exclusion restrictions, and notes that
+heterogeneous peer effects do not generally reduce to a single uniform
+peer-effect parameter.
+
+Third, the peer-effects literature formalizes why closing the gap is
+hard. Manski (1993) states the reflection problem: when peers are
+similar, endogenous influence cannot be separated from shared
+characteristics in the linear-in-means model (see also Manski (2013)).
+Bramoullé, Djebbari, and Fortin (2009), Bramoullé, Djebbari, and Fortin
+(2020) show that peer effects can be identified on networks that are
+sufficiently sparse and intransitive, using the outcomes of
+friends-of-friends as instruments --- a condition the interlock network
+violates (Section 5.1) --- and Angrist (2014) catalogs the ways naive
+peer-effect estimators overstate influence. Fourth, the design-based
+literature on causal inference under interference supplies the
+estimators used here. Building on the potential-outcomes framework
+(Imbens and Rubin (2015)) and randomization inference (Fisher et al.
+(1966); Rosenbaum (2002)), Hudgens and Halloran (2008) define treatment
+and spillover estimands under partial interference; Aronow and Samii
+(2017) develop exposure-mapping estimators and randomization inference
+for general interference; Sävje, Aronow, and Hudgens (2021) and Leung
+(2020) extend estimation and inference to unknown and networked
+interference; Athey, Eckles, and Imbens (2018) give exact tests of sharp
+nulls under network interference; Forastiere, Airoldi, and Mealli (2021)
+treat interference in observational network studies; and Eckles, Karrer,
+and Ugander (2017) show how interference biases naive estimators. Fifth,
+work on Rule 10b5-1 examines how insiders use trading plans: Jagolinzer
+(2009) shows that plan-based sales are strategically timed, and Cohen,
+Malloy, and Pomorski (2012) distinguish routine from opportunistic
+insider trades, which informs the volume outcome in Section 6. The 2022
+cooling-off amendment (Securities, Commission, et al. (2022)) is the
+governance shock this paper exploits. {[}TO-FILL: add a recent empirical
+study of the 2022 cooling-off amendment --- do not cite from memory;
+verify first.{]}
 
 \section{3. Method}\label{methodology-exposure-reconstruction}
 
@@ -584,12 +592,12 @@ Never adopt & 2,652 & 60.4\% \\
 interlock degree; pre-activity = total insider sales 2021Q1--2022Q4).}
 
 \begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1304}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1739}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1739}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1739}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1739}}
-  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1739}}@{}}
+  >{\raggedright\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}
+  >{\raggedleft\arraybackslash}p{(\linewidth - 10\tabcolsep) * \real{0.1667}}@{}}
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 Group
@@ -1031,9 +1039,10 @@ Networks.''} \emph{Proceedings of the National Academy of Sciences} 106
 (51): 21544--49.
 
 \bibitem[\citeproctext]{ref-aronow2017estimating}
-Aronow, Peter M, and Cyrus Samii. 2017. {``Estimating Average Causal
+Aronow, Peter M., and Cyrus Samii. 2017. {``Estimating Average Causal
 Effects Under General Interference, with Application to a Social Network
-Experiment.''}
+Experiment.''} \emph{The Annals of Applied Statistics} 11 (4): 1912--47.
+\url{https://doi.org/10.1214/16-AOAS1005}.
 
 \bibitem[\citeproctext]{ref-athey2018exact}
 Athey, Susan, Dean Eckles, and Guido W Imbens. 2018. {``Exact p-Values
@@ -1049,6 +1058,12 @@ Studies} 22 (11): 4821--47.
 Bouwman, Christa HS. 2011. {``Corporate Governance Propagation Through
 Overlapping Directors.''} \emph{The Review of Financial Studies} 24 (7):
 2358--94.
+
+\bibitem[\citeproctext]{ref-bramoulle2013comment}
+Bramoullé, Yann. 2013. {``Comment: Social Networks and the
+Identification of Peer Effects byGoldsmith-Pinkham, Paul and Imbens,
+Guido w.''} \emph{Journal of Business \& Economic Statistics} 31 (3):
+264--66. \url{http://www.jstor.org/stable/43702719}.
 
 \bibitem[\citeproctext]{ref-bramoulle2009identification}
 Bramoullé, Yann, Habiba Djebbari, and Bernard Fortin. 2009.
@@ -1156,7 +1171,7 @@ Treatment Effects in the Presence of Unknown Interference.''}
 Securities, US, Exchange Commission, et al. 2022. {``Insider Trading
 Arrangements and Related Disclosures, Release No. 33-11038, 34-96492;
 File No. S7-20-21.''} \emph{US Securities and Exchange Commission
-Regulations}. \url{https://www.sec.gov/rules/final/2022/33-11038.pdf}.
+Regulations}.
 
 \bibitem[\citeproctext]{ref-shalizi2011homophily}
 Shalizi, Cosma Rohilla, and Andrew C Thomas. 2011. {``Homophily and
